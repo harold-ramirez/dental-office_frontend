@@ -22,3 +22,19 @@ export const RequestIcon = (props: any) => (
 export const ScheduleIcon = (props: any) => (
   <MaterialCommunityIcons name="book-clock-outline" size={24} color="black" {...props} />
 );
+
+export const SearchIcon = (props: any) => (
+  <FontAwesome name="search" size={24} color="black" {...props} />
+);
+
+export const AddPatientIcon = (props: any) => (
+  <Octicons name="person-add" size={24} color="black" {...props} />
+);
+
+export const WhatsappIcon = (props: any) => (
+  <FontAwesome name="whatsapp" size={24} color="black" {...props} />
+);
+
+export const MedicalHistoryIcon = (props: any) => (
+  <MaterialCommunityIcons name="folder-information-outline" size={24} color="black" {...props} />
+);
