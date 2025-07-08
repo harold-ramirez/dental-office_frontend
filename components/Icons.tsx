@@ -11,6 +11,10 @@ export const ProfileIcon = (props: any) => (
   <FontAwesome5 name="user" size={24} color="black" {...props} />
 );
 
+export const ProfileIconAlt = (props: any) => (
+  <FontAwesome5 name="user-alt" size={24} color="black" {...props} />
+);
+
 export const PatientIcon = (props: any) => (
   <FontAwesome name="address-book-o" size={24} color="black" {...props} />
 );
@@ -37,4 +41,8 @@ export const WhatsappIcon = (props: any) => (
 
 export const MedicalHistoryIcon = (props: any) => (
   <MaterialCommunityIcons name="folder-information-outline" size={24} color="black" {...props} />
+);
+
+export const SadIcon = (props: any) => (
+  <MaterialCommunityIcons name="emoticon-sad-outline" size={24} color="black" {...props} />
 );
