@@ -1,4 +1,5 @@
 import { AddPatientIcon, SadIcon, SearchIcon } from "@/components/Icons";
+import NewPatient from "@/components/patients/newPatient";
 import PatientCard from "@/components/patients/patientCard";
 import { Patient } from "@/interfaces/interfaces";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Patients() {
+  const [showNewPatient, setShowNewPatient] = useState(false);
   const [openId, setOpenId] = useState<number | null>(null);
   const isFirstRender = useRef(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -84,8 +86,12 @@ export default function Patients() {
               className="flex-1 p-2 h-full text-xl"
             />
           </View>
+
           <View className="items-end w-full">
-            <Pressable className="flex-row justify-center items-center gap-1 bg-blackBlue active:bg-pureBlue px-5 py-2 rounded-full">
+            <Pressable
+              onPress={() => setShowNewPatient(true)}
+              className="flex-row justify-center items-center gap-1 bg-blackBlue active:bg-pureBlue px-5 py-2 rounded-full"
+            >
               <AddPatientIcon color="white" />
               <Text className="text-white">Nuevo Paciente</Text>
             </Pressable>
@@ -123,6 +129,14 @@ export default function Patients() {
           )}
         </View>
       </SafeAreaView>
+
+      {showNewPatient && (
+        <NewPatient
+          onClose={() => {
+            setShowNewPatient(false);
+          }}
+        />
+      )}
     </>
   );
 }
