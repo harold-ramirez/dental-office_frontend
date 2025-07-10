@@ -1,6 +1,6 @@
+import { Patient } from "@/interfaces/interfaces";
 import { Linking, Pressable, Text, View } from "react-native";
 import { MedicalHistoryIcon, ProfileIconAlt, WhatsappIcon } from "../Icons";
-import { Patient } from "@/interfaces/interfaces";
 
 interface PatientCardProps {
   patient: Patient;
@@ -44,7 +44,7 @@ export default function PatientCard({
     >
       <Pressable
         onPress={toggleButtons}
-        className={`flex-row items-center gap-5 bg-whiteBlue active:bg-lightBlue p-2 rounded-lg w-full`}
+        className={`flex-row gap-5 bg-whiteBlue active:bg-lightBlue p-2 rounded-lg w-full`}
       >
         <View
           className={`rounded-full size-24 items-center justify-center ${
@@ -62,7 +62,13 @@ export default function PatientCard({
           </Text>
           <Text>{patient.gender === "M" ? "Masculino" : "Femenino"}</Text>
           <Text>{age} años</Text>
-          <Text className="font-semibold">{patient.phoneNumber}</Text>
+          <Text
+            className={`font-semibold ${!patient.phoneNumber ? `italic` : ``} `}
+          >
+            {patient.phoneNumber
+              ? patient.phoneNumber
+              : `Celular no registrado`}
+          </Text>
         </View>
       </Pressable>
 
@@ -71,12 +77,14 @@ export default function PatientCard({
           showButtons ? `flex` : `hidden`
         } flex-row justify-end gap-3 p-1 w-full`}
       >
-        <Pressable
-          onPress={handleWhatsApp}
-          className="justify-center items-center bg-darkBlue p-1 rounded-md size-10"
-        >
-          <WhatsappIcon color="white" size={27} />
-        </Pressable>
+        {patient.phoneNumber && (
+          <Pressable
+            onPress={handleWhatsApp}
+            className="justify-center items-center bg-darkBlue p-1 rounded-md size-10"
+          >
+            <WhatsappIcon color="white" size={27} />
+          </Pressable>
+        )}
         <Pressable className="justify-center items-center bg-darkBlue p-1 rounded-md size-10">
           <MedicalHistoryIcon color="white" size={30} />
         </Pressable>

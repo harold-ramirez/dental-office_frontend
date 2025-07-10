@@ -3,6 +3,7 @@ import NewPatient from "@/components/patients/newPatient";
 import PatientCard from "@/components/patients/patientCard";
 import { Patient } from "@/interfaces/interfaces";
 import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -16,14 +17,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Patients() {
-  const [showNewPatient, setShowNewPatient] = useState(false);
-  const [openId, setOpenId] = useState<number | null>(null);
-  const isFirstRender = useRef(true);
-  const [refreshing, setRefreshing] = useState(false);
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const isFirstRender = useRef(true);
+  const params = useLocalSearchParams();
   const [searchValue, setSearchValue] = useState("");
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
+  const [openId, setOpenId] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showNewPatient, setShowNewPatient] = useState(false);
 
   const fetchAllPatients = async () => {
     try {
@@ -61,7 +63,7 @@ export default function Patients() {
 
   useEffect(() => {
     onRefresh();
-  }, []);
+  }, [params.refresh]);
 
   return (
     <>
