@@ -104,13 +104,6 @@ export default function Patients() {
               color={"#fff"}
               size={"large"}
             />
-          ) : filteredPatients.length === 0 ? (
-            <View className="flex-1 justify-center items-center">
-              <SadIcon color="#9ca3af" size={100} />
-              <Text className="font-bold text-gray-400 text-xl italic">
-                No hay resultados para &quot;{searchValue}&quot;
-              </Text>
-            </View>
           ) : (
             <FlatList
               className="flex-1 w-full"
@@ -126,7 +119,15 @@ export default function Patients() {
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
-              ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+              contentContainerStyle={{ gap: 12, flexGrow: 1 }}
+              ListEmptyComponent={
+                <View className="flex-1 justify-center items-center">
+                  <SadIcon color="#9ca3af" size={100} />
+                  <Text className="font-bold text-gray-400 text-xl italic">
+                    No hay resultados para &quot;{searchValue}&quot;
+                  </Text>
+                </View>
+              }
             />
           )}
         </View>

@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { SaveIcon, XIcon } from "../Icons";
+import RadioButton from "../radioButton";
 
 export default function NewPatient({ onClose }: { onClose: () => void }) {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function NewPatient({ onClose }: { onClose: () => void }) {
     name: "",
     paternalSurname: "",
     maternalSurname: "",
-    gender: "",
+    gender: "M",
     phoneNumber: "",
     occupation: "",
     birthdate: "",
@@ -146,14 +147,9 @@ export default function NewPatient({ onClose }: { onClose: () => void }) {
             </Text>
           </View>
           <View className="flex-row items-center gap-2 mb-3">
-            <TextInput
-              className="flex-1 bg-whiteBlue p-1 rounded-md text-center"
-              placeholder="M/F"
-              readOnly={isLoading}
-              value={newPatient.gender}
-              onChangeText={(text) =>
-                setNewPatient({ ...newPatient, gender: text })
-              }
+            <RadioButton
+              value={newPatient.gender as "M" | "F"}
+              onChange={(val) => setNewPatient({ ...newPatient, gender: val })}
             />
             <TextInput
               className="flex-1 bg-whiteBlue p-1 rounded-md text-center"
