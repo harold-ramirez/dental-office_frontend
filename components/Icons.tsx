@@ -55,3 +55,39 @@ export const SaveIcon = (props: any) => (
 export const XIcon = (props: any) => (
   <FontAwesome6 name="x" size={24} color="black" {...props} />
 );
+
+export const RightArrowIcon = (props: any) => (
+  <FontAwesome5 name="chevron-circle-right" size={24} color="black" {...props} />
+);
+
+export const EditIcon = (props: any) => (
+  <FontAwesome6 name="edit" size={24} color="black" {...props} />
+);
+
+export const PhoneIcon = (props: any) => (
+  <FontAwesome name="phone-square" size={24} color="black" {...props} />
+);
+
+export const FemaleIcon = (props: any) => (
+  <MaterialCommunityIcons name="gender-female" size={24} color="black" {...props} />
+);
+
+export const MaleIcon = (props: any) => (
+  <MaterialCommunityIcons name="gender-male" size={24} color="black" {...props} />
+);
+
+export const CakeIcon = (props: any) => (
+  <FontAwesome name="birthday-cake" size={24} color="black" {...props} />
+);
+
+export const JobIcon = (props: any) => (
+  <FontAwesome5 name="briefcase" size={24} color="black" {...props} />
+);
+
+export const MapMarkerIcon = (props: any) => (
+  <FontAwesome5 name="map-marker-alt" size={24} color="black" {...props} />
+);
+
+export const HouseIcon = (props: any) => (
+  <FontAwesome6 name="house-chimney" size={24} color="black" {...props} />
+);

@@ -1,10 +1,10 @@
 import { AddPatientIcon, SadIcon, SearchIcon } from "@/components/Icons";
-import NewPatient from "@/components/patients/newPatient";
 import PatientCard from "@/components/patients/patientCard";
-import { Patient } from "@/interfaces/interfaces";
+import { CreatePatientModal } from "@/components/patients/patientModal";
+import { PatientDto } from "@/interfaces/interfaces";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -18,40 +18,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Patients() {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-  const isFirstRender = useRef(true);
   const params = useLocalSearchParams();
   const [searchValue, setSearchValue] = useState("");
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState<PatientDto[]>([]);
+  const [filteredPatients, setFilteredPatients] = useState<PatientDto[]>([]);
   const [openId, setOpenId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showNewPatient, setShowNewPatient] = useState(false);
 
-  const fetchAllPatients = async () => {
+  const fetchAllPatients = useCallback(async () => {
     try {
       const endpoint = await fetch(`${apiUrl}/patients`);
       const data = await endpoint.json();
       setPatients(data);
-      setFilteredPatients(data);
     } catch (e) {
       console.error("Error fetching users:", e);
     }
-  };
+  }, [apiUrl]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchAllPatients();
     setSearchValue("");
     setRefreshing(false);
-  };
+  }, [fetchAllPatients]);
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
     const handleSearch = setTimeout(() => {
-      let filter = patients.filter((p) =>
+      const filter = patients.filter((p) =>
         `${p.name} ${p.paternalSurname ?? ""} ${p.maternalSurname ?? ""}`
           .toLowerCase()
           .includes(searchValue.trim().toLowerCase())
@@ -59,11 +53,11 @@ export default function Patients() {
       setFilteredPatients(filter);
     }, 500);
     return () => clearTimeout(handleSearch);
-  }, [searchValue]);
+  }, [searchValue, patients]);
 
   useEffect(() => {
     onRefresh();
-  }, [params.refresh]);
+  }, [params.refresh, onRefresh]);
 
   return (
     <>
@@ -102,7 +96,7 @@ export default function Patients() {
             <ActivityIndicator
               className="flex-1 justify-center items-center"
               color={"#fff"}
-              size={"large"}
+              size={50}
             />
           ) : (
             <FlatList
@@ -134,7 +128,7 @@ export default function Patients() {
       </SafeAreaView>
 
       {showNewPatient && (
-        <NewPatient
+        <CreatePatientModal
           onClose={() => {
             setShowNewPatient(false);
           }}

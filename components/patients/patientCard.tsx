@@ -1,9 +1,18 @@
-import { Patient } from "@/interfaces/interfaces";
+import { PatientDto } from "@/interfaces/interfaces";
+import { Link } from "expo-router";
 import { Linking, Pressable, Text, View } from "react-native";
-import { MedicalHistoryIcon, ProfileIconAlt, WhatsappIcon } from "../Icons";
+import {
+  CakeIcon,
+  FemaleIcon,
+  MaleIcon,
+  MedicalHistoryIcon,
+  PhoneIcon,
+  ProfileIconAlt,
+  WhatsappIcon,
+} from "../Icons";
 
 interface PatientCardProps {
-  patient: Patient;
+  patient: PatientDto;
   openId: number | null;
   setOpenId: (id: number | null) => void;
 }
@@ -57,18 +66,36 @@ export default function PatientCard({
           />
         </View>
         <View className="flex-1">
-          <Text className="font-bold text-2xl">
-            {patient.name} {patient.paternalSurname} {patient.maternalSurname}
+          <Text className="font-bold text-blackBlue text-2xl">
+            {[patient?.name, patient?.paternalSurname, patient?.maternalSurname]
+              .filter(Boolean)
+              .join(" ")}
           </Text>
-          <Text>{patient.gender === "M" ? "Masculino" : "Femenino"}</Text>
-          <Text>{age} años</Text>
-          <Text
-            className={`font-semibold ${!patient.phoneNumber ? `italic` : ``} `}
-          >
-            {patient.phoneNumber
-              ? patient.phoneNumber
-              : `Celular no registrado`}
-          </Text>
+          <View className="flex-row items-center gap-2">
+            <PhoneIcon size={21} color="#02457A" />
+            <Text className={`text-darkBlue text-lg`}>
+              {patient.phoneNumber ? patient.phoneNumber : `- - - - - - - -`}
+            </Text>
+          </View>
+          {patient.gender === "M" ? (
+            <View className="flex-row items-center gap-2">
+              <View className="bg-darkBlue rounded-md">
+                <MaleIcon size={18} color="#D6E8EE" />
+              </View>
+              <Text className="text-darkBlue">Masculino</Text>
+            </View>
+          ) : (
+            <View className="flex-row items-center gap-2">
+              <View className="bg-darkBlue rounded-md">
+                <FemaleIcon size={18} color="#D6E8EE" />
+              </View>
+              <Text className="text-darkBlue">Femenino</Text>
+            </View>
+          )}
+          <View className="flex-row items-center gap-2">
+            <CakeIcon size={18} color="#02457A" />
+            <Text className="text-darkBlue">{age} años</Text>
+          </View>
         </View>
       </Pressable>
 
@@ -88,9 +115,17 @@ export default function PatientCard({
         <Pressable className="justify-center items-center bg-darkBlue p-1 rounded-md size-10">
           <MedicalHistoryIcon color="white" size={30} />
         </Pressable>
-        <Pressable className="justify-center items-center bg-darkBlue p-1 rounded-md size-10">
-          <ProfileIconAlt color="white" size={25} />
-        </Pressable>
+        <Link
+          href={{
+            pathname: "/patientProfile/[id]",
+            params: { id: patient.Id.toString() },
+          }}
+          asChild
+        >
+          <Pressable className="justify-center items-center bg-darkBlue p-1 rounded-md size-10">
+            <ProfileIconAlt color="white" size={25} />
+          </Pressable>
+        </Link>
       </View>
     </View>
   );
