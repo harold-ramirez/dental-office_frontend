@@ -6,6 +6,8 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   Text,
   TextInput,
@@ -93,7 +95,11 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
   };
 
   return (
-    <View className="absolute justify-center items-center bg-black/75 w-full h-full">
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+      className="absolute justify-center items-center bg-black/75 w-full h-full"
+    >
       <View className="flex-col rounded-xl w-5/6">
         <LinearGradient
           colors={["#018ABE", "#02457A", "#018ABE"]}
@@ -119,6 +125,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               }
               placeholder="Nombre"
               autoCapitalize="words"
+              maxLength={45}
             />
           </View>
           <View className="flex-row items-center">
@@ -135,6 +142,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               placeholder="Apellido"
               readOnly={isLoading}
               autoCapitalize="words"
+              maxLength={45}
               value={newPatient.paternalSurname ?? ""}
               onChangeText={(text) =>
                 setNewPatient({ ...newPatient, paternalSurname: text })
@@ -145,6 +153,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               placeholder="Apellido"
               readOnly={isLoading}
               autoCapitalize="words"
+              maxLength={45}
               value={newPatient.maternalSurname ?? ""}
               onChangeText={(text) =>
                 setNewPatient({ ...newPatient, maternalSurname: text })
@@ -168,6 +177,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               placeholder="Teléfono"
               readOnly={isLoading}
               keyboardType="phone-pad"
+              maxLength={15}
               value={newPatient.phoneNumber ?? ""}
               onChangeText={(text) =>
                 setNewPatient({ ...newPatient, phoneNumber: text })
@@ -178,6 +188,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               placeholder="Ocupación"
               readOnly={isLoading}
               autoCapitalize="words"
+              maxLength={50}
               value={newPatient.occupation ?? ""}
               onChangeText={(text) =>
                 setNewPatient({ ...newPatient, occupation: text })
@@ -214,6 +225,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               placeholder="Ciudad/País"
               readOnly={isLoading}
               autoCapitalize="words"
+              maxLength={50}
               value={newPatient.placeOfBirth ?? ""}
               onChangeText={(text) =>
                 setNewPatient({ ...newPatient, placeOfBirth: text })
@@ -233,6 +245,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
                 setNewPatient({ ...newPatient, address: text })
               }
               multiline={true}
+              maxLength={100}
               style={{ textAlignVertical: "top" }}
             />
           </View>
@@ -286,12 +299,12 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
           />
         )}
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 export function UpdatePatientModal({
-  onClose, // La prop ahora espera una función que puede recibir un booleano
+  onClose,
   patient: initialPatient,
 }: UpdatePatientProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -329,7 +342,7 @@ export function UpdatePatientModal({
         console.error("Error updating patient:", error);
       } finally {
         setIsLoading(false);
-        onClose(endpoint?.ok); // Pasa 'true' si la actualización fue exitosa
+        onClose(endpoint?.ok);
       }
     } else {
       Alert.alert("Error", "Por favor, completa los campos obligatorios (*).", [
@@ -339,7 +352,11 @@ export function UpdatePatientModal({
   };
 
   return (
-    <View className="absolute justify-center items-center bg-black/75 w-full h-full">
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+      className="absolute justify-center items-center bg-black/75 w-full h-full"
+    >
       <View className="flex-col rounded-xl w-5/6">
         <LinearGradient
           colors={["#018ABE", "#02457A", "#018ABE"]}
@@ -363,6 +380,7 @@ export function UpdatePatientModal({
               onChangeText={(text) => setPatient({ ...patient, name: text })}
               placeholder="Nombre"
               autoCapitalize="words"
+              maxLength={45}
             />
           </View>
           <View className="flex-row items-center">
@@ -379,6 +397,7 @@ export function UpdatePatientModal({
               placeholder="Apellido"
               readOnly={isLoading}
               autoCapitalize="words"
+              maxLength={45}
               value={patient.paternalSurname ?? ""}
               onChangeText={(text) =>
                 setPatient({ ...patient, paternalSurname: text })
@@ -389,6 +408,7 @@ export function UpdatePatientModal({
               placeholder="Apellido"
               readOnly={isLoading}
               autoCapitalize="words"
+              maxLength={45}
               value={patient.maternalSurname ?? ""}
               onChangeText={(text) =>
                 setPatient({ ...patient, maternalSurname: text })
@@ -412,6 +432,7 @@ export function UpdatePatientModal({
               placeholder="Teléfono"
               readOnly={isLoading}
               keyboardType="phone-pad"
+              maxLength={15}
               value={patient.phoneNumber ?? ""}
               onChangeText={(text) =>
                 setPatient({ ...patient, phoneNumber: text })
@@ -422,6 +443,7 @@ export function UpdatePatientModal({
               placeholder="Ocupación"
               readOnly={isLoading}
               autoCapitalize="words"
+              maxLength={50}
               value={patient.occupation ?? ""}
               onChangeText={(text) =>
                 setPatient({ ...patient, occupation: text })
@@ -458,6 +480,7 @@ export function UpdatePatientModal({
               placeholder="Ciudad/País"
               readOnly={isLoading}
               autoCapitalize="words"
+              maxLength={50}
               value={patient.placeOfBirth ?? ""}
               onChangeText={(text) =>
                 setPatient({ ...patient, placeOfBirth: text })
@@ -475,6 +498,7 @@ export function UpdatePatientModal({
               value={patient.address ?? ""}
               onChangeText={(text) => setPatient({ ...patient, address: text })}
               multiline={true}
+              maxLength={100}
               style={{ textAlignVertical: "top" }}
             />
           </View>
@@ -482,7 +506,7 @@ export function UpdatePatientModal({
 
         <View className="flex-row justify-around">
           <Pressable
-            onPress={() => onClose(false)} // Pasa 'false' en caso de cancelación
+            onPress={() => onClose(false)}
             className="flex-row justify-center items-center gap-2 bg-lightBlue active:bg-pureBlue px-5 py-2 border border-blackBlue rounded-bl-lg w-1/2"
           >
             <XIcon color="#001B48" />
@@ -528,6 +552,6 @@ export function UpdatePatientModal({
           />
         )}
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
