@@ -24,3 +24,13 @@ export interface CreatePatientDto {
   address?: string | null;
   AppUser_Id: number;
 }
+
+export interface AppointmentRequestDto {
+  Id: number;
+  patientFullName: string;
+  dateHourRequest: string;
+  phoneNumber: string;
+  message: string;
+  registerDate: string;
+  AppUser_Id: number;
+}

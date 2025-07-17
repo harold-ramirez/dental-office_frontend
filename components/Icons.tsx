@@ -91,3 +91,15 @@ export const MapMarkerIcon = (props: any) => (
 export const HouseIcon = (props: any) => (
   <FontAwesome6 name="house-chimney" size={24} color="black" {...props} />
 );
+
+export const CalendarClockIcon = (props: any) => (
+  <MaterialCommunityIcons name="calendar-clock" size={24} color="black" {...props} />
+);
+
+export const CheckIcon = (props: any) => (
+  <MaterialCommunityIcons name="calendar-check-outline" size={24} color="black" {...props} />
+);
+
+export const UserCircleIcon = (props: any) => (
+  <FontAwesome5 name="user-circle" size={24} color="black" {...props} />
+);
