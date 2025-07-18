@@ -16,6 +16,7 @@ export default function Requests() {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const [refreshing, setRefreshing] = useState(false);
   const [requests, setRequests] = useState<AppointmentRequestDto[]>([]);
+  const [openId, setOpenId] = useState<number | null>(null);
 
   const fetchAllRequests = useCallback(async () => {
     try {
@@ -49,7 +50,7 @@ export default function Requests() {
         edges={["top", "left", "right"]}
         style={{ flex: 1, paddingHorizontal: 8, paddingTop: 4, gap: 12 }}
       >
-        <Text className="text-white font-bold text-3xl text-center">
+        <Text className="font-bold text-white text-3xl text-center">
           Solicitudes de Citas Médicas
         </Text>
         {refreshing ? (
@@ -63,7 +64,13 @@ export default function Requests() {
             className="flex-1 w-full"
             data={requests}
             keyExtractor={(request) => request.Id.toString()}
-            renderItem={({ item }) => <RequestCard request={item} />}
+            renderItem={({ item }) => (
+              <RequestCard
+                request={item}
+                openId={openId}
+                setOpenId={setOpenId}
+              />
+            )}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
