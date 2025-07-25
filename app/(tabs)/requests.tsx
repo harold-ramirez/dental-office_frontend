@@ -1,4 +1,4 @@
-import RequestCard from "@/components/appointment-requests/requestCard";
+import RequestCard from "@/components/appointments-requests/requestCard";
 import { SadIcon } from "@/components/Icons";
 import { AppointmentRequestDto } from "@/interfaces/interfaces";
 import { LinearGradient } from "expo-linear-gradient";
@@ -48,7 +48,7 @@ export default function Requests() {
       />
       <SafeAreaView
         edges={["top", "left", "right"]}
-        style={{ flex: 1, paddingHorizontal: 8, paddingTop: 4, gap: 12 }}
+        style={{ flex: 1, paddingHorizontal: 8, paddingTop: 8, gap: 12 }}
       >
         <Text className="font-bold text-white text-3xl text-center">
           Solicitudes de Citas Médicas

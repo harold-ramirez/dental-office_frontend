@@ -48,14 +48,14 @@ export default function RequestCard({
           <View className="flex-row gap-1">
             <UserCircleIcon color="#001B48" size={75} />
             <View className="flex-1">
-              <Text className="font-bold text-blackBlue text-2xl">
+              <Text className="font-bold text-blackBlue text-xl">
                 {request.patientFullName}
               </Text>
-              <Text className="font-semibold text-darkBlue text-xl">
-                <PhoneIcon color="#02457A" size={20} /> {request.phoneNumber}
+              <Text className="font-bold text-darkBlue">
+                <PhoneIcon color="#02457A" size={17} /> {request.phoneNumber}
               </Text>
             </View>
-            <Text className="font-semibold text-darkBlue text-right capitalize">
+            <Text className="font-semibold text-darkBlue text-right text-sm capitalize">
               {new Date(request.dateHourRequest).toLocaleDateString("es-BO", {
                 weekday: "long",
               })}
@@ -65,7 +65,7 @@ export default function RequestCard({
               })}
               /
               {new Date(request.dateHourRequest).toLocaleDateString("es-BO", {
-                month: "long",
+                month: "short",
               })}
               /
               {new Date(request.dateHourRequest).toLocaleDateString("es-BO", {
@@ -83,7 +83,7 @@ export default function RequestCard({
             <CalendarClockIcon color="#001B48" size={50} />
           </View>
           <Text
-            numberOfLines={showButtons ? 0 : 3}
+            numberOfLines={showButtons ? 0 : 1}
             ellipsizeMode="tail"
             className="bg-darkBlue/80 my-4 p-3 rounded-bl-xl rounded-tr-xl font-semibold text-whiteBlue text-lg italic text-justify"
           >
