@@ -96,10 +96,18 @@ export const CalendarClockIcon = (props: any) => (
   <MaterialCommunityIcons name="calendar-clock" size={24} color="black" {...props} />
 );
 
-export const CheckIcon = (props: any) => (
+export const CalendarCheckIcon = (props: any) => (
   <MaterialCommunityIcons name="calendar-check-outline" size={24} color="black" {...props} />
 );
 
 export const UserCircleIcon = (props: any) => (
   <FontAwesome5 name="user-circle" size={24} color="black" {...props} />
+);
+
+export const PlusIcon = (props: any) => (
+  <FontAwesome name="plus-square-o" size={24} color="black" {...props} />
+);
+
+export const CheckCircleIcon = (props: any) => (
+  <FontAwesome6 name="check-circle" size={24} color="black" {...props} />
 );

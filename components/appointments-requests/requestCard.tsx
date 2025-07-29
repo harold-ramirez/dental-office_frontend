@@ -2,7 +2,7 @@ import { AppointmentRequestDto } from "@/interfaces/interfaces";
 import { Linking, Pressable, Text, View } from "react-native";
 import {
   CalendarClockIcon,
-  CheckIcon,
+  CalendarCheckIcon,
   EditIcon,
   PhoneIcon,
   UserCircleIcon,
@@ -112,7 +112,7 @@ export default function RequestCard({
             </Pressable>
           )}
           <Pressable className="justify-center items-center bg-darkBlue active:bg-pureBlue px-2 py-1 rounded-lg">
-            <CheckIcon color="#D6E8EE" size={32} className="flex-1" />
+            <CalendarCheckIcon color="#D6E8EE" size={32} className="flex-1" />
             <Text className="font-semibold text-whiteBlue text-xs text-center">
               Confirmar
             </Text>

@@ -69,7 +69,7 @@ export default function Patients() {
       />
       <SafeAreaView
         edges={["top", "left", "right"]}
-        style={{ flex: 1, paddingHorizontal: 8, paddingTop: 4 }}
+        style={{ flex: 1, paddingHorizontal: 8, paddingTop: 8 }}
       >
         <View className="flex-1 items-center gap-3">
           <Text className="font-bold text-white text-3xl">Mis Pacientes</Text>
