@@ -111,3 +111,7 @@ export const PlusIcon = (props: any) => (
 export const CheckCircleIcon = (props: any) => (
   <FontAwesome6 name="check-circle" size={24} color="black" {...props} />
 );
+
+export const ToothIcon = (props: any) => (
+  <MaterialCommunityIcons name="tooth-outline" size={24} color="black" {...props} />
+);
