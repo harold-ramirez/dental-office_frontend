@@ -84,7 +84,7 @@ export default function TreatmentDetails() {
           </ScrollView>
           <Pressable
             onPress={() => setOpenModal(true)}
-            className="right-4 bottom-4 absolute flex-row justify-center items-center bg-blackBlue rounded-full size-16"
+            className="right-4 bottom-4 absolute flex-row justify-center items-center bg-blackBlue rounded-2xl size-16"
           >
             <PlusIcon color="#D6E8EE" size={35} />
           </Pressable>

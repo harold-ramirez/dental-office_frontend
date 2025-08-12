@@ -1,12 +1,15 @@
 import { PlusIcon, UserCircleIcon } from "@/components/Icons";
 import TreatmentCard from "@/components/treatments/treatmentCard";
+import TreatmentModal from "@/components/treatments/treatmentModal";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Treatments() {
   const { patientId } = useLocalSearchParams();
+  const [showModal, setShowModal] = useState(false);
 
   return (
     <>
@@ -38,7 +41,10 @@ export default function Treatments() {
           <View className="flex-1 w-full mt-5">
             <TreatmentCard treatmentId="123" />
           </View>
-          <Pressable className="flex-row justify-center items-center gap-2 bg-darkBlue active:bg-blackBlue p-2 rounded-full w-3/5">
+          <Pressable
+            onPress={() => setShowModal(true)}
+            className="flex-row justify-center items-center gap-2 bg-darkBlue active:bg-blackBlue p-2 rounded-full w-3/5"
+          >
             <PlusIcon color="#D6E8EE" size={32} />
             <Text className="font-semibold text-whiteBlue">
               Nuevo Tratamiento
@@ -46,6 +52,7 @@ export default function Treatments() {
           </Pressable>
         </View>
       </SafeAreaView>
+      {showModal && <TreatmentModal onClose={() => setShowModal(false)} />}
     </>
   );
 }
