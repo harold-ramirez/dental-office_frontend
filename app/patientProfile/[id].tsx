@@ -274,7 +274,13 @@ export default function PatientProfile() {
             </View>
             <View className="mb-5"></View>
 
-            <Link href={`/`} className="active:bg-blackBlue/30 py-1 rounded-md">
+            <Link
+              href={{
+                pathname: "/medicalHistory/[patientId]",
+                params: { patientId: id.toString() },
+              }}
+              className="active:bg-blackBlue/30 py-1 rounded-md"
+            >
               <View className="flex-row justify-center items-center">
                 <Text className="flex-1 font-extrabold text-blackBlue text-lg">
                   FORMULARIO HISTORIA CLÍNICA

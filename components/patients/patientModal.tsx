@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import { EditIcon, SaveIcon, XIcon } from "../Icons";
-import RadioButton from "../radioButton";
+import { GenderRadio } from "../radioButton";
 
 interface CreatePatientProps {
   onClose: () => void;
@@ -168,7 +168,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
             </Text>
           </View>
           <View className="flex-row items-center gap-2 mb-3">
-            <RadioButton
+            <GenderRadio
               value={newPatient.gender as "M" | "F"}
               onChange={(val) => setNewPatient({ ...newPatient, gender: val })}
             />
@@ -423,7 +423,7 @@ export function UpdatePatientModal({
             </Text>
           </View>
           <View className="flex-row items-center gap-2 mb-3">
-            <RadioButton
+            <GenderRadio
               value={patient.gender as "M" | "F"}
               onChange={(val) => setPatient({ ...patient, gender: val })}
             />
