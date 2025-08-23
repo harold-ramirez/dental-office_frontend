@@ -1,8 +1,8 @@
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Octicons from '@expo/vector-icons/Octicons';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 export const HomeIcon = (props: any) => (
   <Octicons name="home" size={24} color="black" {...props} />
@@ -114,4 +114,12 @@ export const CheckCircleIcon = (props: any) => (
 
 export const ToothIcon = (props: any) => (
   <MaterialCommunityIcons name="tooth-outline" size={24} color="black" {...props} />
+);
+
+export const ImageIcon = (props: any) => (
+  <MaterialCommunityIcons name="image" size={24} color="black" {...props} />
+);
+
+export const ImagePlusIcon = (props: any) => (
+  <MaterialCommunityIcons name="image-plus" size={24} color="black" {...props} />
 );
