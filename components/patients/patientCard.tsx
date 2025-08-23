@@ -112,9 +112,15 @@ export default function PatientCard({
             <WhatsappIcon color="white" size={27} />
           </Pressable>
         )}
-        <Pressable className="justify-center items-center bg-darkBlue p-1 rounded-md size-10">
+        <Link
+          href={{
+            pathname: "/medicalImages/[patientId]",
+            params: { patientId: patient.Id.toString() },
+          }}
+          className="justify-center items-center bg-darkBlue p-1 rounded-md size-10"
+        >
           <MedicalHistoryIcon color="white" size={30} />
-        </Pressable>
+        </Link>
         <Link
           href={{
             pathname: "/patientProfile/[id]",

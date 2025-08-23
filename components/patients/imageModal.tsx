@@ -1,6 +1,8 @@
+import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
 import {
   BackHandler,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -8,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ImagePlusIcon } from "../Icons";
+import { ImagePlusIcon, RepeatIcon } from "../Icons";
 
 export default function ImageModal({ onClose }: { onClose: () => void }) {
   const [newPhoto, setNewPhoto] = useState({
@@ -17,6 +19,32 @@ export default function ImageModal({ onClose }: { onClose: () => void }) {
   });
   const handleUploadPhoto = () => {
     onClose();
+  };
+
+  const uploadImage = async () => {
+    try {
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        //Save Image
+        await saveImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const saveImage = async (img: string) => {
+    try {
+      setNewPhoto({ ...newPhoto, photo: img });
+    } catch (error) {
+      throw error;
+    }
   };
 
   useEffect(() => {
@@ -36,14 +64,8 @@ export default function ImageModal({ onClose }: { onClose: () => void }) {
       keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       className="absolute justify-center items-center bg-black/75 w-full h-full"
     >
-      <Pressable
-        onPress={onClose}
-        className="absolute justify-center items-center w-full h-full"
-      >
-        <Pressable
-          onPress={() => {}}
-          className="items-center gap-5 bg-pureBlue -mt-28 p-5 rounded-xl w-11/12"
-        >
+      <View className="absolute justify-center items-center w-full h-full">
+        <View className="items-center gap-5 bg-pureBlue -mt-28 p-5 rounded-xl w-11/12">
           {/* Upload Button */}
           <View className="items-end w-full">
             <Pressable
@@ -57,9 +79,40 @@ export default function ImageModal({ onClose }: { onClose: () => void }) {
           </View>
 
           {/* Image Preview/Placeholder */}
-          <Pressable className="justify-center items-center border-4 border-whiteBlue border-dashed rounded-3xl size-80">
-            <ImagePlusIcon color="#D6E8EE" size={100} />
-          </Pressable>
+          <View
+            style={{ overflow: "hidden" }}
+            className={`justify-center border items-center size-80 border-whiteBlue border-dashed  ${
+              newPhoto.photo === ""
+                ? `border-4 rounded-3xl`
+                : `w-full rounded-md`
+            }`}
+          >
+            {newPhoto.photo === "" ? (
+              <Pressable onPress={() => uploadImage()}>
+                <ImagePlusIcon color="#D6E8EE" size={100} />
+              </Pressable>
+            ) : (
+              <>
+                <Image
+                  source={{ uri: newPhoto.photo }}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                  }}
+                  resizeMode="contain"
+                />
+                <Pressable
+                  onPress={() => uploadImage()}
+                  className="bottom-0 right-0 absolute justify-center items-center bg-blackBlue rounded-md size-10"
+                >
+                  <RepeatIcon color="#D6E8EE" size={24} />
+                </Pressable>
+              </>
+            )}
+          </View>
 
           {/* Photo Description */}
           <View className="w-full">
@@ -77,8 +130,8 @@ export default function ImageModal({ onClose }: { onClose: () => void }) {
               className="bg-whiteBlue rounded-lg w-full h-24 text-blackBlue"
             />
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </KeyboardAvoidingView>
   );
 }

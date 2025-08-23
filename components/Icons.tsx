@@ -123,3 +123,7 @@ export const ImageIcon = (props: any) => (
 export const ImagePlusIcon = (props: any) => (
   <MaterialCommunityIcons name="image-plus" size={24} color="black" {...props} />
 );
+
+export const RepeatIcon = (props: any) => (
+  <FontAwesome name="repeat" size={24} color="black" {...props} />
+);
