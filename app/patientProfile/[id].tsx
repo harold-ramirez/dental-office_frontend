@@ -290,7 +290,13 @@ export default function PatientProfile() {
             </Link>
             <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
 
-            <Link href={`/`} className="active:bg-blackBlue/30 py-1 rounded-md">
+            <Link
+              href={{
+                pathname: "/odontogram/[patientId]",
+                params: { patientId: id.toString() },
+              }}
+              className="active:bg-blackBlue/30 py-1 rounded-md"
+            >
               <View className="flex-row justify-center items-center">
                 <Text className="flex-1 font-extrabold text-blackBlue text-lg">
                   ODONTOGRAMA
