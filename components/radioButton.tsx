@@ -91,3 +91,53 @@ export function YesNoRadio({
     </View>
   );
 }
+
+export function BannerModeRadio({
+  editable,
+  value,
+  onChange,
+}: {
+  editable?: boolean;
+  value: "Day" | "Week";
+  onChange: (val: "Day" | "Week") => void;
+}) {
+  return (
+    <View className="bg-whiteBlue justify-center border border-whiteBlue rounded-full h-10 flex-1">
+      <View
+        style={{ backgroundColor: "rgba(2, 69, 122, 0.6)" }}
+        className="flex-row justify-between items-center rounded-full h-9"
+      >
+        <Pressable
+          className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
+            value === "Day" ? "bg-blackBlue" : ""
+          }`}
+          onPress={() => onChange("Day")}
+          disabled={!editable}
+        >
+          <Text
+            className={`font-bold text-lg ${
+              value === "Day" ? "text-white" : "text-blackBlue"
+            }`}
+          >
+            Día
+          </Text>
+        </Pressable>
+        <Pressable
+          className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
+            value === "Week" ? "bg-blackBlue" : ""
+          }`}
+          onPress={() => onChange("Week")}
+          disabled={!editable}
+        >
+          <Text
+            className={`font-bold text-lg ${
+              value === "Week" ? "text-white" : "text-blackBlue"
+            }`}
+          >
+            Semana
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}

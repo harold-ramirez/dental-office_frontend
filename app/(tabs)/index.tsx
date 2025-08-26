@@ -1,3 +1,4 @@
+import AnimatedArc from "@/components/animatedArc";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
@@ -8,30 +9,51 @@ export default function Index() {
     <>
       <StatusBar barStyle={"light-content"} />
       <LinearGradient
-        colors={["#02457A", "#97CADB"]}
+        colors={["#018ABE", "#001B48"]}
         className="top-0 right-0 left-0 absolute h-full"
       />
       <SafeAreaView
         edges={["top", "left", "right"]}
-        style={{ flex: 1, paddingHorizontal: 8, paddingTop: 16, gap: 12 }}
+        style={{ flex: 1, paddingHorizontal: 8, paddingTop: 8 }}
       >
-        <Text className="font-bold text-white text-3xl">
+        <Text className="my-2 font-bold text-white text-3xl">
           Mi Consultorio Dental
         </Text>
-        <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-          <View className="gap-2 bg-whiteBlue p-2 rounded-xl">
-            <View className="flex-row justify-center items-center gap-2">
-              <Link href={"/createAppointment/[selectedDate]"} asChild>
-                <Pressable className="bg-darkBlue px-3 py-2 border-2 border-blackBlue rounded-full">
-                  <Text className="font-semibold text-whiteBlue text-center">
-                    Agendar{`\n`}Cita Médica
-                  </Text>
-                </Pressable>
-              </Link>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
+          <View className="flex-1 items-center gap-3 w-full">
+            {/* Banner */}
+            <AnimatedArc
+              number={999}
+              text={`Citas Programadas ${`\n`} para el día de hoy`}
+              duration={1000}
+              delay={250}
+            />
+
+            {/* Content */}
+            <View className="flex-1 gap-2 bg-whiteBlue p-2 rounded-2xl w-full">
+              <View className="flex-row justify-between items-center w-full">
+                <Text className="font-bold text-blackBlue text-lg">
+                  Horario del día
+                </Text>
+                <Link href={"/createAppointment/[selectedDate]"} asChild>
+                  <Pressable className="bg-pureBlue px-5 py-2 rounded-md">
+                    <Text className="font-semibold text-whiteBlue text-center">
+                      Agendar Cita
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
+              <View className="bg-lightBlue rounded-md w-full h-8"></View>
               <Link href={"/workSchedule"} asChild>
-                <Pressable className="bg-darkBlue px-3 py-2 border-2 border-blackBlue rounded-full">
+                <Pressable
+                  android_ripple={{ color: "#02457A" }}
+                  className="bg-pureBlue px-3 py-2 rounded-full"
+                >
                   <Text className="font-semibold text-whiteBlue text-center">
-                    Configurar Horario{`\n`}de Trabajo
+                    Configurar Horario de Trabajo
                   </Text>
                 </Pressable>
               </Link>

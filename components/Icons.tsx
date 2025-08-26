@@ -127,3 +127,19 @@ export const ImagePlusIcon = (props: any) => (
 export const RepeatIcon = (props: any) => (
   <FontAwesome name="repeat" size={24} color="black" {...props} />
 );
+
+export const LockIcon = (props: any) => (
+  <FontAwesome name="lock" size={24} color="black" {...props} />
+);
+
+export const EyeIcon = (props: any) => (
+  <FontAwesome5 name="eye" size={24} color="black" {...props} />
+);
+
+export const EyeSlashIcon = (props: any) => (
+  <FontAwesome5 name="eye-slash" size={24} color="black" {...props} />
+);
+
+export const UserDoctorIcon = (props: any) => (
+  <FontAwesome6 name="user-doctor" size={24} color="black" {...props} />
+);
