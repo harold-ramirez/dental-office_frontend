@@ -1,8 +1,8 @@
 import { AppointmentRequestDto } from "@/interfaces/interfaces";
 import { Linking, Pressable, Text, View } from "react-native";
 import {
-  CalendarClockIcon,
   CalendarCheckIcon,
+  CalendarClockIcon,
   EditIcon,
   PhoneIcon,
   UserCircleIcon,
@@ -11,12 +11,14 @@ import {
 
 interface RequestCardProps {
   request: AppointmentRequestDto;
+  isRequestActive?: boolean;
   openId: number | null;
   setOpenId: (id: number | null) => void;
 }
 
 export default function RequestCard({
   request,
+  isRequestActive,
   openId,
   setOpenId,
 }: RequestCardProps) {
@@ -37,12 +39,20 @@ export default function RequestCard({
   return (
     <View
       className={`rounded-3xl border-4 ${
-        showButtons ? `bg-whiteBlue border-blackBlue` : `border-transparent`
+        showButtons
+          ? isRequestActive
+            ? `bg-whiteBlue border-blackBlue`
+            : ``
+          : `border-transparent`
       }`}
     >
       <Pressable
         onPress={toggleButtons}
-        className={`gap-3 bg-lightBlue active:bg-whiteBlue rounded-2xl p-3 ${showButtons ? `rounded-b-none` : ``}`}
+        className={`gap-3  rounded-2xl p-3 ${
+          isRequestActive
+            ? `bg-lightBlue active:bg-whiteBlue`
+            : `bg-whiteBlue/50`
+        }`}
       >
         <View className="gap-2">
           <View className="flex-row gap-1">
@@ -55,7 +65,7 @@ export default function RequestCard({
                 <PhoneIcon color="#02457A" size={17} /> {request.phoneNumber}
               </Text>
             </View>
-            <Text className="font-semibold text-darkBlue text-right text-sm capitalize">
+            <Text className="font-semibold text-darkBlue text-sm text-right capitalize">
               {new Date(request.dateHourRequest).toLocaleDateString("es-BO", {
                 weekday: "long",
               })}
@@ -85,14 +95,14 @@ export default function RequestCard({
           <Text
             numberOfLines={showButtons ? 0 : 1}
             ellipsizeMode="tail"
-            className="bg-darkBlue/80 my-4 p-3 rounded-bl-xl rounded-tr-xl font-semibold text-whiteBlue text-lg italic text-justify"
+            className="bg-darkBlue/80 my-4 p-3 rounded-tr-xl rounded-bl-xl font-semibold text-whiteBlue text-lg text-justify italic"
           >
             &quot;{request.message}&quot;
           </Text>
         </View>
       </Pressable>
 
-      {showButtons && (
+      {showButtons && isRequestActive && (
         <View className="flex-row justify-end gap-3 p-2">
           <Pressable className="justify-center items-center bg-darkBlue active:bg-pureBlue px-2 py-1 rounded-lg">
             <EditIcon color="#D6E8EE" size={30} className="flex-1" />

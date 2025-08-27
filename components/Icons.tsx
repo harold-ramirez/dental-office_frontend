@@ -143,3 +143,11 @@ export const EyeSlashIcon = (props: any) => (
 export const UserDoctorIcon = (props: any) => (
   <FontAwesome6 name="user-doctor" size={24} color="black" {...props} />
 );
+
+export const TriangleDownIcon = (props: any) => (
+  <Octicons name="triangle-down" size={24} color="black" {...props} />
+);
+
+export const TriangleUpIcon = (props: any) => (
+  <Octicons name="triangle-up" size={24} color="black" {...props} />
+);
