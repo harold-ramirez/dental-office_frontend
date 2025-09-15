@@ -89,6 +89,23 @@ export default function DayScheduleDetails() {
               editable={false}
             />
           </View>
+
+          <View className="flex-row justify-evenly items-center w-full h-14">
+            <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
+              Duración:
+            </Text>
+            <DropdownComponent
+              className="w-1/2"
+              data={[
+                { label: "30 min", value: "30" },
+                { label: "1 hora", value: "60" },
+                { label: "1 hora y media", value: "90" },
+                { label: "2 horas", value: "120" },
+                { label: "2 horas y media", value: "150" },
+                { label: "3 horas", value: "180" },
+              ]}
+            />
+          </View>
           <WeekAppointmentSelect />
         </View>
 

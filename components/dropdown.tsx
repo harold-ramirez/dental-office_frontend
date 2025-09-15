@@ -6,7 +6,7 @@ export default function DropdownComponent({
   className,
   data,
 }: {
-  className: string;
+  className?: string;
   data: { label: string; value: string }[];
 }) {
   const [value, setValue] = useState(null);
