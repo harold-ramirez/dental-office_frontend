@@ -17,6 +17,7 @@ export default function Requests() {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const [refreshing, setRefreshing] = useState(false);
   const [requests, setRequests] = useState<AppointmentRequestDto[]>([]);
+  const [pastRequests, setPastRequests] = useState<AppointmentRequestDto[]>([]);
   const [openId, setOpenId] = useState<number | null>(null);
   const [displayPastRequest, setDisplayPastRequest] = useState(false);
 
@@ -30,11 +31,24 @@ export default function Requests() {
     }
   }, [apiUrl]);
 
+  const fetchAllPastRequests = useCallback(async () => {
+    try {
+      const endpoint = await fetch(
+        `${apiUrl}/appointment-requests/pastRequests`
+      );
+      const data = await endpoint.json();
+      setPastRequests(data);
+    } catch (e) {
+      console.error("Error fetching requests:", e);
+    }
+  }, [apiUrl]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchAllRequests();
+    await fetchAllPastRequests();
     setRefreshing(false);
-  }, [fetchAllRequests]);
+  }, [fetchAllRequests, fetchAllPastRequests]);
 
   useEffect(() => {
     onRefresh();
@@ -114,7 +128,7 @@ export default function Requests() {
                   ) : (
                     <FlatList
                       className="mb-5"
-                      data={requests}
+                      data={pastRequests}
                       keyExtractor={(request) => request.Id.toString()}
                       renderItem={({ item }) => (
                         <RequestCard
@@ -123,7 +137,7 @@ export default function Requests() {
                           setOpenId={setOpenId}
                         />
                       )}
-                      scrollEnabled={false} // importante: desactiva el scroll interno
+                      scrollEnabled={false}
                       contentContainerStyle={{ gap: 12 }}
                       ListEmptyComponent={
                         <View className="flex-1 justify-center items-center">
