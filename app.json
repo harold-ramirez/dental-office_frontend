@@ -4,7 +4,7 @@
     "slug": "my-dental-office",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.webp",
+    "icon": "./assets/images/splashLogo.png",
     "scheme": "mydentaloffice",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.webp",
+        "foregroundImage": "./assets/images/splashLogo.png",
         "backgroundColor": "#b5dfeb"
       },
       "edgeToEdgeEnabled": true,
