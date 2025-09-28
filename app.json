@@ -4,7 +4,7 @@
     "slug": "my-dental-office",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.webp",
     "scheme": "mydentaloffice",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,8 +13,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#555"
+        "foregroundImage": "./assets/images/logo.webp",
+        "backgroundColor": "#b5dfeb"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.haroldramirez.mydentaloffice"

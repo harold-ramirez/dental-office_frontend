@@ -1,6 +1,10 @@
+import Loading from "@/components/loading";
+import { MedicalImageDto } from "@/interfaces/interfaces";
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   BackHandler,
   Image,
   KeyboardAvoidingView,
@@ -10,17 +14,38 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ImagePlusIcon, RepeatIcon } from "../Icons";
+import DatePicker from "react-native-date-picker";
+import {
+  DeleteOutlineIcon,
+  ImagePlusIcon,
+  RepeatIcon,
+  SaveIcon,
+  XIcon,
+} from "../Icons";
 
-export default function ImageModal({ onClose }: { onClose: () => void }) {
+interface ImageModalProps {
+  onClose: () => void;
+  image?: MedicalImageDto;
+  patientId: number;
+}
+
+export default function ImageModal({ ...props }: ImageModalProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPhoto, setNewPhoto] = useState({
-    photo: "",
-    description: "",
+    imageID: props.image?.Id ?? 0,
+    photoURL: props.image?.filepath ?? "",
+    description: props.image?.description ?? "",
+    captureDate: props.image?.captureDate
+      ? new Date(props.image.captureDate)
+      : new Date(),
   });
-  const handleUploadPhoto = () => {
-    onClose();
-  };
-
+  const [imageObject, setImageObject] = useState({
+    uri: "",
+    type: "",
+    name: "",
+  });
   const uploadImage = async () => {
     try {
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -29,21 +54,141 @@ export default function ImageModal({ onClose }: { onClose: () => void }) {
         allowsEditing: true,
         quality: 1,
       });
-
       if (!result.canceled) {
-        //Save Image
-        await saveImage(result.assets[0].uri);
+        setImageObject({
+          uri: result.assets[0].uri,
+          type: result.assets[0].mimeType ?? "image/jpeg",
+          name: result.assets[0].fileName ?? "image.jpg",
+        });
+        setNewPhoto({ ...newPhoto, photoURL: result.assets[0].uri });
       }
     } catch (error) {
       console.error(error);
     }
   };
 
-  const saveImage = async (img: string) => {
+  // Backend calls
+  const handleSaveImage = async () => {
     try {
-      setNewPhoto({ ...newPhoto, photo: img });
-    } catch (error) {
-      throw error;
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append("image", {
+        uri: imageObject.uri,
+        name: imageObject.name,
+        type: imageObject.type,
+      } as any);
+      formData.append("captureDate", newPhoto.captureDate.toISOString());
+      formData.append("description", newPhoto.description);
+      formData.append("Patient_Id", props.patientId.toString());
+      formData.append("AppUser_Id", "1"); // Hardcoded
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/images`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      });
+      if (response.ok) {
+        router.replace({
+          pathname: "/medicalImages/[patientId]",
+          params: {
+            patientId: props.patientId.toString(),
+            refresh: Date.now().toString(),
+          },
+        });
+      } else {
+      }
+    } catch (e) {
+      console.error("Error al subir la imagen:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleDeletePhoto = async () => {
+    Alert.alert(
+      "Confirmar Eliminación",
+      "¿Está seguro de eliminar la imagen?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Eliminar",
+          onPress: async () => {
+            setIsLoading(true);
+            const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+            try {
+              const endpoint = await fetch(
+                `${apiUrl}/images/${newPhoto.imageID}`,
+                {
+                  method: "DELETE",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+              if (endpoint.ok) {
+                router.replace({
+                  pathname: "/medicalImages/[patientId]",
+                  params: {
+                    patientId: props.patientId.toString(),
+                    refresh: Date.now().toString(),
+                  },
+                });
+              } else {
+                Alert.alert(
+                  "Error",
+                  "No se pudo eliminar la imagen. Inténtalo de nuevo.",
+                  [{ text: "OK" }]
+                );
+              }
+            } catch (error) {
+              console.error("Error al eliminar la imagen:", error);
+            } finally {
+              setIsLoading(false);
+            }
+          },
+          style: "destructive",
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+  const handleUpdateImage = async () => {
+    try {
+      setIsLoading(true);
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+      const response = await fetch(
+        `${apiUrl}/images/${props.image?.Id.toString()}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            captureDate: newPhoto.captureDate.toISOString(),
+            description: newPhoto.description,
+            Patient_Id: props.patientId,
+            AppUser_Id: 1, // Hardcoded
+          }),
+        }
+      );
+      if (response.ok) {
+        router.replace({
+          pathname: "/medicalImages/[patientId]",
+          params: {
+            patientId: props.patientId.toString(),
+            refresh: Date.now().toString(),
+          },
+        });
+      } else {
+      }
+    } catch (e) {
+      console.error("Error al actualizar la imagen:", e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -51,12 +196,12 @@ export default function ImageModal({ onClose }: { onClose: () => void }) {
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       () => {
-        onClose();
+        props.onClose();
         return true;
       }
     );
     return () => backHandler.remove();
-  }, [onClose]);
+  }, [props.onClose]);
 
   return (
     <KeyboardAvoidingView
@@ -65,70 +210,147 @@ export default function ImageModal({ onClose }: { onClose: () => void }) {
       className="absolute justify-center items-center bg-black/75 w-full h-full"
     >
       <View className="absolute justify-center items-center w-full h-full">
-        <View className="items-center gap-5 bg-pureBlue -mt-28 p-5 rounded-xl w-11/12">
-          {/* Upload Button */}
-          <View className="items-end w-full">
-            <Pressable
-              onPress={handleUploadPhoto}
-              className="justify-center items-center bg-blackBlue active:bg-darkBlue px-3 py-1 border-2 border-whiteBlue rounded-lg"
+        <View className="items-center gap-2 bg-lightBlue -mt-28 rounded-xl w-11/12">
+          <View className="items-center gap-2 px-5 pt-5 w-full">
+            {/* Exit Button */}
+            <View className="flex-row justify-end items-center w-full">
+              <Pressable className="px-2 py-1 border border-darkBlue rounded-md">
+                <XIcon color="#02457A" size={24} onPress={props.onClose} />
+              </Pressable>
+            </View>
+
+            {/* Image Preview/Placeholder */}
+            <View
+              style={{ overflow: "hidden" }}
+              className={`justify-center border items-center size-80 border-darkBlue border-dashed  ${
+                newPhoto.photoURL === ""
+                  ? `border-4 rounded-3xl`
+                  : `w-full rounded-md`
+              }`}
             >
-              <Text className="font-bold text-whiteBlue text-lg">
-                Subir Imagen
+              {newPhoto.photoURL === "" ? (
+                <Pressable onPress={() => uploadImage()}>
+                  <ImagePlusIcon color="#02457A" size={100} />
+                </Pressable>
+              ) : (
+                <>
+                  <Image
+                    source={{ uri: newPhoto.photoURL }}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      bottom: 0,
+                      right: 0,
+                    }}
+                    resizeMode="contain"
+                  />
+                  {!props.image?.filepath && (
+                    <Pressable
+                      onPress={() => uploadImage()}
+                      className="right-0 bottom-0 absolute justify-center items-center bg-blackBlue rounded-md size-10"
+                    >
+                      <RepeatIcon color="#D6E8EE" size={24} />
+                    </Pressable>
+                  )}
+                </>
+              )}
+            </View>
+
+            {/* Capture Date */}
+            <View className="flex-row justify-between items-center w-full">
+              <Text className="w-1/2 font-bold text-darkBlue text-lg">
+                FECHA DE CAPTURA:
               </Text>
-            </Pressable>
+              <DatePicker
+                modal
+                open={showDatePicker}
+                date={newPhoto.captureDate}
+                onConfirm={(date) => {
+                  setNewPhoto({ ...newPhoto, captureDate: date });
+                  setShowDatePicker(false);
+                }}
+                onCancel={() => {
+                  setShowDatePicker(false);
+                }}
+              />
+              <Pressable
+                className="bg-whiteBlue rounded-lg w-1/2"
+                onPress={() => setShowDatePicker(true)}
+                disabled={isLoading}
+              >
+                <Text className="text-blackBlue text-lg text-center">
+                  {newPhoto.captureDate.toLocaleDateString("es-BO")}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Photo Description */}
+            <View className="w-full">
+              <Text className="font-bold text-darkBlue text-lg">
+                DESCRIPCIÓN:
+              </Text>
+              <TextInput
+                multiline
+                numberOfLines={5}
+                readOnly={isLoading}
+                value={newPhoto.description}
+                onChangeText={(text) =>
+                  setNewPhoto({ ...newPhoto, description: text })
+                }
+                style={{ textAlignVertical: "top" }}
+                className="bg-whiteBlue rounded-lg w-full h-24 text-blackBlue"
+              />
+            </View>
           </View>
 
-          {/* Image Preview/Placeholder */}
-          <View
-            style={{ overflow: "hidden" }}
-            className={`justify-center border items-center size-80 border-whiteBlue border-dashed  ${
-              newPhoto.photo === ""
-                ? `border-4 rounded-3xl`
-                : `w-full rounded-md`
-            }`}
-          >
-            {newPhoto.photo === "" ? (
-              <Pressable onPress={() => uploadImage()}>
-                <ImagePlusIcon color="#D6E8EE" size={100} />
-              </Pressable>
+          {/* Buttons */}
+          <View className="flex-row mt-5">
+            {isLoading ? (
+              <Loading className="flex-1" />
             ) : (
               <>
-                <Image
-                  source={{ uri: newPhoto.photo }}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: 0,
-                  }}
-                  resizeMode="contain"
-                />
-                <Pressable
-                  onPress={() => uploadImage()}
-                  className="bottom-0 right-0 absolute justify-center items-center bg-blackBlue rounded-md size-10"
-                >
-                  <RepeatIcon color="#D6E8EE" size={24} />
-                </Pressable>
+                {/* Save Image Button */}
+                {!props.image?.filepath && imageObject.uri && (
+                  <Pressable
+                    onPress={handleSaveImage}
+                    className="flex-row flex-1 justify-center items-center gap-1 py-2 bg-darkBlue border-2 border-darkBlue rounded-b-xl"
+                  >
+                    <SaveIcon color="#D6E8EE" size={24} />
+                    <Text className="font-bold text-whiteBlue text-lg">
+                      Guardar Imagen
+                    </Text>
+                  </Pressable>
+                )}
+
+                {/* Delete Image Button */}
+                {newPhoto.photoURL !== "" && !imageObject.uri && (
+                  <Pressable
+                    onPress={() => handleDeletePhoto()}
+                    className="flex-row flex-1 justify-center items-center py-1 border-t-2 border-darkBlue rounded-t-none"
+                  >
+                    <DeleteOutlineIcon color="#02457A" size={32} />
+                    <Text className="font-bold text-darkBlue">
+                      Eliminar Imagen
+                    </Text>
+                  </Pressable>
+                )}
+
+                {/* Update Image Button */}
+                {props.image &&
+                  props.image?.description !== newPhoto.description && (
+                    <Pressable
+                      onPress={() => handleUpdateImage()}
+                      className="flex-row flex-1 justify-center items-center gap-1 bg-darkBlue border-2 border-darkBlue rounded-br-xl"
+                    >
+                      <SaveIcon color="#D6E8EE" size={24} />
+                      <Text className="font-semibold text-whiteBlue">
+                        Guardar Cambios
+                      </Text>
+                    </Pressable>
+                  )}
               </>
             )}
-          </View>
-
-          {/* Photo Description */}
-          <View className="w-full">
-            <Text className="font-bold text-whiteBlue text-lg">
-              DESCRIPCIÓN:
-            </Text>
-            <TextInput
-              multiline
-              numberOfLines={5}
-              value={newPhoto.description}
-              onChangeText={(text) =>
-                setNewPhoto({ ...newPhoto, description: text })
-              }
-              style={{ textAlignVertical: "top" }}
-              className="bg-whiteBlue rounded-lg w-full h-24 text-blackBlue"
-            />
           </View>
         </View>
       </View>

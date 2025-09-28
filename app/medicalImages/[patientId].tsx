@@ -1,13 +1,44 @@
-import { ImageIcon, PlusIcon } from "@/components/Icons";
+import { PlusIcon } from "@/components/Icons";
 import ImageModal from "@/components/patients/imageModal";
+import { MedicalImageDto } from "@/interfaces/interfaces";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MedicalImages() {
-  const { patientId } = useLocalSearchParams();
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const { patientId, refresh } = useLocalSearchParams();
   const [showModal, setShowModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [images, setImages] = useState<MedicalImageDto[]>([]);
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  const fetchAllPatientImages = useCallback(async () => {
+    try {
+      const endpoint = await fetch(`${apiUrl}/images/${patientId}`);
+      const data = await endpoint.json();
+      setImages(data);
+    } catch (e) {
+      console.error("Error fetching images:", e);
+    }
+  }, [apiUrl, patientId]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchAllPatientImages();
+    setRefreshing(false);
+  }, [fetchAllPatientImages]);
+
+  useEffect(() => {
+    onRefresh();
+  }, [refresh, onRefresh]);
 
   return (
     <>
@@ -31,28 +62,56 @@ export default function MedicalImages() {
             headerRight: () => <></>,
           }}
         />
-        <View className="flex-1 items-end bg-pureBlue p-2 rounded-xl w-full">
-          <ScrollView className="w-full">
-            <View className="flex-row flex-wrap">
-              {[
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-                18, 19, 20, 21,
-              ].map((item) => (
-                <Pressable key={item} className="">
-                  <ImageIcon color="#D6E8EE" size={115} />
+        <View className="flex-1 items-end w-full">
+          {/* Image Gallery */}
+          <ScrollView
+            className="w-full"
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+            <View className="flex-row flex-wrap gap-3">
+              {images.map((img) => (
+                <Pressable
+                  key={img.Id}
+                  className="border"
+                  onPress={() => {
+                    setSelectedImage(img.Id);
+                    setShowModal(true);
+                  }}
+                >
+                  <Image
+                    source={{ uri: img.filepath }}
+                    width={110}
+                    height={110}
+                    className=""
+                  />
                 </Pressable>
               ))}
             </View>
           </ScrollView>
+
+          {/* Upload new Image */}
           <Pressable
-            onPress={() => setShowModal(true)}
+            onPress={() => {
+              setSelectedImage(0);
+              setShowModal(true);
+            }}
             className="right-0 bottom-0 absolute justify-center items-center bg-darkBlue active:bg-blackBlue mr-3 mb-3 rounded-full size-20"
           >
             <PlusIcon color="#D6E8EE" size={46} />
           </Pressable>
         </View>
       </SafeAreaView>
-      {showModal && <ImageModal onClose={() => setShowModal(false)} />}
+
+      {/* Image modal */}
+      {showModal && (
+        <ImageModal
+          onClose={() => setShowModal(false)}
+          image={images.find((img) => img.Id === selectedImage)}
+          patientId={+patientId}
+        />
+      )}
     </>
   );
 }

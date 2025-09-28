@@ -11,7 +11,7 @@ import {
   RightArrowIcon,
 } from "@/components/Icons";
 import { UpdatePatientModal } from "@/components/patients/patientModal";
-import { PatientDto } from "@/interfaces/interfaces";
+import { MedicalImageDto, PatientDto } from "@/interfaces/interfaces";
 import { EventArg, NavigationAction } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -25,7 +25,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -33,11 +35,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PatientProfile() {
+  const { id } = useLocalSearchParams();
   const router = useRouter();
   const navigation = useNavigation();
   const isNavigatingBack = useRef(false);
-  const { id } = useLocalSearchParams();
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [patient, setPatient] = useState<PatientDto>({
     Id: Number(id),
     name: "",
@@ -63,7 +67,6 @@ export default function PatientProfile() {
       age--;
     }
   }
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   const fetchPatient = useCallback(async () => {
     setIsLoading(true);
@@ -130,10 +133,7 @@ export default function PatientProfile() {
     );
   }, [id, patient, router]);
 
-  useEffect(() => {
-    fetchPatient();
-  }, [fetchPatient]);
-
+  // Refresh previous screen
   useEffect(() => {
     const unsubscribe = navigation.addListener(
       "beforeRemove",
@@ -152,9 +152,30 @@ export default function PatientProfile() {
         });
       }
     );
-
     return unsubscribe;
   }, [navigation, router, dataModified]);
+
+  //sections api calls
+  const [images, setImages] = useState<MedicalImageDto[]>([]);
+  const fetchAllPatientImages = useCallback(async () => {
+    try {
+      const endpoint = await fetch(`${apiUrl}/images/${id}`);
+      const data = await endpoint.json();
+      setImages(data.length > 3 ? data.slice(0, 3) : data);
+    } catch (e) {
+      console.error("Error fetching images:", e);
+    }
+  }, [apiUrl, id]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchPatient();
+    await fetchAllPatientImages();
+    setRefreshing(false);
+  }, [fetchPatient, fetchAllPatientImages]);
+  useEffect(() => {
+    onRefresh();
+  }, [onRefresh]);
 
   return (
     <>
@@ -183,10 +204,16 @@ export default function PatientProfile() {
           end={{ x: 0, y: 1 }}
           className="top-0 right-0 bottom-0 left-0 absolute"
         />
-        <ScrollView className="w-full">
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          className="w-full"
+        >
           <View className="flex-1 bg-lightBlue p-3 border-4 border-blackBlue rounded-2xl w-full">
-            <View className="flex-row gap-3">
+            <View className="flex-row gap-3 mb-5">
               <View className="items-center gap-2">
+                {/* Profile Photo */}
                 <View
                   className={`rounded-full size-24 border items-center justify-center ${
                     patient?.gender === "M"
@@ -199,6 +226,8 @@ export default function PatientProfile() {
                     color={patient?.gender === "M" ? "black" : "white"}
                   />
                 </View>
+
+                {/* Edit Info */}
                 <Pressable
                   onPress={() => setShowUpdatePatient(true)}
                   className="flex-row justify-center items-center gap-1 bg-blackBlue active:bg-darkBlue p-1 rounded-md w-24"
@@ -210,6 +239,7 @@ export default function PatientProfile() {
                 </Pressable>
               </View>
               <View className="flex-col flex-1">
+                {/* Patient's Name */}
                 <Text className="font-extrabold text-blackBlue text-3xl">
                   {[
                     patient?.name,
@@ -219,6 +249,7 @@ export default function PatientProfile() {
                     .filter(Boolean)
                     .join(" ")}
                 </Text>
+                {/* PhoneNumber */}
                 {patient?.phoneNumber && (
                   <View className="flex-row items-center gap-2">
                     <PhoneIcon size={21} color="#02457A" />
@@ -227,6 +258,7 @@ export default function PatientProfile() {
                     </Text>
                   </View>
                 )}
+                {/* Gender */}
                 {patient.gender === "M" ? (
                   <View className="flex-row items-center gap-2">
                     <View className="bg-darkBlue rounded-md">
@@ -242,12 +274,14 @@ export default function PatientProfile() {
                     <Text className="text-blackBlue">Femenino</Text>
                   </View>
                 )}
+                {/* Occupation */}
                 {patient?.occupation && (
                   <View className="flex-row items-center gap-2">
                     <JobIcon size={18} color="#02457A" />
                     <Text className="text-blackBlue">{patient.occupation}</Text>
                   </View>
                 )}
+                {/* Age */}
                 <View className="flex-row items-center gap-2">
                   <CakeIcon size={18} color="#02457A" />
                   <Text className="text-blackBlue">
@@ -256,6 +290,7 @@ export default function PatientProfile() {
                     {age} años
                   </Text>
                 </View>
+                {/* Place of birth */}
                 {patient?.placeOfBirth && (
                   <View className="flex-row items-center gap-2 pl-1">
                     <MapMarkerIcon size={18} color="#02457A" />
@@ -264,6 +299,7 @@ export default function PatientProfile() {
                     </Text>
                   </View>
                 )}
+                {/* Address */}
                 {patient?.address && (
                   <View className="flex-row gap-2">
                     <HouseIcon size={16} color="#02457A" />
@@ -272,8 +308,8 @@ export default function PatientProfile() {
                 )}
               </View>
             </View>
-            <View className="mb-5"></View>
 
+            {/* Medical History Form */}
             <Link
               href={{
                 pathname: "/medicalHistory/[patientId]",
@@ -290,6 +326,7 @@ export default function PatientProfile() {
             </Link>
             <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
 
+            {/* Odontogram */}
             <Link
               href={{
                 pathname: "/odontogram/[patientId]",
@@ -306,6 +343,7 @@ export default function PatientProfile() {
             </Link>
             <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
 
+            {/* Treatments */}
             <Link
               href={{
                 pathname: "/patientTreatments/[patientId]",
@@ -322,6 +360,7 @@ export default function PatientProfile() {
             </Link>
             <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
 
+            {/* Medical Images */}
             <Link
               href={{
                 pathname: "/medicalImages/[patientId]",
@@ -336,8 +375,47 @@ export default function PatientProfile() {
                 <RightArrowIcon color="#001B48" />
               </View>
             </Link>
-            <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
+            <View className="flex-row justify-center items-center gap-2 bg-whiteBlue mb-3 rounded-md w-full h-32">
+              {images.map((img) => {
+                if (
+                  img.Id === images[images.length - 1].Id &&
+                  images.length > 2
+                ) {
+                  return (
+                    <Link
+                      key={img.Id}
+                      href={{
+                        pathname: "/medicalImages/[patientId]",
+                        params: { patientId: id.toString() },
+                      }}
+                    >
+                      <View className="w-[100px] h-[100px]">
+                        <Image
+                          source={{ uri: img.filepath }}
+                          width={100}
+                          height={100}
+                        />
+                        <View className="absolute justify-center items-center bg-blackBlue/75 w-[100px] h-[100px]">
+                          <Text className="font-semibold text-whiteBlue text-3xl">
+                            +{images.length - 2}
+                          </Text>
+                        </View>
+                      </View>
+                    </Link>
+                  );
+                }
+                return (
+                  <Image
+                    source={{ uri: img.filepath }}
+                    key={img.Id}
+                    width={100}
+                    height={100}
+                  />
+                );
+              })}
+            </View>
 
+            {/* Delete Button */}
             <Pressable
               onPress={deletePatient}
               className="justify-center items-center bg-red-600 active:bg-red-800 mt-16 mb-5 p-2 rounded-full w-full"
@@ -348,6 +426,8 @@ export default function PatientProfile() {
             </Pressable>
           </View>
         </ScrollView>
+
+        {/* Loader */}
         {isLoading && (
           <View className="top-0 right-0 bottom-0 left-0 absolute justify-center items-center gap-2 bg-blackBlue/25">
             <View className="justify-center items-center gap-2 bg-blackBlue/75 rounded-xl size-28">
@@ -356,6 +436,8 @@ export default function PatientProfile() {
           </View>
         )}
       </SafeAreaView>
+
+      {/* Update Modal */}
       {showUpdatePatient && (
         <UpdatePatientModal
           onClose={(updated) => {

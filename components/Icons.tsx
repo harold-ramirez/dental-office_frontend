@@ -151,3 +151,7 @@ export const TriangleDownIcon = (props: any) => (
 export const TriangleUpIcon = (props: any) => (
   <Octicons name="triangle-up" size={24} color="black" {...props} />
 );
+
+export const DeleteOutlineIcon = (props: any) => (
+  <MaterialCommunityIcons name="delete-outline" size={24} color="black" {...props} />
+);

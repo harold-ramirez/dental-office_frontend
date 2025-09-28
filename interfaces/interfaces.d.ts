@@ -34,3 +34,26 @@ export interface AppointmentRequestDto {
   registerDate: string;
   AppUser_Id: number;
 }
+
+export interface MedicalImageDto {
+  Id: number;
+  filename: string;
+  filepath: string;
+  captureDate: Date;
+  description: string;
+  registerDate: Date;
+  updateDate: Date;
+  user: string;
+}
+
+export interface UploadMedicalImageDto {
+  image:{
+    uri: string;
+    name: string;
+    type: string;
+  }
+  captureDate?: Date;
+  description?: string;
+  Patient_Id: number;
+  AppUser_Id: number;
+}
