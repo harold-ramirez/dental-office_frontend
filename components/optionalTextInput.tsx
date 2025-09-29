@@ -50,6 +50,7 @@ export default function OptionalTextInput({
         value={value}
         onChangeText={setValue}
         placeholder={placeholder}
+        placeholderTextColor="gray"
       />
     </View>
   );

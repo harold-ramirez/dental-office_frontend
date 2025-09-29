@@ -1,7 +1,7 @@
+import GlassyBackground from "@/components/glassyBackground";
 import { PlusIcon } from "@/components/Icons";
 import OptionalTextInput from "@/components/optionalTextInput";
-import { GenderRadio, YesNoRadio } from "@/components/radioButton";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { YesNoRadio } from "@/components/radioButton";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -23,7 +23,7 @@ export default function MedicalHistory() {
     name: "",
     paternalSurname: "",
     maternalSurname: "",
-    age: "",
+    age: null,
     gender: "M",
     phoneNumber: "",
     occupation: "",
@@ -79,162 +79,10 @@ export default function MedicalHistory() {
         />
         <ScrollView className="w-full" showsVerticalScrollIndicator={false}>
           <View className="gap-5 pb-5">
-            {/* PATIENT'S INFORMATION */}
-            <LinearGradient
-              className="gap-2 blur-xl p-3 border border-whiteBlue/30 rounded-xl w-full"
-              colors={["rgba(0, 0, 0, 0.1)", "rgba(0, 0, 0, 0.2)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{
-                borderRadius: 12,
-              }}
-            >
-              <Text className="font-bold text-whiteBlue text-center">
-                INFORMACIÓN DEL PACIENTE
-              </Text>
-              <View>
-                <Text className="font-bold text-whiteBlue text-lg">
-                  Nombres
-                </Text>
-                <TextInput
-                  value={formData.name}
-                  onChangeText={(val) =>
-                    setFormData({ ...formData, name: val })
-                  }
-                  className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-                />
-              </View>
-              <View className="flex-row gap-2">
-                <View className="flex-1">
-                  <Text className="font-bold text-whiteBlue text-lg">
-                    Apellido Paterno
-                  </Text>
-                  <TextInput
-                    value={formData.paternalSurname}
-                    onChangeText={(val) =>
-                      setFormData({ ...formData, paternalSurname: val })
-                    }
-                    className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="font-bold text-whiteBlue text-lg">
-                    Apellido Materno
-                  </Text>
-                  <TextInput
-                    value={formData.maternalSurname}
-                    onChangeText={(val) =>
-                      setFormData({ ...formData, maternalSurname: val })
-                    }
-                    className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-                  />
-                </View>
-              </View>
-              <View className="flex-row gap-2">
-                <View className="flex-1">
-                  <Text className="font-bold text-whiteBlue text-lg">Edad</Text>
-                  <TextInput
-                    value={formData.age}
-                    editable={false}
-                    className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="font-bold text-whiteBlue text-lg">Sexo</Text>
-                  <GenderRadio
-                    value={formData.gender as "M" | "F"}
-                    onChange={(val) =>
-                      setFormData({ ...formData, gender: val })
-                    }
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="font-bold text-whiteBlue text-lg">
-                    Celular
-                  </Text>
-                  <TextInput
-                    keyboardType="phone-pad"
-                    maxLength={8}
-                    value={formData.phoneNumber}
-                    onChangeText={(val) =>
-                      setFormData({ ...formData, phoneNumber: val })
-                    }
-                    className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="font-bold text-whiteBlue text-lg">
-                    Ocupación
-                  </Text>
-                  <TextInput
-                    value={formData.occupation}
-                    onChangeText={(val) =>
-                      setFormData({ ...formData, occupation: val })
-                    }
-                    className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-                  />
-                </View>
-              </View>
-              <View className="flex-row gap-2">
-                <View className="flex-1">
-                  <Text className="font-bold text-whiteBlue text-lg">
-                    Fecha Nacimiento
-                  </Text>
-                  <Pressable onPress={() => setShowDatePicker(true)}>
-                    <TextInput
-                      className="bg-whiteBlue border p-1 border-blackBlue rounded-xl w-full text-center"
-                      placeholder="Selecciona fecha..."
-                      value={
-                        formData.birthdate
-                          ? new Date(formData.birthdate).toLocaleDateString(
-                              "es-BO"
-                            )
-                          : ""
-                      }
-                      editable={false}
-                    />
-                  </Pressable>
-                  <Text className="mt-1 font-bold text-whiteBlue text-lg">
-                    Lugar Nacimiento
-                  </Text>
-                  <TextInput
-                    value={formData.placeOfBirth}
-                    onChangeText={(val) =>
-                      setFormData({ ...formData, placeOfBirth: val })
-                    }
-                    className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="font-bold text-whiteBlue text-lg">
-                    Dirección
-                  </Text>
-                  <TextInput
-                    multiline
-                    numberOfLines={2}
-                    style={{ textAlignVertical: "top" }}
-                    value={formData.address}
-                    onChangeText={(val) =>
-                      setFormData({ ...formData, address: val })
-                    }
-                    className="bg-whiteBlue border border-blackBlue rounded-xl w-full h-32"
-                  />
-                </View>
-              </View>
-            </LinearGradient>
-
             {/* PATIENT'S PATHOLOGIES */}
-            <LinearGradient
-              colors={["rgba(0, 0, 0, 0.1)", "rgba(0, 0, 0, 0.2)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="gap-2 blur-xl p-3 border border-whiteBlue/30 rounded-xl w-full"
-              style={{
-                borderRadius: 12,
-              }}
-            >
+            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
               <View>
-                <Text className="font-bold text-whiteBlue text-lg">
+                <Text className="font-bold text-whiteBlue text-lg text-center">
                   Antecedentes Patológicos Familiares
                 </Text>
                 <TextInput className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center" />
@@ -243,8 +91,8 @@ export default function MedicalHistory() {
                 <Text className="font-bold text-whiteBlue text-lg">
                   Antecedentes Patológicos Familiares
                 </Text>
-                <View className="bg-whiteBlue p-2 rounded-xl gap-5">
-                  <View className="flex-row flex-1 flex-wrap gap-2 justify-around">
+                <View className="gap-5 bg-whiteBlue p-2 rounded-xl">
+                  <View className="flex-row flex-wrap flex-1 justify-around gap-2">
                     {/* Renderizar como componente con un .map() */}
                     <Pressable className="justify-center items-center bg-whiteBlue px-5 border-2 border-blackBlue rounded-full">
                       <Text className="font-semibold text-blackBlue">
@@ -325,18 +173,10 @@ export default function MedicalHistory() {
                   }
                 />
               </View>
-            </LinearGradient>
+            </GlassyBackground>
 
             {/* INTRAORAL EXAMINATION */}
-            <LinearGradient
-              colors={["rgba(0, 0, 0, 0.1)", "rgba(0, 0, 0, 0.2)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="gap-2 blur-xl p-3 border border-whiteBlue/30 rounded-xl w-full"
-              style={{
-                borderRadius: 12,
-              }}
-            >
+            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
               <Text className="font-bold text-whiteBlue text-center">
                 EXAMEN INTRAORAL
               </Text>
@@ -363,7 +203,7 @@ export default function MedicalHistory() {
                       formData.breathing === ""
                         ? `bg-whiteBlue border-blackBlue`
                         : formData.breathing === "Nasal"
-                        ? `bg-blackBlue border-whiteBlue`
+                        ? `bg-darkBlue border-whiteBlue`
                         : `bg-whiteBlue/30 border-blackBlue`
                     }`}
                   >
@@ -385,7 +225,7 @@ export default function MedicalHistory() {
                       formData.breathing === ""
                         ? `bg-whiteBlue border-blackBlue`
                         : formData.breathing === "Mouth"
-                        ? `bg-blackBlue border-whiteBlue`
+                        ? `bg-darkBlue border-whiteBlue`
                         : `bg-whiteBlue/30 border-blackBlue`
                     }`}
                   >
@@ -407,7 +247,7 @@ export default function MedicalHistory() {
                       formData.breathing === ""
                         ? `bg-whiteBlue border-blackBlue`
                         : formData.breathing === "Oral-Nasal"
-                        ? `bg-blackBlue border-whiteBlue`
+                        ? `bg-darkBlue border-whiteBlue`
                         : `bg-whiteBlue/30 border-blackBlue`
                     }`}
                   >
@@ -432,18 +272,10 @@ export default function MedicalHistory() {
                   style={{ textAlignVertical: "top" }}
                 />
               </View>
-            </LinearGradient>
+            </GlassyBackground>
 
             {/* INTRAORAL EXAMINATION */}
-            <LinearGradient
-              colors={["rgba(0, 0, 0, 0.1)", "rgba(0, 0, 0, 0.2)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="gap-2 blur-xl p-3 border border-whiteBlue/30 rounded-xl w-full"
-              style={{
-                borderRadius: 12,
-              }}
-            >
+            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
               <Text className="font-bold text-whiteBlue text-center">
                 EXAMEN INTRAORAL
               </Text>
@@ -487,18 +319,10 @@ export default function MedicalHistory() {
                   }
                 />
               </View>
-            </LinearGradient>
+            </GlassyBackground>
 
             {/* PATIENT'S ORAL HISTORY */}
-            <LinearGradient
-              colors={["rgba(0, 0, 0, 0.1)", "rgba(0, 0, 0, 0.2)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="gap-2 blur-xl p-3 border border-whiteBlue/30 rounded-xl w-full"
-              style={{
-                borderRadius: 12,
-              }}
-            >
+            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
               <Text className="font-bold text-whiteBlue text-center">
                 ANTECEDENTES BUCODENTALES
               </Text>
@@ -526,18 +350,10 @@ export default function MedicalHistory() {
                   </View>
                 </View>
               </View>
-            </LinearGradient>
+            </GlassyBackground>
 
             {/* ORAL HYGIENE HISTORY */}
-            <LinearGradient
-              colors={["rgba(0, 0, 0, 0.1)", "rgba(0, 0, 0, 0.2)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="gap-2 blur-xl p-3 border border-whiteBlue/30 rounded-xl w-full"
-              style={{
-                borderRadius: 12,
-              }}
-            >
+            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
               <Text className="font-bold text-whiteBlue text-center">
                 ANTECEDENTES DE HIGIENE BUCAL
               </Text>
@@ -659,7 +475,7 @@ export default function MedicalHistory() {
                   </Pressable>
                 </View>
               </View>
-            </LinearGradient>
+            </GlassyBackground>
 
             {/* SAVE BUTTON */}
             <View className="items-center">
@@ -671,28 +487,6 @@ export default function MedicalHistory() {
             </View>
           </View>
         </ScrollView>
-        
-        {showDatePicker && (
-          <DateTimePicker
-            value={
-              formData.birthdate
-                ? new Date(formData.birthdate)
-                : new Date(2000, 6, 1)
-            }
-            mode="date"
-            onChange={(_, selectedDate) => {
-              setShowDatePicker(false);
-              if (selectedDate) {
-                setFormData({
-                  ...formData,
-                  birthdate: selectedDate.toISOString(),
-                });
-              }
-            }}
-            minimumDate={new Date("1900-01-01")}
-            maximumDate={new Date()}
-          />
-        )}
       </SafeAreaView>
     </KeyboardAvoidingView>
   );

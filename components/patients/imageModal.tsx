@@ -264,6 +264,7 @@ export default function ImageModal({ ...props }: ImageModalProps) {
               </Text>
               <DatePicker
                 modal
+                mode="date"
                 open={showDatePicker}
                 date={newPhoto.captureDate}
                 onConfirm={(date) => {

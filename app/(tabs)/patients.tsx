@@ -73,10 +73,12 @@ export default function Patients() {
       >
         <View className="flex-1 items-center gap-3">
           <Text className="font-bold text-white text-3xl">Mis Pacientes</Text>
+          {/* Search Bar */}
           <View className="flex-row items-center bg-whiteBlue pl-2 rounded-lg w-full h-12 text-lg">
             <SearchIcon color="gray" size={30} />
             <TextInput
               placeholder="Buscar..."
+              placeholderTextColor="gray"
               value={searchValue}
               onChangeText={setSearchValue}
               className="flex-1 p-2 h-full text-xl"

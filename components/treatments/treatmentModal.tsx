@@ -1,4 +1,3 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
@@ -9,6 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import DatePicker from "react-native-date-picker";
 import DropdownComponent from "../dropdown";
 
 export default function TreatmentModal({ onClose }: { onClose: () => void }) {
@@ -91,6 +91,26 @@ export default function TreatmentModal({ onClose }: { onClose: () => void }) {
             <Text className="font-bold text-whiteBlue text-center">
               Inicio{`\n`}Tratamiento:
             </Text>
+            <DatePicker
+              modal
+              mode="date"
+              open={showDatePicker}
+              date={
+                newTreatment.startDate
+                  ? new Date(newTreatment.startDate)
+                  : new Date(2000, 6, 1)
+              }
+              onConfirm={(date) => {
+                setNewTreatment({
+                  ...newTreatment,
+                  startDate: date.toISOString(),
+                });
+                setShowDatePicker(false);
+              }}
+              onCancel={() => {
+                setShowDatePicker(false);
+              }}
+            />
             <Pressable onPress={() => setShowDatePicker(true)}>
               <TextInput
                 className="bg-whiteBlue p-2 border rounded-md text-center"
@@ -115,6 +135,7 @@ export default function TreatmentModal({ onClose }: { onClose: () => void }) {
             <TextInput
               keyboardType="decimal-pad"
               placeholder="123.50"
+              placeholderTextColor={"gray"}
               value={newTreatment.totalAmount}
               onChangeText={(text) =>
                 setNewTreatment({
@@ -134,28 +155,6 @@ export default function TreatmentModal({ onClose }: { onClose: () => void }) {
           </Pressable>
         </Pressable>
       </Pressable>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={
-            newTreatment.startDate
-              ? new Date(newTreatment.startDate)
-              : new Date(2000, 6, 1)
-          }
-          mode="date"
-          onChange={(_, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) {
-              setNewTreatment({
-                ...newTreatment,
-                startDate: selectedDate.toISOString(),
-              });
-            }
-          }}
-          minimumDate={new Date("1900-01-01")}
-          maximumDate={new Date()}
-        />
-      )}
     </KeyboardAvoidingView>
   );
 }

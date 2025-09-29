@@ -2,7 +2,9 @@ import { WeekAppointmentSelect } from "@/components/appointments-requests/schedu
 import DropdownComponent from "@/components/dropdown";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import DatePicker from "react-native-date-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 const patientsList = [
   { label: "Juanito", value: "1" },
@@ -24,7 +26,15 @@ export default function DayScheduleDetails() {
     selectedDate?: string;
     patient?: string;
   }>();
-
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [appointment, setAppoinment] = useState({
+    dateHour: new Date(),
+    AppointmentRequest_Id: null,
+    DiagnosedProcedure_Id: null,
+    Patient_Id: null,
+    minutesDuration: null,
+    AppUser_Id: 1, //Hardcoded
+  });
   const date = selectedDate ? new Date(selectedDate) : null;
   const isValidDate = date && !isNaN(date.getTime());
   const dateTextInput = isValidDate
@@ -77,17 +87,40 @@ export default function DayScheduleDetails() {
             </Text>
             <DropdownComponent className="w-1/2" data={treatmentsList} />
           </View>
+
           <View className="flex-row justify-evenly items-center w-full">
             <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
               Fecha/Hora{`\n`}Cita Médica:
             </Text>
-            <TextInput
-              className="bg-whiteBlue p-1 rounded-lg w-1/2 text-blackBlue text-lg text-center capitalize"
-              multiline
-              numberOfLines={2}
-              value={dateTextInput}
-              editable={false}
+            <DatePicker
+              modal
+              mode="datetime"
+              open={showDatePicker}
+              date={appointment.dateHour}
+              onConfirm={(date) => {
+                setAppoinment({ ...appointment, dateHour: date });
+                setShowDatePicker(false);
+              }}
+              onCancel={() => {
+                setShowDatePicker(false);
+              }}
             />
+            <Pressable
+              onPress={() => setShowDatePicker(true)}
+              className="w-1/2 bg-whiteBlue p-2 rounded-md"
+            >
+              <Text className="text-center text-lg capitalize text-blackBlue">
+                {appointment.dateHour.toLocaleString("es-BO", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "2-digit",
+                  year: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
+              </Text>
+            </Pressable>
           </View>
 
           <View className="flex-row justify-evenly items-center w-full h-14">

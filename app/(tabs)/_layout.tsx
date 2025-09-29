@@ -20,10 +20,18 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="profile"
+        name="index"
         options={{
-          title: "Configuración",
-          tabBarIcon: ({ color }) => <ProfileIcon color={color} />,
+          title: "Home",
+          tabBarIcon: ({ color }) => <HomeIcon color={color} />,
+        }}
+      />
+      
+      <Tabs.Screen
+        name="schedule"
+        options={{
+          title: "Agenda",
+          tabBarIcon: ({ color }) => <ScheduleIcon color={color} />,
         }}
       />
 
@@ -36,26 +44,17 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <HomeIcon color={color} />,
-        }}
-      />
-
-      <Tabs.Screen
-        name="schedule"
-        options={{
-          title: "Agenda",
-          tabBarIcon: ({ color }) => <ScheduleIcon color={color} />,
-        }}
-      />
-
-      <Tabs.Screen
         name="requests"
         options={{
           title: "Solicitudes",
           tabBarIcon: ({ color }) => <RequestIcon color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Configuración",
+          tabBarIcon: ({ color }) => <ProfileIcon color={color} />,
         }}
       />
     </Tabs>

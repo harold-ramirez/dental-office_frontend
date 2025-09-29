@@ -1,4 +1,3 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -8,6 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import DatePicker from "react-native-date-picker";
 
 export default function PaymentModal({ onClose }: { onClose: () => void }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -48,6 +48,26 @@ export default function PaymentModal({ onClose }: { onClose: () => void }) {
           </View>
           <View className="flex-row items-center gap-2">
             <Text className="font-bold text-blackBlue">Fecha: </Text>
+            <DatePicker
+              modal
+              mode="date"
+              open={showDatePicker}
+              date={
+                newPayment.date
+                  ? new Date(newPayment.date)
+                  : new Date(2000, 6, 1)
+              }
+              onConfirm={(date) => {
+                setNewPayment({
+                  ...newPayment,
+                  date: date.toISOString(),
+                });
+                setShowDatePicker(false);
+              }}
+              onCancel={() => {
+                setShowDatePicker(false);
+              }}
+            />
             <Pressable
               className="flex-1 h-8"
               onPress={() => setShowDatePicker(true)}
@@ -67,26 +87,6 @@ export default function PaymentModal({ onClose }: { onClose: () => void }) {
             <Text className="font-semibold text-whiteBlue">Registrar</Text>
           </Pressable>
         </Pressable>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={
-              newPayment.date ? new Date(newPayment.date) : new Date(2000, 6, 1)
-            }
-            mode="date"
-            onChange={(_, selectedDate) => {
-              setShowDatePicker(false);
-              if (selectedDate) {
-                setNewPayment({
-                  ...newPayment,
-                  date: selectedDate.toISOString(),
-                });
-              }
-            }}
-            minimumDate={new Date("1900-01-01")}
-            maximumDate={new Date()}
-          />
-        )}
       </Pressable>
     </KeyboardAvoidingView>
   );

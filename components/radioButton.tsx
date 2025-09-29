@@ -8,14 +8,14 @@ export function GenderRadio({
   onChange: (val: "M" | "F") => void;
 }) {
   return (
-    <View className="bg-whiteBlue border border-whiteBlue rounded-full w-24">
+    <View className="justify-center bg-whiteBlue border border-whiteBlue rounded-full w-24 h-10">
       <View
         style={{ backgroundColor: "rgba(2, 69, 122, 0.6)" }}
-        className="flex-row justify-between items-center rounded-full"
+        className="flex-row justify-between items-center rounded-full h-9"
       >
         <Pressable
-          className={`flex-1 items-center py-1 rounded-full ${
-            value === "M" ? "bg-blackBlue" : ""
+          className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
+            value === "M" ? "bg-darkBlue" : ""
           }`}
           onPress={() => onChange("M")}
         >
@@ -28,8 +28,8 @@ export function GenderRadio({
           </Text>
         </Pressable>
         <Pressable
-          className={`flex-1 items-center py-1 rounded-full ${
-            value === "F" ? "bg-blackBlue" : ""
+          className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
+            value === "F" ? "bg-darkBlue" : ""
           }`}
           onPress={() => onChange("F")}
         >
@@ -54,14 +54,14 @@ export function YesNoRadio({
   onChange: (val: "Y" | "N") => void;
 }) {
   return (
-    <View className="bg-whiteBlue justify-center border border-whiteBlue rounded-full h-10 w-24">
+    <View className="justify-center bg-whiteBlue border border-whiteBlue rounded-full w-24 h-10">
       <View
         style={{ backgroundColor: "rgba(2, 69, 122, 0.6)" }}
         className="flex-row justify-between items-center rounded-full h-9"
       >
         <Pressable
           className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
-            value === "Y" ? "bg-blackBlue" : ""
+            value === "Y" ? "bg-darkBlue" : ""
           }`}
           onPress={() => onChange("Y")}
         >
@@ -75,7 +75,7 @@ export function YesNoRadio({
         </Pressable>
         <Pressable
           className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
-            value === "N" ? "bg-blackBlue" : ""
+            value === "N" ? "bg-darkBlue" : ""
           }`}
           onPress={() => onChange("N")}
         >
@@ -102,7 +102,7 @@ export function BannerModeRadio({
   onChange: (val: "Day" | "Week") => void;
 }) {
   return (
-    <View className="bg-whiteBlue justify-center border border-whiteBlue rounded-full h-10 flex-1">
+    <View className="flex-1 justify-center bg-whiteBlue border border-whiteBlue rounded-full h-10">
       <View
         style={{ backgroundColor: "rgba(2, 69, 122, 0.6)" }}
         className="flex-row justify-between items-center rounded-full h-9"
