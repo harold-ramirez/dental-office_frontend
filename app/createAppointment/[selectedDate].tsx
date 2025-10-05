@@ -3,7 +3,7 @@ import DropdownComponent from "@/components/dropdown";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import DatePicker from "react-native-date-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 const patientsList = [
@@ -27,6 +27,7 @@ export default function DayScheduleDetails() {
     patient?: string;
   }>();
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showWeeklySchedule, setShowWeeklySchedule] = useState(false);
   const [appointment, setAppoinment] = useState({
     dateHour: new Date(),
     AppointmentRequest_Id: null,
@@ -79,37 +80,24 @@ export default function DayScheduleDetails() {
             <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
               Paciente:
             </Text>
-            <DropdownComponent className="w-1/2" data={patientsList} />
+            <DropdownComponent className="flex-1" data={patientsList} />
           </View>
           <View className="flex-row justify-evenly items-center w-full h-14">
             <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
               Tratamiento:
             </Text>
-            <DropdownComponent className="w-1/2" data={treatmentsList} />
+            <DropdownComponent className="flex-1" data={treatmentsList} />
           </View>
 
           <View className="flex-row justify-evenly items-center w-full">
             <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
               Fecha/Hora{`\n`}Cita Médica:
             </Text>
-            <DatePicker
-              modal
-              mode="datetime"
-              open={showDatePicker}
-              date={appointment.dateHour}
-              onConfirm={(date) => {
-                setAppoinment({ ...appointment, dateHour: date });
-                setShowDatePicker(false);
-              }}
-              onCancel={() => {
-                setShowDatePicker(false);
-              }}
-            />
             <Pressable
               onPress={() => setShowDatePicker(true)}
-              className="w-1/2 bg-whiteBlue p-2 rounded-md"
+              className="flex-1 bg-whiteBlue p-2 rounded-md"
             >
-              <Text className="text-center text-lg capitalize text-blackBlue">
+              <Text className="text-blackBlue text-lg text-center capitalize">
                 {appointment.dateHour.toLocaleString("es-BO", {
                   weekday: "long",
                   day: "numeric",
@@ -128,7 +116,7 @@ export default function DayScheduleDetails() {
               Duración:
             </Text>
             <DropdownComponent
-              className="w-1/2"
+              className="flex-1"
               data={[
                 { label: "30 min", value: "30" },
                 { label: "1 hora", value: "60" },
@@ -139,7 +127,31 @@ export default function DayScheduleDetails() {
               ]}
             />
           </View>
-          <WeekAppointmentSelect />
+
+          <View className="flex-row justify-evenly items-center w-full h-14">
+            <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
+              Notas:
+            </Text>
+            <TextInput
+              className="flex-1 bg-whiteBlue p-2 rounded-md text-blackBlue text-center"
+              placeholder="Notas / Descripción de la cita"
+              placeholderTextColor={"gray"}
+            />
+          </View>
+          <View className="flex-1 justify-center items-center bg-whiteBlue/20 rounded-lg w-full">
+            {!showWeeklySchedule ? (
+              <Pressable
+                onPress={() => setShowWeeklySchedule(true)}
+                className="justify-center items-center active:bg-pureBlue px-5 py-2 border border-whiteBlue rounded-lg"
+              >
+                <Text className="font-medium text-whiteBlue text-lg">
+                  Mostrar Agenda semanal
+                </Text>
+              </Pressable>
+            ) : (
+              <WeekAppointmentSelect />
+            )}
+          </View>
         </View>
 
         {patient ? (
@@ -163,6 +175,19 @@ export default function DayScheduleDetails() {
           </Pressable>
         )}
       </SafeAreaView>
+      <DatePicker
+        modal
+        mode="datetime"
+        open={showDatePicker}
+        date={appointment.dateHour}
+        onConfirm={(date) => {
+          setAppoinment({ ...appointment, dateHour: date });
+          setShowDatePicker(false);
+        }}
+        onCancel={() => {
+          setShowDatePicker(false);
+        }}
+      />
     </>
   );
 }

@@ -33,6 +33,7 @@ export interface AppointmentRequestDto {
   message: string;
   registerDate: string;
   AppUser_Id: number;
+  status: boolean;
 }
 
 export interface MedicalImageDto {
@@ -47,11 +48,11 @@ export interface MedicalImageDto {
 }
 
 export interface UploadMedicalImageDto {
-  image:{
+  image: {
     uri: string;
     name: string;
     type: string;
-  }
+  };
   captureDate?: Date;
   description?: string;
   Patient_Id: number;

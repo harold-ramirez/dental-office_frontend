@@ -60,6 +60,10 @@ export const RightArrowIcon = (props: any) => (
   <FontAwesome5 name="chevron-circle-right" size={24} color="black" {...props} />
 );
 
+export const LeftArrowIcon = (props: any) => (
+  <FontAwesome5 name="chevron-circle-left" size={24} color="black" {...props} />
+);
+
 export const EditIcon = (props: any) => (
   <FontAwesome6 name="edit" size={24} color="black" {...props} />
 );

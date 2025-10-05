@@ -1,6 +1,7 @@
 import { Link } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { LeftArrowIcon, RightArrowIcon } from "../Icons";
 import {
   AppointmentSelection,
   DayAppointment,
@@ -224,9 +225,17 @@ export function WeekAppointmentSelect() {
 
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
-      <Text className="w-full font-bold text-blackBlue text-xl text-center capitalize">
-        {currentWeek()}
-      </Text>
+      <View className="flex-row justify-center items-center">
+        <Pressable onPress={() => {}} className="active:bg-lightBlue p-1 justify-center items-center">
+          <LeftArrowIcon color="#02457A" size={32} />
+        </Pressable>
+        <Text className="flex-1 font-bold text-blackBlue text-xl text-center capitalize">
+          {currentWeek()}
+        </Text>
+        <Pressable onPress={() => {}} className="active:bg-lightBlue p-1 justify-center items-center">
+          <RightArrowIcon color="#02457A" size={32} />
+        </Pressable>
+      </View>
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
         <View className="flex-row gap-2">
           <View className="mt-5">
@@ -315,7 +324,7 @@ export function WorkScheduleSelection() {
                 {[1, 2, 3, 4, 5, 6, 7].map((day) => (
                   <View
                     key={day}
-                    className="border-t border-r border-whiteBlue w-12"
+                    className="border-whiteBlue border-t border-r w-12"
                   >
                     <WorkingHourSelection />
                   </View>

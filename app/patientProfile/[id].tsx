@@ -1,3 +1,4 @@
+import { DeleteAlertMessage } from "@/components/alertMessage";
 import {
   CakeIcon,
   EditIcon,
@@ -16,6 +17,7 @@ import { EventArg, NavigationAction } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Link,
+  RelativePathString,
   Stack,
   useLocalSearchParams,
   useNavigation,
@@ -24,7 +26,6 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Pressable,
   RefreshControl,
@@ -80,58 +81,6 @@ export default function PatientProfile() {
       setIsLoading(false);
     }
   }, [apiUrl, id]);
-
-  const deletePatient = useCallback(() => {
-    Alert.alert(
-      "Confirmar Eliminación",
-      `¿Está seguro de eliminar al paciente "${[
-        patient?.name,
-        patient?.paternalSurname,
-        patient?.maternalSurname,
-      ]
-        .filter(Boolean)
-        .join(" ")}"?`,
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Eliminar",
-          onPress: async () => {
-            setIsLoading(true);
-            const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-            try {
-              const endpoint = await fetch(`${apiUrl}/patients/${id}`, {
-                method: "DELETE",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              });
-              if (endpoint.ok) {
-                router.replace({
-                  pathname: "/(tabs)/patients",
-                  params: { refresh: Date.now().toString() },
-                });
-              } else {
-                Alert.alert(
-                  "Error",
-                  "No se pudo eliminar el paciente. Inténtalo de nuevo.",
-                  [{ text: "OK" }]
-                );
-              }
-            } catch (error) {
-              console.error("Error al eliminar el paciente:", error);
-            } finally {
-              setIsLoading(false);
-            }
-          },
-          style: "destructive",
-        },
-      ],
-      { cancelable: false }
-    );
-  }, [id, patient, router]);
 
   // Refresh previous screen
   useEffect(() => {
@@ -360,6 +309,23 @@ export default function PatientProfile() {
             </Link>
             <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
 
+            {/* Appointments History */}
+            <Link
+              href={{
+                pathname: "./#",
+                params: { patientId: id.toString() },
+              }}
+              className="active:bg-blackBlue/30 py-1 rounded-md"
+            >
+              <View className="flex-row justify-center items-center">
+                <Text className="flex-1 font-extrabold text-blackBlue text-lg">
+                  HISTORIAL DE CITAS
+                </Text>
+                <RightArrowIcon color="#001B48" />
+              </View>
+            </Link>
+            <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
+
             {/* Medical Images */}
             <Link
               href={{
@@ -417,7 +383,22 @@ export default function PatientProfile() {
 
             {/* Delete Button */}
             <Pressable
-              onPress={deletePatient}
+              onPress={() => {
+                DeleteAlertMessage(
+                  "Confirmar Eliminación",
+                  `¿Está seguro de eliminar al paciente "${[
+                    patient?.name,
+                    patient?.paternalSurname,
+                    patient?.maternalSurname,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}"?`,
+                  "Eliminar",
+                  `/patients/${id}`,
+                  "No se pudo eliminar el paciente. Inténtalo de nuevo.",
+                  "/(tabs)/patients" as RelativePathString
+                );
+              }}
               className="justify-center items-center bg-red-600 active:bg-red-800 mt-16 mb-5 p-2 rounded-full w-full"
             >
               <Text className="font-semibold text-whiteBlue">

@@ -1,10 +1,9 @@
 import Loading from "@/components/loading";
 import { MedicalImageDto } from "@/interfaces/interfaces";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { RelativePathString, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   BackHandler,
   Image,
   KeyboardAvoidingView,
@@ -22,6 +21,7 @@ import {
   SaveIcon,
   XIcon,
 } from "../Icons";
+import { DeleteAlertMessage } from "../alertMessage";
 
 interface ImageModalProps {
   onClose: () => void;
@@ -45,6 +45,7 @@ export default function ImageModal({ ...props }: ImageModalProps) {
     uri: "",
     type: "",
     name: "",
+    size: 0,
   });
   const uploadImage = async () => {
     try {
@@ -55,12 +56,22 @@ export default function ImageModal({ ...props }: ImageModalProps) {
         quality: 1,
       });
       if (!result.canceled) {
+        const asset = result.assets[0];
+        if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+          alert(
+            "La imagen es demasiado pesada. Elige una de menos de 5 MB o recorta la imagen"
+          );
+          return;
+        }
         setImageObject({
-          uri: result.assets[0].uri,
-          type: result.assets[0].mimeType ?? "image/jpeg",
-          name: result.assets[0].fileName ?? "image.jpg",
+          uri: asset.uri,
+          type: asset.mimeType ?? "image/jpeg",
+          name: asset.fileName ?? "image.jpg",
+          size: asset.fileSize
+            ? Number((asset.fileSize / (1024 * 1024)).toFixed(2))
+            : 0,
         });
-        setNewPhoto({ ...newPhoto, photoURL: result.assets[0].uri });
+        setNewPhoto({ ...newPhoto, photoURL: asset.uri });
       }
     } catch (error) {
       console.error(error);
@@ -105,57 +116,7 @@ export default function ImageModal({ ...props }: ImageModalProps) {
       setIsLoading(false);
     }
   };
-  const handleDeletePhoto = async () => {
-    Alert.alert(
-      "Confirmar Eliminación",
-      "¿Está seguro de eliminar la imagen?",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Eliminar",
-          onPress: async () => {
-            setIsLoading(true);
-            const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-            try {
-              const endpoint = await fetch(
-                `${apiUrl}/images/${newPhoto.imageID}`,
-                {
-                  method: "DELETE",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                }
-              );
-              if (endpoint.ok) {
-                router.replace({
-                  pathname: "/medicalImages/[patientId]",
-                  params: {
-                    patientId: props.patientId.toString(),
-                    refresh: Date.now().toString(),
-                  },
-                });
-              } else {
-                Alert.alert(
-                  "Error",
-                  "No se pudo eliminar la imagen. Inténtalo de nuevo.",
-                  [{ text: "OK" }]
-                );
-              }
-            } catch (error) {
-              console.error("Error al eliminar la imagen:", error);
-            } finally {
-              setIsLoading(false);
-            }
-          },
-          style: "destructive",
-        },
-      ],
-      { cancelable: false }
-    );
-  };
+
   const handleUpdateImage = async () => {
     try {
       setIsLoading(true);
@@ -257,6 +218,13 @@ export default function ImageModal({ ...props }: ImageModalProps) {
               )}
             </View>
 
+            {/* Image Size */}
+            <View>
+              {imageObject.size !== 0 && (
+                <Text>Tamaño: {imageObject.size} MB</Text>
+              )}
+            </View>
+
             {/* Capture Date */}
             <View className="flex-row justify-between items-center w-full">
               <Text className="w-1/2 font-bold text-darkBlue text-lg">
@@ -327,7 +295,17 @@ export default function ImageModal({ ...props }: ImageModalProps) {
                 {/* Delete Image Button */}
                 {newPhoto.photoURL !== "" && !imageObject.uri && (
                   <Pressable
-                    onPress={() => handleDeletePhoto()}
+                    onPress={() => {
+                      DeleteAlertMessage(
+                        "Confirmar Eliminación",
+                        `¿Está seguro de eliminar la imagen?`,
+                        "Eliminar",
+                        `/images/${newPhoto.imageID}`,
+                        "No se pudo eliminar la imagen. Inténtalo de nuevo.",
+                        "/medicalImages/[patientId]" as RelativePathString,
+                        { patientId: props.patientId.toString() }
+                      );
+                    }}
                     className="flex-row flex-1 justify-center items-center py-1 border-t-2 border-darkBlue rounded-t-none"
                   >
                     <DeleteOutlineIcon color="#02457A" size={32} />
