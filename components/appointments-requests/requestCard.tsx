@@ -1,5 +1,8 @@
 import { AppointmentRequestDto } from "@/interfaces/interfaces";
+import { RelativePathString } from "expo-router";
+import { useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
+import DatePicker from "react-native-date-picker";
 import {
   CalendarCheckIcon,
   CalendarClockIcon,
@@ -7,7 +10,9 @@ import {
   PhoneIcon,
   UserCircleIcon,
   WhatsappIcon,
+  XIcon,
 } from "../Icons";
+import { DeleteAlertMessage } from "../alertMessage";
 
 interface RequestCardProps {
   request: AppointmentRequestDto;
@@ -16,20 +21,42 @@ interface RequestCardProps {
   setOpenId: (id: number | null) => void;
 }
 
-export default function RequestCard({
-  request,
-  isRequestActive,
-  openId,
-  setOpenId,
-}: RequestCardProps) {
-  const showButtons = openId === request.Id;
-  const toggleButtons = () => {
-    setOpenId(showButtons ? null : request.Id);
-  };
+export default function RequestCard({ ...props }: RequestCardProps) {
+  const showButtons = props.openId === props.request.Id;
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
+  const toggleButtons = () => {
+    props.setOpenId(showButtons ? null : props.request.Id);
+  };
+  const formatDate = (date: string) => {
+    const dayName = new Date(props.request.dateHourRequest).toLocaleDateString(
+      "es-BO",
+      { weekday: "long" }
+    );
+    const day = new Date(props.request.dateHourRequest).toLocaleDateString(
+      "es-BO",
+      { day: "2-digit" }
+    );
+    const month = new Date(props.request.dateHourRequest).toLocaleDateString(
+      "es-BO",
+      { month: "short" }
+    );
+    const year = new Date(props.request.dateHourRequest).toLocaleDateString(
+      "es-BO",
+      { year: "2-digit" }
+    );
+    const hour = new Date(props.request.dateHourRequest)
+      .toLocaleTimeString("es-BO", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      .replace(/[\s.]/g, "")
+      .toLowerCase();
+    return dayName + `\n` + day + `/` + month + `/` + year + `\n` + hour;
+  };
   const handleWhatsApp = () => {
-    if (request.phoneNumber) {
-      const url = `https://wa.me/591${request.phoneNumber}`;
+    if (props.request.phoneNumber) {
+      const url = `https://wa.me/591${props.request.phoneNumber}`;
       Linking.openURL(url);
     } else {
       alert("El paciente no tiene número de teléfono registrado.");
@@ -38,97 +65,123 @@ export default function RequestCard({
 
   return (
     <View
-      className={`rounded-3xl border-4 ${
-        showButtons
-          ? isRequestActive
-            ? `bg-whiteBlue border-blackBlue`
-            : ``
-          : `border-transparent`
-      }`}
+      className={
+        showButtons && props.isRequestActive ? `bg-whiteBlue rounded-2xl` : ``
+      }
     >
       <Pressable
         onPress={toggleButtons}
-        className={`gap-3  rounded-2xl p-3 ${
-          isRequestActive
-            ? `bg-lightBlue active:bg-whiteBlue`
-            : `bg-whiteBlue/50`
+        className={`gap-3 rounded-2xl p-3 ${
+          props.isRequestActive ? `bg-lightBlue` : `bg-whiteBlue/50`
         }`}
       >
         <View className="gap-2">
           <View className="flex-row gap-1">
             <UserCircleIcon color="#001B48" size={75} />
+            {/* Patient Info */}
             <View className="flex-1">
               <Text className="font-bold text-blackBlue text-xl">
-                {request.patientFullName}
+                {props.request.patientFullName}
               </Text>
               <Text className="font-bold text-darkBlue">
-                <PhoneIcon color="#02457A" size={17} /> {request.phoneNumber}
+                <PhoneIcon color="#02457A" size={17} />{" "}
+                {props.request.phoneNumber}
               </Text>
             </View>
+
+            {/* Request Date/Hour */}
             <Text className="font-semibold text-darkBlue text-sm text-right capitalize">
-              {new Date(request.dateHourRequest).toLocaleDateString("es-BO", {
-                weekday: "long",
-              })}
-              {`\n`}
-              {new Date(request.dateHourRequest).toLocaleDateString("es-BO", {
-                day: "2-digit",
-              })}
-              /
-              {new Date(request.dateHourRequest).toLocaleDateString("es-BO", {
-                month: "short",
-              })}
-              /
-              {new Date(request.dateHourRequest).toLocaleDateString("es-BO", {
-                year: "2-digit",
-              })}
-              {`\n`}
-              {new Date(request.dateHourRequest)
-                .toLocaleTimeString("es-BO", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-                .replace(/[\s.]/g, "")
-                .toLowerCase()}
+              {formatDate(props.request.dateHourRequest)}
             </Text>
             <CalendarClockIcon color="#001B48" size={50} />
           </View>
+
+          {/* Request Message */}
           <Text
             numberOfLines={showButtons ? 0 : 1}
             ellipsizeMode="tail"
             className="bg-darkBlue/80 my-4 p-3 rounded-tr-xl rounded-bl-xl font-semibold text-whiteBlue text-lg text-justify italic"
           >
-            &quot;{request.message}&quot;
+            &quot;{props.request.message}&quot;
           </Text>
         </View>
       </Pressable>
 
-      {showButtons && isRequestActive && (
-        <View className="flex-row justify-end gap-3 p-2">
-          <Pressable className="justify-center items-center bg-darkBlue active:bg-pureBlue px-2 py-1 rounded-lg">
-            <EditIcon color="#D6E8EE" size={30} className="flex-1" />
-            <Text className="font-semibold text-whiteBlue text-xs text-center">
-              Reprogramar
-            </Text>
-          </Pressable>
-          {request.phoneNumber && (
+      {/* Action Buttons */}
+      {showButtons && props.isRequestActive && (
+        <View className="flex-row">
+          {/* Discard Button */}
+          <View className="p-2">
             <Pressable
-              onPress={handleWhatsApp}
-              className="justify-center items-center bg-darkBlue active:bg-pureBlue px-2 py-1 rounded-lg"
+              onPress={() => {
+                DeleteAlertMessage(
+                  "Descartar Solicitud?",
+                  "¿Está seguro de descartar la solicitud? Esta acción es irreversible",
+                  "Descartar",
+                  `/appointment-requests/${props.request.Id}/1`,
+                  "No se pudo descartar la solicitud. Inténtelo de nuevo.",
+                  "/(tabs)/requests" as RelativePathString
+                );
+              }}
+              className="justify-center items-center active:bg-red-100 px-2 py-1 border border-red-500 rounded-lg"
             >
-              <WhatsappIcon color="#D6E8EE" size={32} className="flex-1" />
-              <Text className="font-semibold text-whiteBlue text-xs text-center">
-                Mensaje
+              <XIcon color="#ef4444" size={30} />
+              <Text className="font-semibold text-red-500 text-xs text-center">
+                Descartar
               </Text>
             </Pressable>
-          )}
-          <Pressable className="justify-center items-center bg-darkBlue active:bg-pureBlue px-2 py-1 rounded-lg">
-            <CalendarCheckIcon color="#D6E8EE" size={32} className="flex-1" />
-            <Text className="font-semibold text-whiteBlue text-xs text-center">
-              Confirmar
-            </Text>
-          </Pressable>
+          </View>
+
+          <View className="flex-row flex-1 justify-end gap-3 p-2">
+            {/* Re-schedule Button */}
+            <Pressable
+              onPress={() => setShowDatePicker(true)}
+              className="justify-center items-center active:bg-lightBlue px-2 py-1 border-2 border-darkBlue rounded-lg"
+            >
+              <EditIcon color="#02457A" size={30} className="flex-1" />
+              <Text className="font-semibold text-darkBlue text-xs text-center">
+                Reprogramar
+              </Text>
+            </Pressable>
+
+            {/* Send-to-Whatsapp Button */}
+            {props.request.phoneNumber && (
+              <Pressable
+                onPress={handleWhatsApp}
+                className="justify-center items-center active:bg-lightBlue px-2 py-1 border-2 border-darkBlue rounded-lg"
+              >
+                <WhatsappIcon color="#02457A" size={32} className="flex-1" />
+                <Text className="font-semibold text-darkBlue text-xs text-center">
+                  Mensaje
+                </Text>
+              </Pressable>
+            )}
+
+            {/* Confirm Button */}
+            <Pressable className="justify-center items-center bg-darkBlue active:bg-pureBlue px-2 py-1 rounded-lg">
+              <CalendarCheckIcon color="#D6E8EE" size={32} className="flex-1" />
+              <Text className="font-semibold text-whiteBlue text-xs text-center">
+                Confirmar
+              </Text>
+            </Pressable>
+          </View>
         </View>
       )}
+
+      {/* Date Picker */}
+      <DatePicker
+        modal
+        mode="datetime"
+        open={showDatePicker}
+        date={new Date(props.request.dateHourRequest)}
+        onConfirm={(date) => {
+          // TO DO: create a new appointment with new date hour
+          setShowDatePicker(false);
+        }}
+        onCancel={() => {
+          setShowDatePicker(false);
+        }}
+      />
     </View>
   );
 }

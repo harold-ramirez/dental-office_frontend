@@ -2,6 +2,7 @@ import RequestCard from "@/components/appointments-requests/requestCard";
 import { SadIcon, TriangleDownIcon, TriangleUpIcon } from "@/components/Icons";
 import { AppointmentRequestDto } from "@/interfaces/interfaces";
 import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -15,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Requests() {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const params = useLocalSearchParams();
   const [refreshing, setRefreshing] = useState(false);
   const [requests, setRequests] = useState<AppointmentRequestDto[]>([]);
   const [pastRequests, setPastRequests] = useState<AppointmentRequestDto[]>([]);
@@ -52,7 +54,7 @@ export default function Requests() {
 
   useEffect(() => {
     onRefresh();
-  }, [onRefresh]);
+  }, [params.refresh, onRefresh]);
 
   return (
     <>
