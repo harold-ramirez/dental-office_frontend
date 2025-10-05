@@ -8,6 +8,10 @@
     "scheme": "mydentaloffice",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "notification": {
+      "icon": "./assets/images/splashLogo.png",
+      "color": "#b5dfeb"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -34,7 +38,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#555555"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -44,6 +49,12 @@
       "eas": {
         "projectId": "ebb57ac1-67e0-45cc-ac1c-836746597398"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ebb57ac1-67e0-45cc-ac1c-836746597398"
     }
   }
 }

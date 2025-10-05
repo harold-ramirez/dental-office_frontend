@@ -6,6 +6,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  DeviceEventEmitter,
   FlatList,
   Pressable,
   RefreshControl,
@@ -55,6 +56,19 @@ export default function Requests() {
   useEffect(() => {
     onRefresh();
   }, [params.refresh, onRefresh]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      "newAppointmentRequest",
+      () => {
+        onRefresh();
+      }
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [onRefresh]);
 
   return (
     <>
