@@ -4,12 +4,12 @@
     "slug": "my-dental-office",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/splashLogo.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "mydentaloffice",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "notification": {
-      "icon": "./assets/images/splashLogo.png",
+      "icon": "./assets/images/icon.png",
       "color": "#b5dfeb"
     },
     "ios": {
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/splashLogo.png",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#b5dfeb"
       },
       "edgeToEdgeEnabled": true,
@@ -33,10 +33,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#555555"
+          "backgroundColor": "#b5dfeb"
         }
       ],
       "expo-web-browser"
