@@ -1,5 +1,5 @@
-import { registerForPushNotifications } from "@/contexts/notificationService";
-import SocketService from "@/contexts/socketService";
+import { registerForPushNotifications } from "@/services/notificationService";
+import SocketService from "@/services/socketService";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
