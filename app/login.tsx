@@ -4,9 +4,10 @@ import {
   LockIcon,
   ProfileIconAlt,
 } from "@/components/Icons";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+// import { useRouter } from "expo-router";
+import { useContext, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -19,16 +20,18 @@ import {
 } from "react-native";
 
 export default function Login() {
-  const router = useRouter();
+  // const router = useRouter();
 
-  const handleLogin = () => {
-    router.replace("/(tabs)");
-  };
+  // const handleLogin = () => {
+  //   router.replace("/(protected)/(tabs)");
+  // };
   const [peekPassword, setPeekPassword] = useState(false);
   const [formData, setFormData] = useState({
     user: "",
     password: "",
   });
+
+  const authContext = useContext(AuthContext);
 
   return (
     <>
@@ -48,7 +51,7 @@ export default function Login() {
           className="justify-center items-center"
         >
           <Image
-            source={require("../assets/images/logo.webp")}
+            source={require("../assets/images/logo.png")}
             style={{ width: 200, height: 200, marginBottom: 48 }}
             className="rounded-full"
           />
@@ -99,7 +102,7 @@ export default function Login() {
             </View>
 
             <Pressable
-              onPress={handleLogin}
+              onPress={authContext.logIn}
               android_ripple={{ color: "#018ABE" }}
               className="bg-blackBlue mt-5 px-5 py-2 border border-whiteBlue rounded-lg"
             >

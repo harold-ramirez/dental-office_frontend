@@ -5,9 +5,21 @@ import {
   RequestIcon,
   ScheduleIcon,
 } from "@/components/Icons";
+import { registerForPushNotifications } from "@/services/notificationService";
+import SocketService from "@/services/socketService";
 import { Tabs } from "expo-router";
+import { useEffect } from "react";
 
 export default function TabsLayout() {
+  // Websocket connection
+  useEffect(() => {
+    registerForPushNotifications();
+    SocketService.connect();
+    return () => {
+      SocketService.disconnect();
+    };
+  }, []);
+  
   return (
     <Tabs
       initialRouteName="index"
@@ -26,7 +38,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <HomeIcon color={color} />,
         }}
       />
-      
+
       <Tabs.Screen
         name="schedule"
         options={{
