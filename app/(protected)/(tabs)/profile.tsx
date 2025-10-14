@@ -132,21 +132,6 @@ export default function Profile() {
               8 horas
             </Text>
           </View>
-
-          <View className="flex-row items-center gap-2 px-2 w-full">
-            <Text className="font-semibold text-whiteBlue text-lg">
-              Uso del{`\n`}Almacenamiento:
-            </Text>
-            <View className="flex-1 bg-blackBlue/50 border border-whiteBlue rounded-full h-8">
-              <View
-                style={{ width: "50%" }}
-                className="bg-pureBlue rounded-full h-full"
-              />
-              <Text className="right-0 absolute mr-2 font-medium text-whiteBlue text-xl">
-                50%
-              </Text>
-            </View>
-          </View>
         </View>
       </SafeAreaView>
       {showModal && (
