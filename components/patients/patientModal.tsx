@@ -34,7 +34,8 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
     paternalSurname: "",
     maternalSurname: "",
     gender: "M",
-    phoneNumber: "",
+    cellphoneNumber: null,
+    telephoneNumber: null,
     occupation: "",
     birthdate: "",
     placeOfBirth: "",
@@ -67,7 +68,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
             paternalSurname: "",
             maternalSurname: "",
             gender: "",
-            phoneNumber: "",
+            cellphoneNumber: "",
             occupation: "",
             birthdate: "",
             placeOfBirth: "",
@@ -184,9 +185,9 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
                 readOnly={isLoading}
                 keyboardType="phone-pad"
                 maxLength={15}
-                value={newPatient.phoneNumber ?? ""}
+                value={newPatient.cellphoneNumber ?? ""}
                 onChangeText={(val) =>
-                  setNewPatient({ ...newPatient, phoneNumber: val })
+                  setNewPatient({ ...newPatient, cellphoneNumber: val })
                 }
                 className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
               />
@@ -456,9 +457,9 @@ export function UpdatePatientModal({
                 readOnly={isLoading}
                 keyboardType="phone-pad"
                 maxLength={15}
-                value={patient.phoneNumber ?? ""}
+                value={patient.cellphoneNumber ?? ""}
                 onChangeText={(val) =>
-                  setPatient({ ...patient, phoneNumber: val })
+                  setPatient({ ...patient, cellphoneNumber: val })
                 }
                 className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
               />

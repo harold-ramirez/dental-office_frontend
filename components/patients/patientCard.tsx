@@ -37,8 +37,8 @@ export default function PatientCard({
     setOpenId(showButtons ? null : patient.Id);
   };
   const handleWhatsApp = () => {
-    if (patient.phoneNumber) {
-      const url = `https://wa.me/591${patient.phoneNumber}`;
+    if (patient.cellphoneNumber) {
+      const url = `https://wa.me/591${patient.cellphoneNumber}`;
       Linking.openURL(url);
     } else {
       alert("El paciente no tiene número de teléfono registrado.");
@@ -74,7 +74,9 @@ export default function PatientCard({
           <View className="flex-row items-center gap-2">
             <PhoneIcon size={21} color="#02457A" />
             <Text className={`text-darkBlue text-lg`}>
-              {patient.phoneNumber ? patient.phoneNumber : `- - - - - - - -`}
+              {patient.cellphoneNumber
+                ? patient.cellphoneNumber
+                : `- - - - - - - -`}
             </Text>
           </View>
           {patient.gender === "M" ? (
@@ -104,7 +106,7 @@ export default function PatientCard({
           showButtons ? `flex` : `hidden`
         } flex-row justify-end gap-3 p-1 w-full`}
       >
-        {patient.phoneNumber && (
+        {patient.cellphoneNumber && (
           <Pressable
             onPress={handleWhatsApp}
             className="justify-center items-center bg-darkBlue p-1 rounded-md size-10"
@@ -114,7 +116,7 @@ export default function PatientCard({
         )}
         <Link
           href={{
-            pathname: "/medicalImages/[patientId]",
+            pathname: "/medicalHistory/[patientId]",
             params: { patientId: patient.Id.toString() },
           }}
           className="justify-center items-center bg-darkBlue p-1 rounded-md size-10"

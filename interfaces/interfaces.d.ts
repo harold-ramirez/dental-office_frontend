@@ -4,7 +4,8 @@ export interface PatientDto {
   paternalSurname?: string | null;
   maternalSurname?: string | null;
   gender: string;
-  phoneNumber?: string | null;
+  cellphoneNumber?: string | null;
+  telephoneNumber?: string | null;
   placeOfBirth?: string | null;
   birthdate: string;
   occupation?: string | null;
@@ -17,7 +18,8 @@ export interface CreatePatientDto {
   paternalSurname?: string | null;
   maternalSurname?: string | null;
   gender: string;
-  phoneNumber?: string | null;
+  cellphoneNumber?: string | null;
+  telephoneNumber?: string | null;
   placeOfBirth?: string | null;
   birthdate: string;
   occupation?: string | null;
