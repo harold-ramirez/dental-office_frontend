@@ -5,9 +5,11 @@ import { Dropdown } from "react-native-element-dropdown";
 export default function DropdownComponent({
   className,
   data,
+  search,
 }: {
   className?: string;
   data: { label: string; value: string }[];
+  search?: boolean;
 }) {
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
@@ -21,7 +23,7 @@ export default function DropdownComponent({
         inputSearchStyle={styles.inputSearchStyle}
         iconStyle={styles.iconStyle}
         data={data}
-        search
+        search={search ?? true}
         maxHeight={300}
         labelField="label"
         valueField="value"

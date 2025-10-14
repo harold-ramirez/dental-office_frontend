@@ -117,6 +117,7 @@ export default function DayScheduleDetails() {
             </Text>
             <DropdownComponent
               className="flex-1"
+              search={false}
               data={[
                 { label: "30 min", value: "30" },
                 { label: "1 hora", value: "60" },
