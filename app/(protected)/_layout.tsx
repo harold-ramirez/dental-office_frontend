@@ -23,6 +23,9 @@ export default function ProtectedLayout() {
     };
   }, [authState?.isLoggedIn]);
 
+  if (!authState.isReady) {
+    return null;
+  }
   if (!authState.isLoggedIn) {
     return <Redirect href={"../login"} />;
   }
