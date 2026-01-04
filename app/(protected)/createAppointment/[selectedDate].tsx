@@ -1,25 +1,16 @@
 import { WeekAppointmentSelect } from "@/components/appointments-requests/scheduleModes";
 import DropdownComponent from "@/components/dropdown";
+import { fetchData } from "@/services/fetchData";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import DatePicker from "react-native-date-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-const patientsList = [
-  { label: "Juanito", value: "1" },
-  { label: "Alberto", value: "2" },
-  { label: "Ana", value: "3" },
-  { label: "Carlos", value: "4" },
-  { label: "Claudia", value: "5" },
-  { label: "Harold", value: "6" },
-];
-const treatmentsList = [
-  { label: "Ortodoncia", value: "1" },
-  { label: "Blanqueamiento", value: "2" },
-  { label: "Caries", value: "3" },
-  { label: "Tratamiento de Conducto", value: "4" },
-];
+// ------------------------------------------------------------------
+const patientsApiData = fetchData("/patients/names");
+const treatmentsApiData = fetchData("/treatments");
+// ------------------------------------------------------------------
 
 export default function DayScheduleDetails() {
   const { selectedDate, patient } = useLocalSearchParams<{
@@ -49,6 +40,23 @@ export default function DayScheduleDetails() {
         hour12: false,
       })}`
     : "...";
+
+  // ------------------------------------------------------------------
+  const patientsList: { label: string; value: string }[] = [];
+  const treatmentsList: { label: string; value: string }[] = [];
+  patientsApiData.read().map((item: { id: number; fullName: string }) => {
+    patientsList.push({
+      label: item.fullName,
+      value: item.id.toString(),
+    });
+  });
+  treatmentsApiData.read().map((item: { Id: number; name: string }) => {
+    treatmentsList.push({
+      label: item.name,
+      value: item.Id.toString(),
+    });
+  });
+  // ------------------------------------------------------------------
 
   return (
     <>
@@ -80,13 +88,17 @@ export default function DayScheduleDetails() {
             <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
               Paciente:
             </Text>
-            <DropdownComponent className="flex-1" data={patientsList} />
+            <Suspense fallback={<View>no</View>}>
+              <DropdownComponent className="flex-1" data={patientsList} />
+            </Suspense>
           </View>
           <View className="flex-row justify-evenly items-center w-full h-14">
             <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
               Tratamiento:
             </Text>
-            <DropdownComponent className="flex-1" data={treatmentsList} />
+            <Suspense fallback={<View>no</View>}>
+              <DropdownComponent className="flex-1" data={treatmentsList} />
+            </Suspense>
           </View>
 
           <View className="flex-row justify-evenly items-center w-full">

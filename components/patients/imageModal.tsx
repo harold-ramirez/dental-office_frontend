@@ -30,12 +30,15 @@ interface ImageModalProps {
 }
 
 export default function ImageModal({ ...props }: ImageModalProps) {
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPhoto, setNewPhoto] = useState({
     imageID: props.image?.Id ?? 0,
-    photoURL: props.image?.filepath ?? "",
+    photoURL: props.image?.filename
+      ? `${apiUrl}/uploads/${props.image.filename}`
+      : ``,
     description: props.image?.description ?? "",
     captureDate: props.image?.captureDate
       ? new Date(props.image.captureDate)
@@ -92,7 +95,6 @@ export default function ImageModal({ ...props }: ImageModalProps) {
       formData.append("description", newPhoto.description);
       formData.append("Patient_Id", props.patientId.toString());
       formData.append("AppUser_Id", "1"); // Hardcoded
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
       const response = await fetch(`${apiUrl}/images`, {
         method: "POST",
         headers: {

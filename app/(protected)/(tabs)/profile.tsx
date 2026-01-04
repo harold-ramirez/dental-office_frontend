@@ -1,12 +1,15 @@
 import LogInModal from "@/components/account/logInModal";
-import { UserDoctorIcon } from "@/components/Icons";
+import { LogoutIcon, UserDoctorIcon } from "@/components/Icons";
 import { BannerModeRadio } from "@/components/radioButton";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Profile() {
+  const authContext = useContext(AuthContext);
+
   const [showModal, setShowModal] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [config, setConfig] = useState({
@@ -132,6 +135,15 @@ export default function Profile() {
               8 horas
             </Text>
           </View>
+          <Pressable
+            onPress={authContext.logOut}
+            className="flex-row justify-center items-center gap-2 bg-blackBlue mt-3 p-2 border border-whiteBlue rounded-full w-3/4 overflow-hidden"
+          >
+            <LogoutIcon color={"#D6E8EE"} size={24} />
+            <Text className="font-semibold text-whiteBlue text-lg">
+              Cerrar Sesión
+            </Text>
+          </Pressable>
         </View>
       </SafeAreaView>
       {showModal && (

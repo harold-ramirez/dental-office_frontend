@@ -159,3 +159,7 @@ export const TriangleUpIcon = (props: any) => (
 export const DeleteOutlineIcon = (props: any) => (
   <MaterialCommunityIcons name="delete-outline" size={24} color="black" {...props} />
 );
+
+export const LogoutIcon = (props: any) => (
+  <MaterialCommunityIcons name="logout" size={24} color="black" {...props} />
+);

@@ -81,7 +81,7 @@ export default function MedicalImages() {
                   }}
                 >
                   <Image
-                    source={{ uri: img.filepath }}
+                    source={{ uri: `${apiUrl}/uploads/${img.filename}` }}
                     width={110}
                     height={110}
                     className=""

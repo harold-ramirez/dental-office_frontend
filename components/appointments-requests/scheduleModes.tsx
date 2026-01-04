@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { LeftArrowIcon, RightArrowIcon } from "../Icons";
 import {
@@ -37,7 +37,6 @@ const hours = [
   "18:30",
   "19:00",
   "19:30",
-  "20:00",
 ];
 const currentWeek = () => {
   const today = new Date();
@@ -226,13 +225,19 @@ export function WeekAppointmentSelect() {
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
       <View className="flex-row justify-center items-center">
-        <Pressable onPress={() => {}} className="active:bg-lightBlue p-1 justify-center items-center">
+        <Pressable
+          onPress={() => {}}
+          className="active:bg-lightBlue p-1 justify-center items-center"
+        >
           <LeftArrowIcon color="#02457A" size={32} />
         </Pressable>
         <Text className="flex-1 font-bold text-blackBlue text-xl text-center capitalize">
           {currentWeek()}
         </Text>
-        <Pressable onPress={() => {}} className="active:bg-lightBlue p-1 justify-center items-center">
+        <Pressable
+          onPress={() => {}}
+          className="active:bg-lightBlue p-1 justify-center items-center"
+        >
           <RightArrowIcon color="#02457A" size={32} />
         </Pressable>
       </View>
@@ -297,6 +302,42 @@ export function WeekAppointmentSelect() {
 }
 
 export function WorkScheduleSelection() {
+  const [shifts, setShifts] = useState<
+    {
+      Id: number;
+      day: string;
+      hour: string;
+      status: boolean;
+    }[]
+  >([]);
+  useEffect(() => {
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+    const fetchShifts = async () => {
+      const data = await fetch(`${apiUrl}/shifts`).then((response) =>
+        response.json()
+      );
+      setShifts(data);
+    };
+    fetchShifts();
+  }, []);
+  const days = [
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+    "Domingo",
+  ];
+  const groupedDays = useMemo(() => {
+    return days.map((day) => {
+      const items = shifts.filter(
+        (s) => String(s.day).toLowerCase() === day.toLowerCase()
+      );
+      items.sort((a, b) => (a.hour > b.hour ? 1 : a.hour < b.hour ? -1 : 0));
+      return { day, items };
+    });
+  }, [shifts]);
   return (
     <View className="flex-1 bg-whiteBlue pt-1 rounded-xl w-full">
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
@@ -310,12 +351,12 @@ export function WorkScheduleSelection() {
           </View>
           <View className="self-start">
             <View className="flex-row self-start mb-1">
-              {["L", "M", "X", "J", "V", "S", "D"].map((day) => (
+              {groupedDays.map((dayObj, index) => (
                 <Text
-                  key={day}
+                  key={index}
                   className="w-12 font-semibold text-blackBlue text-lg text-center"
                 >
-                  {day}
+                  {dayObj.day[0]}
                 </Text>
               ))}
             </View>

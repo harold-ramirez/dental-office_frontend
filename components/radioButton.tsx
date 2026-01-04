@@ -109,14 +109,14 @@ export function BannerModeRadio({
       >
         <Pressable
           className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
-            value === "Day" ? "bg-blackBlue" : ""
+            value === "Day" ? "bg-darkBlue" : ""
           }`}
           onPress={() => onChange("Day")}
           disabled={!editable}
         >
           <Text
             className={`font-bold text-lg ${
-              value === "Day" ? "text-white" : "text-blackBlue"
+              value === "Day" ? "text-white" : "text-darkBlue"
             }`}
           >
             Día
@@ -124,14 +124,14 @@ export function BannerModeRadio({
         </Pressable>
         <Pressable
           className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
-            value === "Week" ? "bg-blackBlue" : ""
+            value === "Week" ? "bg-darkBlue" : ""
           }`}
           onPress={() => onChange("Week")}
           disabled={!editable}
         >
           <Text
             className={`font-bold text-lg ${
-              value === "Week" ? "text-white" : "text-blackBlue"
+              value === "Week" ? "text-white" : "text-darkBlue"
             }`}
           >
             Semana

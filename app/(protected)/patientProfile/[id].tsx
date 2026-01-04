@@ -49,7 +49,8 @@ export default function PatientProfile() {
     paternalSurname: "",
     maternalSurname: "",
     gender: "",
-    phoneNumber: "",
+    telephoneNumber: "",
+    cellphoneNumber: "",
     occupation: "",
     birthdate: "",
     placeOfBirth: "",
@@ -96,7 +97,7 @@ export default function PatientProfile() {
         e.preventDefault();
         isNavigatingBack.current = true;
         router.replace({
-          pathname: "/(tabs)/patients",
+          pathname: "/(protected)/(tabs)/patients",
           params: { refresh: Date.now().toString() },
         });
       }
@@ -199,11 +200,13 @@ export default function PatientProfile() {
                     .join(" ")}
                 </Text>
                 {/* PhoneNumber */}
-                {patient?.phoneNumber && (
+                {patient?.cellphoneNumber && (
                   <View className="flex-row items-center gap-2">
                     <PhoneIcon size={21} color="#02457A" />
                     <Text className={`text-blackBlue text-lg`}>
-                      {patient.phoneNumber}
+                      {patient.cellphoneNumber}
+                      {patient?.telephoneNumber &&
+                        ` - ${patient.telephoneNumber}`}
                     </Text>
                   </View>
                 )}
@@ -357,7 +360,7 @@ export default function PatientProfile() {
                     >
                       <View className="w-[100px] h-[100px]">
                         <Image
-                          source={{ uri: img.filepath }}
+                          source={{ uri: `${apiUrl}/uploads/${img.filename}` }}
                           width={100}
                           height={100}
                         />
@@ -372,7 +375,7 @@ export default function PatientProfile() {
                 }
                 return (
                   <Image
-                    source={{ uri: img.filepath }}
+                    source={{ uri: `${apiUrl}/uploads/${img.filename}` }}
                     key={img.Id}
                     width={100}
                     height={100}
