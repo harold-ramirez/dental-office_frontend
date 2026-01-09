@@ -46,13 +46,15 @@ export function GenderRadio({
   );
 }
 
-export function YesNoRadio({
-  value,
-  onChange,
-}: {
-  value: "Y" | "N";
-  onChange: (val: "Y" | "N") => void;
-}) {
+interface YesNoRadioProps {
+  value: boolean;
+  onChange: (val: boolean) => void;
+  isDisabled?: boolean;
+}
+
+export function YesNoRadio(props: YesNoRadioProps) {
+  const { value, onChange, isDisabled = false } = props;
+
   return (
     <View className="justify-center bg-whiteBlue border border-whiteBlue rounded-full w-24 h-10">
       <View
@@ -61,13 +63,16 @@ export function YesNoRadio({
       >
         <Pressable
           className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
-            value === "Y" ? "bg-darkBlue" : ""
+            value ? "bg-darkBlue" : ""
           }`}
-          onPress={() => onChange("Y")}
+          onPress={() => {
+            if (!value) onChange(true);
+          }}
+          disabled={isDisabled}
         >
           <Text
             className={`font-bold text-lg ${
-              value === "Y" ? "text-white" : "text-blackBlue"
+              value ? "text-white" : "text-blackBlue"
             }`}
           >
             SI
@@ -75,13 +80,16 @@ export function YesNoRadio({
         </Pressable>
         <Pressable
           className={`flex-1 items-center justify-center py-1 h-9 rounded-full ${
-            value === "N" ? "bg-darkBlue" : ""
+            !value ? "bg-darkBlue" : ""
           }`}
-          onPress={() => onChange("N")}
+          onPress={() => {
+            if (value) onChange(false);
+          }}
+          disabled={isDisabled}
         >
           <Text
             className={`font-bold text-lg ${
-              value === "N" ? "text-white" : "text-blackBlue"
+              !value ? "text-white" : "text-blackBlue"
             }`}
           >
             NO

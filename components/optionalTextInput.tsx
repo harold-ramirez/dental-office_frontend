@@ -5,6 +5,7 @@ import { CheckCircleIcon } from "./Icons";
 interface OptionalTextInputProps {
   placeholder?: string;
   className?: string;
+  isReadOnly?: boolean;
   value: string;
   setValue: (val: string) => void;
 }
@@ -12,41 +13,44 @@ interface OptionalTextInputProps {
 export default function OptionalTextInput({
   placeholder,
   className,
+  isReadOnly = false,
   value,
   setValue,
 }: OptionalTextInputProps) {
-  const [isEnabled, setIsEnabled] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(isReadOnly && value !== "");
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    if (isEnabled) {
+    if (isExpanded) {
       inputRef.current?.focus();
     }
-  }, [isEnabled]);
+  }, [isExpanded]);
 
   return (
     <View
       className={`${className} flex-row justify-center bg-whiteBlue rounded-full  h-11 ${
-        isEnabled ? `flex-1` : ``
+        isExpanded ? `flex-1` : ``
       }`}
     >
       <Pressable
+        disabled={isReadOnly && value !== ""}
         onPress={() => {
-          setIsEnabled(!isEnabled);
+          setIsExpanded(!isExpanded);
           setValue("");
         }}
         className={`rounded-full items-center justify-center size-11 ${
-          isEnabled ? `bg-blackBlue` : `bg-whiteBlue`
+          isExpanded ? `bg-blackBlue` : `bg-whiteBlue`
         }`}
       >
-        <CheckCircleIcon size={36} color={isEnabled ? `#D6E8EE` : `#001B48`} />
+        <CheckCircleIcon size={36} color={isExpanded ? `#D6E8EE` : `#001B48`} />
       </Pressable>
       <TextInput
         ref={inputRef}
         className={`flex-1 font-semibold text-blackBlue text-center ${
-          isEnabled ? `flex` : `hidden`
+          isExpanded ? `flex` : `hidden`
         }`}
-        editable={isEnabled}
+        editable={isExpanded}
+        readOnly={isReadOnly}
         value={value}
         onChangeText={setValue}
         placeholder={placeholder}

@@ -208,7 +208,7 @@ export default function ImageModal({ ...props }: ImageModalProps) {
                     }}
                     resizeMode="contain"
                   />
-                  {!props.image?.filepath && (
+                  {!props.image?.filename && (
                     <Pressable
                       onPress={() => uploadImage()}
                       className="right-0 bottom-0 absolute justify-center items-center bg-blackBlue rounded-md size-10"
@@ -282,7 +282,7 @@ export default function ImageModal({ ...props }: ImageModalProps) {
             ) : (
               <>
                 {/* Save Image Button */}
-                {!props.image?.filepath && imageObject.uri && (
+                {!props.image?.filename && imageObject.uri && (
                   <Pressable
                     onPress={handleSaveImage}
                     className="flex-row flex-1 justify-center items-center gap-1 py-2 bg-darkBlue border-2 border-darkBlue rounded-b-xl"
@@ -304,6 +304,7 @@ export default function ImageModal({ ...props }: ImageModalProps) {
                         "Eliminar",
                         `/images/${newPhoto.imageID}`,
                         "No se pudo eliminar la imagen. Inténtalo de nuevo.",
+                        "DELETE",
                         "/medicalImages/[patientId]" as RelativePathString,
                         { patientId: props.patientId.toString() }
                       );

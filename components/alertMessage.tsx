@@ -7,6 +7,7 @@ export const DeleteAlertMessage = (
   actionButtonText: string,
   apiRoute: string,
   errorMessage: string,
+  httpMethod: string,
   refreshPath: RelativePathString,
   param?: { [key: string]: string }
 ) => {
@@ -24,7 +25,7 @@ export const DeleteAlertMessage = (
           const apiUrl = process.env.EXPO_PUBLIC_API_URL;
           try {
             const endpoint = await fetch(`${apiUrl}${apiRoute}`, {
-              method: "PATCH",
+              method: httpMethod,
               headers: {
                 "Content-Type": "application/json",
               },

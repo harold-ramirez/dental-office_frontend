@@ -1,10 +1,18 @@
+import { DeleteAlertMessage } from "@/components/alertMessage";
 import GlassyBackground from "@/components/glassyBackground";
 import { PlusIcon } from "@/components/Icons";
+import Loading from "@/components/loading";
 import OptionalTextInput from "@/components/optionalTextInput";
 import { YesNoRadio } from "@/components/radioButton";
+import { MedicalHistoryDto } from "@/interfaces/interfaces";
 import { LinearGradient } from "expo-linear-gradient";
-import { Stack, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import {
+  RelativePathString,
+  router,
+  Stack,
+  useLocalSearchParams,
+} from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -15,36 +23,284 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalHistory() {
   const { patientId } = useLocalSearchParams();
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    paternalSurname: "",
-    maternalSurname: "",
-    age: null,
-    gender: "M",
-    phoneNumber: "",
-    occupation: "",
-    birthdate: "",
-    placeOfBirth: "",
-    address: "",
-    personalPathologieshistory: [],
-    habits: [],
-    allergies: "",
-    isPregnant: "",
-    isInMedicalTreatment: "",
-    isTakingMedicine: "",
-    hadHemorrhageAfterExtraction: "",
-    breathing: "",
-    teethBrushFrecuency: "",
-    intraoralProsthesis: "",
-    usesDentalFloss: "N",
-    usesMouthWash: "N",
-    hasBleedingGums: "N",
-    oralStatus: "",
+  const [isPosting, setIsPosting] = useState(false);
+  const [showNewFormBtn, setShowNewFormBtn] = useState(true);
+  const [habits, setHabits] = useState<{ Id: number; name: string }[]>([]);
+  const [histories, setHistories] = useState<MedicalHistoryDto[]>([]);
+  const [formData, setFormData] = useState<any>(null);
+  const [newPathologyHabit, setNewPathologyHabit] = useState({
+    showPathologyTextInput: false,
+    showHabitTextInput: false,
+    newPathology: "",
+    newHabit: "",
   });
+  const [personalPathologies, setPersonalPathologies] = useState<
+    { Id: number; name: string }[]
+  >([]);
+
+  // UI EVENTS ************************************
+  const newMedicalHistory = () => {
+    setShowNewFormBtn(false);
+    const copy = [...histories];
+    copy.push({
+      registerDate: new Date().toISOString(),
+      personalPathologieshistory: [],
+      habits: [],
+      familyPathologicalHistory: "",
+      allergies: "",
+      pregnantMonths: "",
+      medicalTreatment: "",
+      takingMedicine: "",
+      hemorrhageType: "",
+      tmj: "",
+      lymphNodes: "",
+      breathingType: "",
+      others: "",
+      lipsStatus: "",
+      tongueStatus: "",
+      palateStatus: "",
+      mouthFloorStatus: "",
+      buccalMucousStatus: "",
+      gumsStatus: "",
+      prosthesisLocation: "",
+      lastTimeVisitedDentist: "",
+      useDentalFloss: false,
+      useMouthWash: false,
+      toothBrushingFrequency: "",
+      hasBleedOnToothBrushing: false,
+      oralHygiene: "",
+    });
+    setHistories(copy);
+    setFormData(copy[copy.length - 1]);
+  };
+  const selectPathology = (id: number) => {
+    const updatedPathologies = [...(formData.personalPathologieshistory || [])];
+    const index = updatedPathologies.findIndex((p) => p.Id === id);
+    if (index > -1) {
+      updatedPathologies.splice(index, 1);
+    } else {
+      const pathology = personalPathologies.find((p) => p.Id === id);
+      if (pathology) {
+        updatedPathologies.push({ Id: pathology.Id, name: pathology.name });
+      }
+    }
+    setFormData({
+      ...formData,
+      personalPathologieshistory: updatedPathologies,
+    });
+  };
+  const selectHabit = (id: number) => {
+    const updatedHabits = [...(formData.habits || [])];
+    const index = updatedHabits.findIndex((h) => h.Id === id);
+    if (index > -1) {
+      updatedHabits.splice(index, 1);
+    } else {
+      const habit = habits.find((h) => h.Id === id);
+      if (habit) {
+        updatedHabits.push({ Id: habit.Id, name: habit.name });
+      }
+    }
+    setFormData({
+      ...formData,
+      habits: updatedHabits,
+    });
+  };
+
+  // API CALLINGS ******************************
+  const handlePostPathology = async () => {
+    if (newPathologyHabit.newPathology === "") return;
+    try {
+      const res = await fetch(`${apiUrl}/personal-pathologies`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newPathologyHabit.newPathology,
+          AppUser_Id: 1, // Hardcoded UserID
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.log("Error creando Patología:", res.status, errText);
+        return;
+      }
+      const created = await res.json();
+      setPersonalPathologies((prev) => [
+        ...prev,
+        { Id: created.Id, name: created.name },
+      ]);
+
+      // Pre-select the pathology form
+      if (!formData.Id) {
+        setFormData({
+          ...formData,
+          personalPathologieshistory: [
+            ...(formData.personalPathologieshistory || []),
+            { Id: created.Id, name: created.name },
+          ],
+        });
+      }
+    } catch (error) {
+      console.log("Error posting new Pathology:", error);
+    } finally {
+      setNewPathologyHabit({
+        ...newPathologyHabit,
+        showPathologyTextInput: false,
+        newPathology: "",
+      });
+    }
+  };
+  const handlePostHabit = async () => {
+    if (newPathologyHabit.newHabit === "") return;
+    try {
+      const res = await fetch(`${apiUrl}/habits`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newPathologyHabit.newHabit,
+          AppUser_Id: 1, // Hardcoded UserID
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.log("Error creando Hábito:", res.status, errText);
+        return;
+      }
+      const created = await res.json();
+      setHabits((prev) => [...prev, { Id: created.Id, name: created.name }]);
+
+      // Pre-select the pathology form
+      if (!formData.Id) {
+        setFormData({
+          ...formData,
+          habits: [
+            ...(formData.habits || []),
+            { Id: created.Id, name: created.name },
+          ],
+        });
+      }
+    } catch (error) {
+      console.log("Error posting new Habit:", error);
+    } finally {
+      setNewPathologyHabit({
+        ...newPathologyHabit,
+        showHabitTextInput: false,
+        newHabit: "",
+      });
+    }
+  };
+  const handlePostForm = async () => {
+    try {
+      setIsPosting(true);
+      const res = await fetch(`${apiUrl}/medical-history`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          AppUser_Id: 1, //Hardcoded userID
+          Patient_Id: Number(patientId),
+          personalPathologieshistory: formData.personalPathologieshistory,
+          habits: formData.habits,
+          familyPathologicalHistory:
+            formData.familyPathologicalHistory === ""
+              ? null
+              : formData.familyPathologicalHistory,
+          allergies: formData.allergies === "" ? null : formData.allergies,
+          pregnantMonths:
+            formData.pregnantMonths === "" ? null : formData.pregnantMonths,
+          medicalTreatment:
+            formData.medicalTreatment === "" ? null : formData.medicalTreatment,
+          takingMedicine:
+            formData.takingMedicine === "" ? null : formData.takingMedicine,
+          hemorrhageType:
+            formData.hemorrhageType === "" ? null : formData.hemorrhageType,
+          tmj: formData.tmj === "" ? null : formData.tmj,
+          lymphNodes: formData.lymphNodes === "" ? null : formData.lymphNodes,
+          breathingType:
+            formData.breathingType === "" ? null : formData.breathingType,
+          others: formData.others === "" ? null : formData.others,
+          lipsStatus: formData.lipsStatus === "" ? null : formData.lipsStatus,
+          tongueStatus:
+            formData.tongueStatus === "" ? null : formData.tongueStatus,
+          palateStatus:
+            formData.palateStatus === "" ? null : formData.palateStatus,
+          mouthFloorStatus:
+            formData.mouthFloorStatus === "" ? null : formData.mouthFloorStatus,
+          buccalMucousStatus:
+            formData.buccalMucousStatus === ""
+              ? null
+              : formData.buccalMucousStatus,
+          gumsStatus: formData.gumsStatus === "" ? null : formData.gumsStatus,
+          prosthesisLocation:
+            formData.prosthesisLocation === ""
+              ? null
+              : formData.prosthesisLocation,
+          lastTimeVisitedDentist:
+            formData.lastTimeVisitedDentist === ""
+              ? null
+              : formData.lastTimeVisitedDentist,
+          useDentalFloss: formData.useDentalFloss,
+          useMouthWash: formData.useMouthWash,
+          toothBrushingFrequency:
+            formData.toothBrushingFrequency === ""
+              ? null
+              : formData.toothBrushingFrequency,
+          hasBleedOnToothBrushing: formData.hasBleedOnToothBrushing,
+          oralHygiene:
+            formData.oralHygiene === "" ? null : formData.oralHygiene,
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.log("Error creando Formulario:", res.status, errText);
+        return;
+      }
+      setIsPosting(false);
+      router.replace({
+        pathname: "/(protected)/patientProfile/[id]",
+        params: {
+          id: patientId.toString(),
+          refresh: Date.now().toString(),
+        },
+      });
+    } catch (error) {
+      console.log("Error posting new medical history:", error);
+      setIsPosting(false);
+    }
+  };
+
+  // REACT HOOKS **************************************************
+  const fetchAllMedicalHistories = useCallback(async () => {
+    try {
+      const data = await fetch(`${apiUrl}/medical-history/${patientId}`).then(
+        (res) => res.json()
+      );
+      setHistories(data);
+      setFormData(data[0]);
+      const habits = await fetch(`${apiUrl}/habits`).then((res) => res.json());
+      const personalPathologies = await fetch(
+        `${apiUrl}/personal-pathologies`
+      ).then((res) => res.json());
+      setHabits(habits);
+      setPersonalPathologies(personalPathologies);
+    } catch (e) {
+      console.error("Error fetching medical histories:", e);
+    }
+  }, [patientId]);
+  const onRefresh = useCallback(async () => {
+    await fetchAllMedicalHistories();
+  }, [fetchAllMedicalHistories]);
+  useEffect(() => {
+    onRefresh();
+  }, [onRefresh]);
 
   return (
     <KeyboardAvoidingView
@@ -78,414 +334,784 @@ export default function MedicalHistory() {
           }}
         />
         <ScrollView className="w-full" showsVerticalScrollIndicator={false}>
-          <View className="gap-5 pb-5">
-            {/* PATIENT'S PATHOLOGIES */}
-            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
-              <View>
-                <Text className="font-bold text-whiteBlue text-lg text-center">
-                  Antecedentes Patológicos Familiares
+          <ScrollView
+            horizontal
+            className="pb-2"
+            showsHorizontalScrollIndicator={false}
+          >
+            <View className="flex-row gap-1">
+              {histories.map((history, i) => (
+                <Pressable
+                  key={i}
+                  onPress={() => {
+                    setFormData(histories[i]);
+                  }}
+                  className={`active:bg-lightBlue px-4 py-1 rounded-t-2xl border border-whiteBlue ${
+                    formData.registerDate === history.registerDate
+                      ? `bg-whiteBlue`
+                      : `bg-darkBlue`
+                  }`}
+                >
+                  <Text
+                    className={`text-blackBlue ${
+                      !history.Id ? `font-bold italic` : ``
+                    } ${
+                      formData.registerDate === history.registerDate
+                        ? `text-darkBlue`
+                        : `text-whiteBlue`
+                    }`}
+                  >
+                    {new Date(
+                      history.registerDate as string
+                    ).toLocaleDateString("es-BO", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                    {!history.Id ? "*" : ""}
+                  </Text>
+                </Pressable>
+              ))}
+
+              {/* New Medical History */}
+              {showNewFormBtn && (
+                <Pressable
+                  onPress={() => newMedicalHistory()}
+                  className="justify-center items-center bg-darkBlue active:bg-lightBlue px-3 py-1 border border-whiteBlue rounded-t-2xl"
+                >
+                  <Text className="font-bold text-whiteBlue">
+                    + Nuevo Formulario
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          </ScrollView>
+
+          {histories.length === 0 ? (
+            <GlassyBackground className="gap-2 px-3 py-6 rounded-xl w-full">
+              <Text className="text-whiteBlue text-center italic">
+                No hay registro de una historia clínica para este paciente
+              </Text>
+            </GlassyBackground>
+          ) : (
+            <View className="gap-5 pb-5">
+              {/* PATIENT'S PATHOLOGIES */}
+              <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
+                <Text
+                  className={`font-bold text-whiteBlue text-xl text-center uppercase ${
+                    !formData.Id ? `italic` : ``
+                  }`}
+                >
+                  {new Date(formData.registerDate).toLocaleDateString("es-BO", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </Text>
-                <TextInput className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center" />
-              </View>
-              <View>
-                <Text className="font-bold text-whiteBlue text-lg">
-                  Antecedentes Patológicos Familiares
+                <View>
+                  <Text className="font-bold text-whiteBlue text-lg">
+                    Antecedentes Patológicos Familiares
+                  </Text>
+                  <TextInput
+                    placeholder="..."
+                    placeholderTextColor={"gray"}
+                    readOnly={formData.Id}
+                    value={formData.familyPathologicalHistory}
+                    onChangeText={(val) =>
+                      setFormData({
+                        ...formData,
+                        familyPathologicalHistory: val,
+                      })
+                    }
+                    className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
+                  />
+                </View>
+                <View>
+                  <Text className="font-bold text-whiteBlue text-lg">
+                    Antecedentes Patológicos Personales
+                  </Text>
+                  <View className="gap-5 bg-whiteBlue p-2 rounded-xl">
+                    <View className="flex-row flex-wrap flex-1 gap-2">
+                      {personalPathologies.map((pathology, i) => (
+                        <Pressable
+                          key={i}
+                          disabled={!!formData.Id}
+                          onPress={() => {
+                            selectPathology(pathology.Id);
+                          }}
+                          className={`justify-center items-center active:bg-lightBlue px-5 border-2 border-blackBlue rounded-full ${
+                            formData.personalPathologieshistory?.some(
+                              (p: any) => p.Id === pathology.Id
+                            )
+                              ? "bg-blackBlue"
+                              : "bg-whiteBlue"
+                          }`}
+                        >
+                          <Text
+                            className={`font-semibold ${
+                              formData.personalPathologieshistory?.some(
+                                (p: any) => p.Id === pathology.Id
+                              )
+                                ? "text-whiteBlue"
+                                : "text-blackBlue"
+                            }`}
+                          >
+                            {pathology.name}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    <View className="flex-row justify-end items-end gap-2">
+                      {newPathologyHabit.showPathologyTextInput && (
+                        <TextInput
+                          placeholder="Nueva Patología"
+                          placeholderTextColor={"gray"}
+                          value={newPathologyHabit.newPathology}
+                          onChangeText={(val) =>
+                            setNewPathologyHabit({
+                              ...newPathologyHabit,
+                              newPathology: val,
+                            })
+                          }
+                          className="flex-1 border rounded-xl text-blackBlue text-center"
+                        />
+                      )}
+                      {!formData.Id &&
+                        (!newPathologyHabit.showPathologyTextInput ? (
+                          <Pressable
+                            onPress={() => {
+                              setNewPathologyHabit({
+                                ...newPathologyHabit,
+                                showPathologyTextInput:
+                                  !newPathologyHabit.showPathologyTextInput,
+                              });
+                            }}
+                            className="flex-row justify-center items-center gap-2 bg-darkBlue active:bg-blackBlue p-1 rounded-lg w-1/4"
+                          >
+                            <PlusIcon size={24} color="#D6E8EE" />
+                            <Text className="text-whiteBlue">Otro</Text>
+                          </Pressable>
+                        ) : (
+                          <Pressable
+                            onPress={handlePostPathology}
+                            className="flex-row justify-center items-center gap-2 bg-darkBlue active:bg-blackBlue p-1 rounded-lg w-1/4"
+                          >
+                            <Text className="text-whiteBlue">Añadir</Text>
+                          </Pressable>
+                        ))}
+                    </View>
+                  </View>
+                </View>
+                <View className="flex-row justify-between items-center gap-3">
+                  <Text className="flex-1 font-semibold text-whiteBlue">
+                    Alergias
+                  </Text>
+                  {formData.Id ? (
+                    <TextInput
+                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
+                      value={formData.allergies ?? "-"}
+                      editable={false}
+                    />
+                  ) : (
+                    <OptionalTextInput
+                      placeholder="Ej. Maní"
+                      isReadOnly={formData.Id}
+                      value={formData.allergies}
+                      setValue={(val) =>
+                        setFormData({ ...formData, allergies: val })
+                      }
+                    />
+                  )}
+                </View>
+                <View className="flex-row justify-between items-center gap-3">
+                  <Text className="flex-1 font-semibold text-whiteBlue">
+                    Embarazo
+                  </Text>
+                  {formData.Id ? (
+                    <TextInput
+                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
+                      value={formData.pregnantMonths ?? "-"}
+                      editable={false}
+                    />
+                  ) : (
+                    <OptionalTextInput
+                      placeholder="Ej. 3 Meses"
+                      isReadOnly={formData.Id}
+                      value={formData.pregnantMonths}
+                      setValue={(val) =>
+                        setFormData({ ...formData, pregnantMonths: val })
+                      }
+                    />
+                  )}
+                </View>
+                <View className="flex-row justify-between items-center gap-3">
+                  <Text className="flex-1 font-semibold text-whiteBlue">
+                    Está en Tratamiento Médico?
+                  </Text>
+                  {formData.Id ? (
+                    <TextInput
+                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
+                      value={formData.medicalTreatment ?? "-"}
+                      editable={false}
+                    />
+                  ) : (
+                    <OptionalTextInput
+                      placeholder="Ej. ..."
+                      isReadOnly={formData.Id}
+                      value={formData.medicalTreatment}
+                      setValue={(val) =>
+                        setFormData({ ...formData, medicalTreatment: val })
+                      }
+                    />
+                  )}
+                </View>
+                <View className="flex-row justify-between items-center gap-3">
+                  <Text className="flex-1 font-semibold text-whiteBlue">
+                    Actualmente recibe algún medicamento?
+                  </Text>
+                  {formData.Id ? (
+                    <TextInput
+                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
+                      value={formData.takingMedicine ?? "-"}
+                      editable={false}
+                    />
+                  ) : (
+                    <OptionalTextInput
+                      placeholder="Ej. Aspirina"
+                      isReadOnly={formData.Id}
+                      value={formData.takingMedicine}
+                      setValue={(val) =>
+                        setFormData({ ...formData, takingMedicine: val })
+                      }
+                    />
+                  )}
+                </View>
+                <View className="flex-row justify-between items-center gap-3">
+                  <Text className="flex-1 font-semibold text-whiteBlue">
+                    Tuvo hemorragia después de una extracción dental?
+                  </Text>
+                  {formData.Id ? (
+                    <TextInput
+                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
+                      value={formData.hemorrhageType ?? "-"}
+                      editable={false}
+                    />
+                  ) : (
+                    <OptionalTextInput
+                      placeholder="Ej. Inmediata"
+                      isReadOnly={formData.Id}
+                      value={formData.hemorrhageType}
+                      setValue={(val) =>
+                        setFormData({
+                          ...formData,
+                          hemorrhageType: val,
+                        })
+                      }
+                    />
+                  )}
+                </View>
+              </GlassyBackground>
+
+              {/* INTRAORAL EXAMINATION */}
+              <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
+                <Text className="font-bold text-whiteBlue text-center">
+                  EXAMEN INTRAORAL
                 </Text>
-                <View className="gap-5 bg-whiteBlue p-2 rounded-xl">
-                  <View className="flex-row flex-wrap flex-1 justify-around gap-2">
-                    {/* Renderizar como componente con un .map() */}
-                    <Pressable className="justify-center items-center bg-whiteBlue px-5 border-2 border-blackBlue rounded-full">
-                      <Text className="font-semibold text-blackBlue">
-                        Anemia
+                <View>
+                  <Text className="font-semibold text-whiteBlue">ATM</Text>
+                  <TextInput
+                    readOnly={formData.Id}
+                    value={formData.tmj}
+                    onChangeText={(val) =>
+                      setFormData({ ...formData, tmj: val })
+                    }
+                    className="bg-whiteBlue rounded-xl text-center"
+                  />
+                </View>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">
+                    Ganglios Linfáticos
+                  </Text>
+                  <TextInput
+                    readOnly={formData.Id}
+                    value={formData.lymphNodes}
+                    onChangeText={(val) =>
+                      setFormData({ ...formData, lymphNodes: val })
+                    }
+                    className="bg-whiteBlue rounded-xl text-center"
+                  />
+                </View>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">
+                    Respiración
+                  </Text>
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      disabled={!!formData.Id}
+                      onPress={() =>
+                        setFormData({ ...formData, breathingType: "Nasal" })
+                      }
+                      className={`items-center py-1 border-2 rounded-full flex-1 ${
+                        formData.breathingType === ""
+                          ? `bg-whiteBlue border-blackBlue`
+                          : formData.breathingType === "Nasal"
+                          ? `bg-darkBlue border-whiteBlue`
+                          : `bg-whiteBlue/30 border-blackBlue`
+                      }`}
+                    >
+                      <Text
+                        className={`font-semibold ${
+                          formData.breathingType === "Nasal"
+                            ? `text-whiteBlue`
+                            : `text-blackBlue`
+                        }`}
+                      >
+                        Nasal
                       </Text>
                     </Pressable>
-                    {/*  */}
-                  </View>
-                  <View className="items-end">
-                    <Pressable className="flex-row justify-center items-center gap-2 bg-darkBlue active:bg-blackBlue p-1 rounded-lg w-1/4">
-                      <PlusIcon size={24} color="#D6E8EE" />
-                      <Text className="text-whiteBlue">Otro</Text>
+                    <Pressable
+                      disabled={!!formData.Id}
+                      onPress={() =>
+                        setFormData({ ...formData, breathingType: "Mouth" })
+                      }
+                      className={`items-center py-1 border-2 rounded-full flex-1 ${
+                        formData.breathingType === ""
+                          ? `bg-whiteBlue border-blackBlue`
+                          : formData.breathingType === "Mouth"
+                          ? `bg-darkBlue border-whiteBlue`
+                          : `bg-whiteBlue/30 border-blackBlue`
+                      }`}
+                    >
+                      <Text
+                        className={`font-semibold ${
+                          formData.breathingType === "Mouth"
+                            ? `text-whiteBlue`
+                            : `text-blackBlue`
+                        }`}
+                      >
+                        Bucal
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      disabled={!!formData.Id}
+                      onPress={() =>
+                        setFormData({
+                          ...formData,
+                          breathingType: "Oral-Nasal",
+                        })
+                      }
+                      className={`items-center py-1 border-2 rounded-full flex-1 ${
+                        formData.breathingType === ""
+                          ? `bg-whiteBlue border-blackBlue`
+                          : formData.breathingType === "Oral-Nasal"
+                          ? `bg-darkBlue border-whiteBlue`
+                          : `bg-whiteBlue/30 border-blackBlue`
+                      }`}
+                    >
+                      <Text
+                        className={`font-semibold ${
+                          formData.breathingType === "Oral-Nasal"
+                            ? `text-whiteBlue`
+                            : `text-blackBlue`
+                        }`}
+                      >
+                        Buconasal
+                      </Text>
                     </Pressable>
                   </View>
                 </View>
-              </View>
-              <View className="flex-row justify-between items-center gap-3">
-                <Text className="flex-1 font-semibold text-whiteBlue">
-                  Alergias
-                </Text>
-                <OptionalTextInput
-                  placeholder="Ej. Maní"
-                  value={formData.allergies}
-                  setValue={(val) =>
-                    setFormData({ ...formData, allergies: val })
-                  }
-                />
-              </View>
-              <View className="flex-row justify-between items-center gap-3">
-                <Text className="flex-1 font-semibold text-whiteBlue">
-                  Embarazo
-                </Text>
-                <OptionalTextInput
-                  placeholder="Ej. 3 Meses"
-                  value={formData.isPregnant}
-                  setValue={(val) =>
-                    setFormData({ ...formData, isPregnant: val })
-                  }
-                />
-              </View>
-              <View className="flex-row justify-between items-center gap-3">
-                <Text className="flex-1 font-semibold text-whiteBlue">
-                  Está en Tratamiento Médico?
-                </Text>
-                <OptionalTextInput
-                  placeholder="Ej. ..."
-                  value={formData.isInMedicalTreatment}
-                  setValue={(val) =>
-                    setFormData({ ...formData, isInMedicalTreatment: val })
-                  }
-                />
-              </View>
-              <View className="flex-row justify-between items-center gap-3">
-                <Text className="flex-1 font-semibold text-whiteBlue">
-                  Actualmente recibe algún medicamento?
-                </Text>
-                <OptionalTextInput
-                  placeholder="Ej. Aspirina"
-                  value={formData.isTakingMedicine}
-                  setValue={(val) =>
-                    setFormData({ ...formData, isTakingMedicine: val })
-                  }
-                />
-              </View>
-              <View className="flex-row justify-between items-center gap-3">
-                <Text className="flex-1 font-semibold text-whiteBlue">
-                  Tuvo hemorragia después de una extracción dental?
-                </Text>
-                <OptionalTextInput
-                  placeholder="Ej. Inmediata"
-                  className=""
-                  value={formData.hadHemorrhageAfterExtraction}
-                  setValue={(val) =>
-                    setFormData({
-                      ...formData,
-                      hadHemorrhageAfterExtraction: val,
-                    })
-                  }
-                />
-              </View>
-            </GlassyBackground>
-
-            {/* INTRAORAL EXAMINATION */}
-            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
-              <Text className="font-bold text-whiteBlue text-center">
-                EXAMEN INTRAORAL
-              </Text>
-              <View>
-                <Text className="font-semibold text-whiteBlue">ATM</Text>
-                <TextInput className="bg-whiteBlue rounded-xl text-center" />
-              </View>
-              <View>
-                <Text className="font-semibold text-whiteBlue">
-                  Ganglios Linfáticos
-                </Text>
-                <TextInput className="bg-whiteBlue rounded-xl text-center" />
-              </View>
-              <View>
-                <Text className="font-semibold text-whiteBlue">
-                  Respiración
-                </Text>
-                <View className="flex-row gap-2">
-                  <Pressable
-                    onPress={() =>
-                      setFormData({ ...formData, breathing: "Nasal" })
+                <View>
+                  <Text className="font-semibold text-whiteBlue">Otros</Text>
+                  <TextInput
+                    multiline
+                    numberOfLines={5}
+                    readOnly={formData.Id}
+                    value={formData.others}
+                    onChangeText={(val) =>
+                      setFormData({ ...formData, others: val })
                     }
-                    className={`items-center py-1 border-2 rounded-full flex-1 ${
-                      formData.breathing === ""
-                        ? `bg-whiteBlue border-blackBlue`
-                        : formData.breathing === "Nasal"
-                        ? `bg-darkBlue border-whiteBlue`
-                        : `bg-whiteBlue/30 border-blackBlue`
-                    }`}
-                  >
-                    <Text
-                      className={`font-semibold ${
-                        formData.breathing === "Nasal"
-                          ? `text-whiteBlue`
-                          : `text-blackBlue`
-                      }`}
-                    >
-                      Nasal
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() =>
-                      setFormData({ ...formData, breathing: "Mouth" })
-                    }
-                    className={`items-center py-1 border-2 rounded-full flex-1 ${
-                      formData.breathing === ""
-                        ? `bg-whiteBlue border-blackBlue`
-                        : formData.breathing === "Mouth"
-                        ? `bg-darkBlue border-whiteBlue`
-                        : `bg-whiteBlue/30 border-blackBlue`
-                    }`}
-                  >
-                    <Text
-                      className={`font-semibold ${
-                        formData.breathing === "Mouth"
-                          ? `text-whiteBlue`
-                          : `text-blackBlue`
-                      }`}
-                    >
-                      Bucal
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() =>
-                      setFormData({ ...formData, breathing: "Oral-Nasal" })
-                    }
-                    className={`items-center py-1 border-2 rounded-full flex-1 ${
-                      formData.breathing === ""
-                        ? `bg-whiteBlue border-blackBlue`
-                        : formData.breathing === "Oral-Nasal"
-                        ? `bg-darkBlue border-whiteBlue`
-                        : `bg-whiteBlue/30 border-blackBlue`
-                    }`}
-                  >
-                    <Text
-                      className={`font-semibold ${
-                        formData.breathing === "Oral-Nasal"
-                          ? `text-whiteBlue`
-                          : `text-blackBlue`
-                      }`}
-                    >
-                      Buconasal
-                    </Text>
-                  </Pressable>
+                    className="bg-whiteBlue p-2 rounded-xl h-24 text-blackBlue"
+                    style={{ textAlignVertical: "top" }}
+                  />
                 </View>
-              </View>
-              <View>
-                <Text className="font-semibold text-whiteBlue">Otros</Text>
-                <TextInput
-                  multiline
-                  numberOfLines={5}
-                  className="bg-whiteBlue p-2 rounded-xl h-24"
-                  style={{ textAlignVertical: "top" }}
-                />
-              </View>
-            </GlassyBackground>
+              </GlassyBackground>
 
-            {/* INTRAORAL EXAMINATION */}
-            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
-              <Text className="font-bold text-whiteBlue text-center">
-                EXAMEN INTRAORAL
-              </Text>
-              <View>
-                <Text className="font-semibold text-whiteBlue">Labios</Text>
-                <TextInput className="bg-whiteBlue rounded-xl text-center" />
-              </View>
-              <View>
-                <Text className="font-semibold text-whiteBlue">Lengua</Text>
-                <TextInput className="bg-whiteBlue rounded-xl text-center" />
-              </View>
-              <View>
-                <Text className="font-semibold text-whiteBlue">Paladar</Text>
-                <TextInput className="bg-whiteBlue rounded-xl text-center" />
-              </View>
-              <View>
-                <Text className="font-semibold text-whiteBlue">
-                  Piso de la Boca
+              {/* INTRAORAL EXAMINATION */}
+              <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
+                <Text className="font-bold text-whiteBlue text-center">
+                  EXAMEN INTRAORAL
                 </Text>
-                <TextInput className="bg-whiteBlue rounded-xl text-center" />
-              </View>
-              <View>
-                <Text className="font-semibold text-whiteBlue">
-                  Mucosa Yugal
-                </Text>
-                <TextInput className="bg-whiteBlue rounded-xl text-center" />
-              </View>
-              <View>
-                <Text className="font-semibold text-whiteBlue">Encías</Text>
-                <TextInput className="bg-whiteBlue rounded-xl text-center" />
-              </View>
-              <View className="flex-row justify-between gap-3">
-                <Text className="font-semibold text-whiteBlue">
-                  Utiliza Prótesis intraoral?
-                </Text>
-                <OptionalTextInput
-                  placeholder="..."
-                  value={formData.intraoralProsthesis}
-                  setValue={(val) =>
-                    setFormData({ ...formData, intraoralProsthesis: val })
-                  }
-                />
-              </View>
-            </GlassyBackground>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">Labios</Text>
+                  <TextInput
+                    readOnly={formData.Id}
+                    value={formData.lipsStatus}
+                    onChangeText={(val) => {
+                      setFormData({ ...formData, lipsStatus: val });
+                    }}
+                    className="bg-whiteBlue rounded-xl text-center"
+                  />
+                </View>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">Lengua</Text>
+                  <TextInput
+                    readOnly={formData.Id}
+                    value={formData.tongueStatus}
+                    onChangeText={(val) => {
+                      setFormData({ ...formData, tongueStatus: val });
+                    }}
+                    className="bg-whiteBlue rounded-xl text-center"
+                  />
+                </View>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">Paladar</Text>
+                  <TextInput
+                    readOnly={formData.Id}
+                    value={formData.palateStatus}
+                    onChangeText={(val) => {
+                      setFormData({ ...formData, palateStatus: val });
+                    }}
+                    className="bg-whiteBlue rounded-xl text-center"
+                  />
+                </View>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">
+                    Piso de la Boca
+                  </Text>
+                  <TextInput
+                    readOnly={formData.Id}
+                    value={formData.mouthFloorStatus}
+                    onChangeText={(val) => {
+                      setFormData({ ...formData, mouthFloorStatus: val });
+                    }}
+                    className="bg-whiteBlue rounded-xl text-center"
+                  />
+                </View>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">
+                    Mucosa Yugal
+                  </Text>
+                  <TextInput
+                    readOnly={formData.Id}
+                    value={formData.buccalMucousStatus}
+                    onChangeText={(val) => {
+                      setFormData({ ...formData, buccalMucousStatus: val });
+                    }}
+                    className="bg-whiteBlue rounded-xl text-center"
+                  />
+                </View>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">Encías</Text>
+                  <TextInput
+                    readOnly={formData.Id}
+                    value={formData.gumsStatus}
+                    onChangeText={(val) => {
+                      setFormData({ ...formData, gumsStatus: val });
+                    }}
+                    className="bg-whiteBlue rounded-xl text-center"
+                  />
+                </View>
+                <View className="flex-row justify-between gap-3">
+                  <Text className="font-semibold text-whiteBlue">
+                    Utiliza Prótesis intraoral?
+                  </Text>
+                  {formData.Id ? (
+                    <TextInput
+                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
+                      value={formData.prosthesisLocation ?? "-"}
+                      editable={false}
+                    />
+                  ) : (
+                    <OptionalTextInput
+                      placeholder="..."
+                      isReadOnly={formData.Id}
+                      value={formData.prosthesisLocation}
+                      setValue={(val) =>
+                        setFormData({ ...formData, prosthesisLocation: val })
+                      }
+                    />
+                  )}
+                </View>
+              </GlassyBackground>
 
-            {/* PATIENT'S ORAL HISTORY */}
-            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
-              <Text className="font-bold text-whiteBlue text-center">
-                ANTECEDENTES BUCODENTALES
-              </Text>
-              <View>
-                <Text className="font-semibold text-whiteBlue">
-                  Fecha de la última vez que visitó al odontólogo
+              {/* PATIENT'S ORAL HISTORY */}
+              <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
+                <Text className="font-bold text-whiteBlue text-center">
+                  ANTECEDENTES BUCODENTALES
                 </Text>
-                <TextInput className="bg-whiteBlue rounded-xl text-center" />
-              </View>
-              <View>
-                <Text className="font-semibold text-whiteBlue">Hábitos</Text>
-                <View className="bg-whiteBlue p-2 rounded-xl">
-                  <View className="flex-row flex-1">
-                    {/* Renderizar como componente con un .map() */}
-                    <Pressable className="justify-center items-center bg-whiteBlue px-5 border-2 border-blackBlue rounded-full">
-                      <Text className="font-semibold text-blackBlue">Fuma</Text>
-                    </Pressable>
-                    {/*  */}
-                  </View>
-                  <View className="items-end">
-                    <Pressable className="flex-row justify-center items-center gap-2 bg-darkBlue active:bg-blackBlue p-1 rounded-lg w-1/4">
-                      <PlusIcon size={24} color="#D6E8EE" />
-                      <Text className="text-whiteBlue">Otro</Text>
-                    </Pressable>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">
+                    Fecha de la última vez que visitó al odontólogo
+                  </Text>
+                  <TextInput
+                    readOnly={formData.Id}
+                    value={formData.lastTimeVisitedDentist}
+                    onChangeText={(val) => {
+                      setFormData({ ...formData, lastTimeVisitedDentist: val });
+                    }}
+                    className="bg-whiteBlue rounded-xl text-center"
+                  />
+                </View>
+                <View>
+                  <Text className="font-semibold text-whiteBlue">Hábitos</Text>
+                  <View className="gap-3 bg-whiteBlue p-2 rounded-xl">
+                    <View className="flex-row flex-wrap flex-1 gap-2">
+                      {habits.map((habit, i) => (
+                        <Pressable
+                          key={i}
+                          disabled={!!formData.Id}
+                          onPress={() => {
+                            selectHabit(habit.Id);
+                          }}
+                          className={`justify-center items-center px-5 border-2 border-blackBlue rounded-full ${
+                            formData.habits?.some((p: any) => p.Id === habit.Id)
+                              ? "bg-blackBlue"
+                              : "bg-whiteBlue"
+                          }`}
+                        >
+                          <Text
+                            className={`font-semibold text-blackBlue ${
+                              formData.habits?.some(
+                                (p: any) => p.Id === habit.Id
+                              )
+                                ? "text-whiteBlue"
+                                : "text-blackBlue"
+                            }`}
+                          >
+                            {habit.name}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    <View className="flex-row justify-end items-end gap-2">
+                      {newPathologyHabit.showHabitTextInput && (
+                        <TextInput
+                          placeholder="Nuevo Hábito"
+                          placeholderTextColor={"gray"}
+                          value={newPathologyHabit.newHabit}
+                          onChangeText={(val) =>
+                            setNewPathologyHabit({
+                              ...newPathologyHabit,
+                              newHabit: val,
+                            })
+                          }
+                          className="flex-1 border rounded-xl text-blackBlue text-center"
+                        />
+                      )}
+                      {!formData.Id &&
+                        (!newPathologyHabit.showHabitTextInput ? (
+                          <Pressable
+                            onPress={() => {
+                              setNewPathologyHabit({
+                                ...newPathologyHabit,
+                                showHabitTextInput:
+                                  !newPathologyHabit.showHabitTextInput,
+                              });
+                            }}
+                            className="flex-row justify-center items-center gap-2 bg-darkBlue active:bg-blackBlue p-1 rounded-lg w-1/4"
+                          >
+                            <PlusIcon size={24} color="#D6E8EE" />
+                            <Text className="text-whiteBlue">Otro</Text>
+                          </Pressable>
+                        ) : (
+                          <Pressable
+                            onPress={handlePostHabit}
+                            className="flex-row justify-center items-center gap-2 bg-darkBlue active:bg-blackBlue p-1 rounded-lg w-1/4"
+                          >
+                            <Text className="text-whiteBlue">Añadir</Text>
+                          </Pressable>
+                        ))}
+                    </View>
                   </View>
                 </View>
-              </View>
-            </GlassyBackground>
+              </GlassyBackground>
 
-            {/* ORAL HYGIENE HISTORY */}
-            <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
-              <Text className="font-bold text-whiteBlue text-center">
-                ANTECEDENTES DE HIGIENE BUCAL
-              </Text>
-              <View className="flex-row justify-between items-center gap-3">
-                <Text className="font-semibold text-whiteBlue">
-                  Utiliza cepillo dental?
+              {/* ORAL HYGIENE HISTORY */}
+              <GlassyBackground className="gap-2 p-3 rounded-xl w-full">
+                <Text className="font-bold text-whiteBlue text-center">
+                  ANTECEDENTES DE HIGIENE BUCAL
                 </Text>
-                <OptionalTextInput
-                  placeholder="Frecuencia"
-                  value={formData.teethBrushFrecuency}
-                  setValue={(val) =>
-                    setFormData({ ...formData, teethBrushFrecuency: val })
-                  }
-                />
-              </View>
-              <View className="flex-row justify-between items-center">
-                <Text className="font-semibold text-whiteBlue">
-                  Utiliza hilo dental?
-                </Text>
-                <YesNoRadio
-                  value={formData.usesDentalFloss as "Y" | "N"}
-                  onChange={(val) =>
-                    setFormData({ ...formData, usesDentalFloss: val })
-                  }
-                />
-              </View>
-              <View className="flex-row justify-between items-center">
-                <Text className="font-semibold text-whiteBlue">
-                  Utiliza enjuague bucal?
-                </Text>
-                <YesNoRadio
-                  value={formData.usesMouthWash as "Y" | "N"}
-                  onChange={(val) =>
-                    setFormData({ ...formData, usesMouthWash: val })
-                  }
-                />
-              </View>
-              <View className="flex-row justify-between items-center">
-                <Text className="font-semibold text-whiteBlue">
-                  Durante el cepillado dental,{`\n`}le sangran las encías?
-                </Text>
-                <YesNoRadio
-                  value={formData.hasBleedingGums as "Y" | "N"}
-                  onChange={(val) =>
-                    setFormData({ ...formData, hasBleedingGums: val })
-                  }
-                />
-              </View>
-              <View className="gap-2">
-                <Text className="font-semibold text-whiteBlue">
-                  Higiene Bucodental
-                </Text>
-                <View className="flex-row gap-2">
-                  <Pressable
-                    onPress={() =>
-                      setFormData({ ...formData, oralStatus: "Good" })
-                    }
-                    className={`items-center py-1 border-2 rounded-full flex-1 ${
-                      formData.oralStatus === ""
-                        ? `bg-whiteBlue border-blackBlue`
-                        : formData.oralStatus === "Good"
-                        ? `bg-blackBlue border-whiteBlue`
-                        : `bg-whiteBlue/30 border-blackBlue`
-                    }`}
-                  >
-                    <Text
-                      className={`font-semibold ${
-                        formData.oralStatus === "Good"
-                          ? `text-whiteBlue`
-                          : `text-blackBlue`
-                      }`}
-                    >
-                      Buena
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() =>
-                      setFormData({ ...formData, oralStatus: "Regular" })
-                    }
-                    className={`items-center py-1 border-2 rounded-full flex-1 ${
-                      formData.oralStatus === ""
-                        ? `bg-whiteBlue border-blackBlue`
-                        : formData.oralStatus === "Regular"
-                        ? `bg-blackBlue border-whiteBlue`
-                        : `bg-whiteBlue/30 border-blackBlue`
-                    }`}
-                  >
-                    <Text
-                      className={`font-semibold ${
-                        formData.oralStatus === "Regular"
-                          ? `text-whiteBlue`
-                          : `text-blackBlue`
-                      }`}
-                    >
-                      Regular
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() =>
-                      setFormData({ ...formData, oralStatus: "Bad" })
-                    }
-                    className={`items-center py-1 border-2 rounded-full flex-1 ${
-                      formData.oralStatus === ""
-                        ? `bg-whiteBlue border-blackBlue`
-                        : formData.oralStatus === "Bad"
-                        ? `bg-blackBlue border-whiteBlue`
-                        : `bg-whiteBlue/30 border-blackBlue`
-                    }`}
-                  >
-                    <Text
-                      className={`font-semibold ${
-                        formData.oralStatus === "Bad"
-                          ? `text-whiteBlue`
-                          : `text-blackBlue`
-                      }`}
-                    >
-                      Mala
-                    </Text>
-                  </Pressable>
+                <View className="flex-row justify-between items-center gap-3">
+                  <Text className="font-semibold text-whiteBlue">
+                    Utiliza cepillo dental?
+                  </Text>
+                  {formData.Id ? (
+                    <TextInput
+                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
+                      value={formData.toothBrushingFrequency ?? "-"}
+                      editable={false}
+                    />
+                  ) : (
+                    <OptionalTextInput
+                      placeholder="Frecuencia"
+                      isReadOnly={formData.Id}
+                      value={formData.toothBrushingFrequency}
+                      setValue={(val) =>
+                        setFormData({
+                          ...formData,
+                          toothBrushingFrequency: val,
+                        })
+                      }
+                    />
+                  )}
                 </View>
-              </View>
-            </GlassyBackground>
+                <View className="flex-row justify-between items-center">
+                  <Text className="font-semibold text-whiteBlue">
+                    Utiliza hilo dental?
+                  </Text>
+                  <YesNoRadio
+                    isDisabled={!!formData.Id}
+                    value={formData.useDentalFloss}
+                    onChange={(val) =>
+                      setFormData({ ...formData, useDentalFloss: val })
+                    }
+                  />
+                </View>
+                <View className="flex-row justify-between items-center">
+                  <Text className="font-semibold text-whiteBlue">
+                    Utiliza enjuague bucal?
+                  </Text>
+                  <YesNoRadio
+                    isDisabled={!!formData.Id}
+                    value={formData.useMouthWash}
+                    onChange={(val) =>
+                      setFormData({ ...formData, useMouthWash: val })
+                    }
+                  />
+                </View>
+                <View className="flex-row justify-between items-center">
+                  <Text className="font-semibold text-whiteBlue">
+                    Durante el cepillado dental,{`\n`}le sangran las encías?
+                  </Text>
+                  <YesNoRadio
+                    isDisabled={!!formData.Id}
+                    value={formData.hasBleedOnToothBrushing}
+                    onChange={(val) =>
+                      setFormData({
+                        ...formData,
+                        hasBleedOnToothBrushing: val,
+                      })
+                    }
+                  />
+                </View>
+                <View className="gap-2">
+                  <Text className="font-semibold text-whiteBlue">
+                    Higiene Bucodental
+                  </Text>
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      disabled={!!formData.Id}
+                      onPress={() =>
+                        setFormData({ ...formData, oralHygiene: "Good" })
+                      }
+                      className={`items-center py-1 border-2 rounded-full flex-1 ${
+                        formData.oralHygiene === ""
+                          ? `bg-whiteBlue border-blackBlue`
+                          : formData.oralHygiene === "Good"
+                          ? `bg-blackBlue border-whiteBlue`
+                          : `bg-whiteBlue/30 border-blackBlue`
+                      }`}
+                    >
+                      <Text
+                        className={`font-semibold ${
+                          formData.oralHygiene === "Good"
+                            ? `text-whiteBlue`
+                            : `text-blackBlue`
+                        }`}
+                      >
+                        Buena
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      disabled={!!formData.Id}
+                      onPress={() =>
+                        setFormData({ ...formData, oralHygiene: "Regular" })
+                      }
+                      className={`items-center py-1 border-2 rounded-full flex-1 ${
+                        formData.oralHygiene === ""
+                          ? `bg-whiteBlue border-blackBlue`
+                          : formData.oralHygiene === "Regular"
+                          ? `bg-blackBlue border-whiteBlue`
+                          : `bg-whiteBlue/30 border-blackBlue`
+                      }`}
+                    >
+                      <Text
+                        className={`font-semibold ${
+                          formData.oralHygiene === "Regular"
+                            ? `text-whiteBlue`
+                            : `text-blackBlue`
+                        }`}
+                      >
+                        Regular
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      disabled={!!formData.Id}
+                      onPress={() =>
+                        setFormData({ ...formData, oralHygiene: "Bad" })
+                      }
+                      className={`items-center py-1 border-2 rounded-full flex-1 ${
+                        formData.oralHygiene === ""
+                          ? `bg-whiteBlue border-blackBlue`
+                          : formData.oralHygiene === "Bad"
+                          ? `bg-blackBlue border-whiteBlue`
+                          : `bg-whiteBlue/30 border-blackBlue`
+                      }`}
+                    >
+                      <Text
+                        className={`font-semibold ${
+                          formData.oralHygiene === "Bad"
+                            ? `text-whiteBlue`
+                            : `text-blackBlue`
+                        }`}
+                      >
+                        Mala
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </GlassyBackground>
 
-            {/* SAVE BUTTON */}
-            <View className="items-center">
-              <Pressable className="items-center bg-blackBlue active:bg-pureBlue p-2 border border-whiteBlue rounded-full w-2/3">
-                <Text className="font-bold text-whiteBlue text-xl">
-                  Guardar
-                </Text>
-              </Pressable>
+              {/* SAVE-DELETE BUTTONS */}
+              <View className="items-center">
+                {!formData.Id ? (
+                  <Pressable
+                    onPress={handlePostForm}
+                    disabled={isPosting}
+                    className="items-center bg-blackBlue active:bg-pureBlue p-2 border border-whiteBlue rounded-full w-2/3"
+                  >
+                    {isPosting ? (
+                      <Loading className="flex-1" size={24} />
+                    ) : (
+                      <Text className="font-bold text-whiteBlue text-xl">
+                        Guardar
+                      </Text>
+                    )}
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    className="items-center bg-red-700 active:bg-red-600 px-2 py-1 border border-whiteBlue rounded-full w-2/3"
+                    onPress={() => {
+                      DeleteAlertMessage(
+                        "Confirmar Eliminación",
+                        `¿Está seguro de eliminar el registro?`,
+                        "Eliminar",
+                        `/medical-history/${formData.Id}`,
+                        "No se pudo eliminar la historia clínica. Inténtalo de nuevo.",
+                        "DELETE",
+                        `/(protected)/patientProfile/[id]` as RelativePathString,
+                        { id: patientId.toString() }
+                      );
+                    }}
+                  >
+                    <Text className="font-semibold text-whiteBlue text-lg">
+                      Eliminar Historia Clínica
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
-          </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>

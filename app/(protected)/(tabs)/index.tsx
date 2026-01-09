@@ -1,10 +1,30 @@
 import AnimatedArc from "@/components/animatedArc";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Index() {
+  const [summary, setSummary] = useState(0);
+  const fetchAppointmentsSummary = useCallback(async () => {
+    try {
+      const data = await fetch(`${apiUrl}/appointments/summary`).then((res) =>
+        res.text()
+      );
+      setSummary(parseInt(data, 10));
+    } catch (e) {
+      console.error("Error getting appointments summary:", e);
+    }
+  }, []);
+  const onRefresh = useCallback(async () => {
+    await fetchAppointmentsSummary();
+  }, [fetchAppointmentsSummary]);
+  useEffect(() => {
+    onRefresh();
+  }, [onRefresh]);
+
   return (
     <>
       <StatusBar barStyle={"light-content"} />
@@ -26,8 +46,10 @@ export default function Index() {
           <View className="flex-1 items-center gap-3 w-full">
             {/* Banner */}
             <AnimatedArc
-              number={999}
-              text={`Citas Programadas ${`\n`} para el día de hoy`}
+              number={summary}
+              text={`Cita${summary !== 1 ? `s` : ``} Programada${
+                summary !== 1 ? `s` : ``
+              } ${`\n`} para el día de hoy`}
               duration={1000}
               delay={250}
             />

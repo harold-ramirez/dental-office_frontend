@@ -1,6 +1,7 @@
 import { DeleteAlertMessage } from "@/components/alertMessage";
 import {
   CakeIcon,
+  DocumentIcon,
   EditIcon,
   FemaleIcon,
   HouseIcon,
@@ -107,13 +108,27 @@ export default function PatientProfile() {
 
   //sections api calls
   const [images, setImages] = useState<MedicalImageDto[]>([]);
+  const [medicalHistories, setMedicalHistories] = useState<
+    { registerDate: string }[]
+  >([]);
   const fetchAllPatientImages = useCallback(async () => {
     try {
       const endpoint = await fetch(`${apiUrl}/images/${id}`);
       const data = await endpoint.json();
-      setImages(data.length > 3 ? data.slice(0, 3) : data);
+      setImages(data);
     } catch (e) {
       console.error("Error fetching images:", e);
+    }
+  }, [apiUrl, id]);
+
+  const fetchMedicalHistories = useCallback(async () => {
+    try {
+      const data = await fetch(`${apiUrl}/medical-history/preview/${id}`).then(
+        (res) => res.json()
+      );
+      setMedicalHistories(data);
+    } catch (e) {
+      console.error("Error fetching medical histories:", e);
     }
   }, [apiUrl, id]);
 
@@ -121,8 +136,9 @@ export default function PatientProfile() {
     setRefreshing(true);
     await fetchPatient();
     await fetchAllPatientImages();
+    await fetchMedicalHistories();
     setRefreshing(false);
-  }, [fetchPatient, fetchAllPatientImages]);
+  }, [fetchPatient, fetchAllPatientImages, fetchMedicalHistories]);
   useEffect(() => {
     onRefresh();
   }, [onRefresh]);
@@ -155,12 +171,13 @@ export default function PatientProfile() {
           className="top-0 right-0 bottom-0 left-0 absolute"
         />
         <ScrollView
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
           className="w-full"
         >
-          <View className="flex-1 bg-lightBlue p-3 border-4 border-blackBlue rounded-2xl w-full">
+          <View className="flex-1 bg-lightBlue p-3 rounded-2xl w-full">
             <View className="flex-row gap-3 mb-5">
               <View className="items-center gap-2">
                 {/* Profile Photo */}
@@ -237,7 +254,7 @@ export default function PatientProfile() {
                 <View className="flex-row items-center gap-2">
                   <CakeIcon size={18} color="#02457A" />
                   <Text className="text-blackBlue">
-                    {new Date(patient.birthdate).toLocaleDateString("es-ES")}
+                    {new Date(patient.birthdate).toLocaleDateString("es-BO")}
                     {" - "}
                     {age} años
                   </Text>
@@ -276,7 +293,50 @@ export default function PatientProfile() {
                 <RightArrowIcon color="#001B48" />
               </View>
             </Link>
-            <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
+            <View className="flex-row justify-center items-center gap-2 bg-whiteBlue mb-3 rounded-md w-full h-32">
+              {medicalHistories.slice(0, 3).map((history, i) => {
+                if (i === 2 && medicalHistories.length > 2) {
+                  return (
+                    <Link
+                      key={i}
+                      href={{
+                        pathname: "/medicalHistory/[patientId]",
+                        params: { patientId: id.toString() },
+                      }}
+                    >
+                      <View className="w-[100px] h-[100px]">
+                        <View className="justify-center items-center p-1 border border-blackBlue rounded-md w-[100px] h-[100px]">
+                          <DocumentIcon color="#001B48" size={32} />
+                          <Text className="text-blackBlue">
+                            {new Date(history.registerDate).toLocaleDateString(
+                              "es-BO"
+                            )}
+                          </Text>
+                        </View>
+                        <View className="absolute justify-center items-center bg-blackBlue/75 w-[100px] h-[100px]">
+                          <Text className="font-semibold text-whiteBlue text-3xl">
+                            +{medicalHistories.length - 2}
+                          </Text>
+                        </View>
+                      </View>
+                    </Link>
+                  );
+                }
+                return (
+                  <View
+                    key={i}
+                    className="justify-center items-center p-1 border border-blackBlue rounded-md w-[100px] h-[100px]"
+                  >
+                    <DocumentIcon color="#001B48" size={32} />
+                    <Text className="text-blackBlue">
+                      {new Date(history.registerDate).toLocaleDateString(
+                        "es-BO"
+                      )}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
 
             {/* Odontogram */}
             <Link
@@ -345,11 +405,8 @@ export default function PatientProfile() {
               </View>
             </Link>
             <View className="flex-row justify-center items-center gap-2 bg-whiteBlue mb-3 rounded-md w-full h-32">
-              {images.map((img) => {
-                if (
-                  img.Id === images[images.length - 1].Id &&
-                  images.length > 2
-                ) {
+              {images.slice(0, 3).map((img, i) => {
+                if (i === 2 && images.length > 2) {
                   return (
                     <Link
                       key={img.Id}
@@ -376,7 +433,7 @@ export default function PatientProfile() {
                 return (
                   <Image
                     source={{ uri: `${apiUrl}/uploads/${img.filename}` }}
-                    key={img.Id}
+                    key={i}
                     width={100}
                     height={100}
                   />
@@ -399,6 +456,7 @@ export default function PatientProfile() {
                   "Eliminar",
                   `/patients/${id}`,
                   "No se pudo eliminar el paciente. Inténtalo de nuevo.",
+                  "DELETE",
                   "/(tabs)/patients" as RelativePathString
                 );
               }}

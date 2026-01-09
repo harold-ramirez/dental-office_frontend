@@ -163,3 +163,7 @@ export const DeleteOutlineIcon = (props: any) => (
 export const LogoutIcon = (props: any) => (
   <MaterialCommunityIcons name="logout" size={24} color="black" {...props} />
 );
+
+export const DocumentIcon = (props: any) => (
+  <MaterialCommunityIcons name="file-document-outline" size={24} color="black" {...props} />
+);

@@ -120,6 +120,7 @@ export default function RequestCard({ ...props }: RequestCardProps) {
                   "Descartar",
                   `/appointment-requests/${props.request.Id}/1`,
                   "No se pudo descartar la solicitud. Inténtelo de nuevo.",
+                  "PATCH",
                   "/(tabs)/requests" as RelativePathString
                 );
               }}
