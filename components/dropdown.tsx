@@ -6,12 +6,15 @@ export default function DropdownComponent({
   className,
   data,
   search,
+  value,
+  setValue,
 }: {
   className?: string;
   data: { label: string; value: string }[];
   search?: boolean;
+  value: string,
+  setValue: (val: string) => void;
 }) {
-  const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
 
   return (

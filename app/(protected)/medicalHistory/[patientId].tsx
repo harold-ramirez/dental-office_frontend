@@ -295,12 +295,9 @@ export default function MedicalHistory() {
       console.error("Error fetching medical histories:", e);
     }
   }, [patientId]);
-  const onRefresh = useCallback(async () => {
-    await fetchAllMedicalHistories();
-  }, [fetchAllMedicalHistories]);
   useEffect(() => {
-    onRefresh();
-  }, [onRefresh]);
+    fetchAllMedicalHistories();
+  }, [fetchAllMedicalHistories]);
 
   return (
     <KeyboardAvoidingView

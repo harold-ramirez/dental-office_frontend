@@ -96,3 +96,17 @@ export interface MedicalHistoryDto {
   hasBleedOnToothBrushing: boolean;
   oralHygiene: string | null;
 }
+
+export interface DiagnosedProcedureDto {
+  Id?: number;
+  description: string | null;
+  totalCost: number | null;
+  Treatment:{
+    Id: number;
+    name: string;
+    description: string | null;
+  };
+  totalPieces: number;
+  registerDate: string;
+  updateDate?: string;
+}

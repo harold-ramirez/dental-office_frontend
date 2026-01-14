@@ -108,6 +108,7 @@ export default function PatientProfile() {
 
   //sections api calls
   const [images, setImages] = useState<MedicalImageDto[]>([]);
+  const [treatments, setTreatments] = useState<any[]>([]);
   const [medicalHistories, setMedicalHistories] = useState<
     { registerDate: string }[]
   >([]);
@@ -132,13 +133,30 @@ export default function PatientProfile() {
     }
   }, [apiUrl, id]);
 
+  const fetchTreatments = useCallback(async () => {
+    try {
+      const data = await fetch(
+        `${apiUrl}/diagnosed-procedure/${id}/preview`
+      ).then((res) => res.json());
+      setTreatments(data);
+    } catch (e) {
+      console.error("Error fetching Treatments:", e);
+    }
+  }, [apiUrl, id]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchPatient();
     await fetchAllPatientImages();
     await fetchMedicalHistories();
+    await fetchTreatments();
     setRefreshing(false);
-  }, [fetchPatient, fetchAllPatientImages, fetchMedicalHistories]);
+  }, [
+    fetchPatient,
+    fetchAllPatientImages,
+    fetchMedicalHistories,
+    fetchTreatments,
+  ]);
   useEffect(() => {
     onRefresh();
   }, [onRefresh]);
@@ -370,7 +388,28 @@ export default function PatientProfile() {
                 <RightArrowIcon color="#001B48" />
               </View>
             </Link>
-            <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
+            <View className="bg-whiteBlue mb-3 p-3 rounded-md w-full h-32">
+              {treatments.length === 0 ? (
+                <Text className="w-full text-blackBlue text-center italic">
+                  No se tiene registrado ningún tratamiento realizado a este
+                  paciente
+                </Text>
+              ) : (
+                treatments.slice(0, 5).map((treatment) => (
+                  <View key={treatment.Id} className="flex-row">
+                    <Text className="text-blackBlue">
+                      {treatment.treatment.name}
+                    </Text>
+                    <View className="flex-1 mx-2 mb-1 border-blackBlue border-b border-dotted" />
+                    <Text className="text-blackBlue">
+                      {new Date(treatment.registerDate).toLocaleDateString(
+                        "es-BO"
+                      )}
+                    </Text>
+                  </View>
+                ))
+              )}
+            </View>
 
             {/* Appointments History */}
             <Link

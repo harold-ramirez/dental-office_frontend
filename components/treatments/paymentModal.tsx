@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -8,13 +9,63 @@ import {
   View,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
-export default function PaymentModal({ onClose }: { onClose: () => void }) {
+interface Props {
+  onClose: () => void;
+  onRefresh: () => void;
+  procedureId: number;
+}
+
+export default function PaymentModal(props: Props) {
+  const { onClose, procedureId, onRefresh } = props;
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [newPayment, setNewPayment] = useState({
+  const [newPayment, setNewPayment] = useState<{
+    amount: number | "";
+    DiagnosedProcedure_Id: number;
+    AppUser_Id: number;
+    registerDate: string;
+  }>({
     amount: "",
-    date: new Date().toDateString(),
+    DiagnosedProcedure_Id: procedureId,
+    AppUser_Id: 1, // Hardcoded userID
+    registerDate: new Date().toISOString(),
   });
+
+  const handlePostPayment = async () => {
+    if (newPayment.amount === "") return;
+    try {
+      const res = await fetch(`${apiUrl}/payments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: newPayment.amount,
+          DiagnosedProcedure_Id: procedureId,
+          AppUser_Id: newPayment.AppUser_Id,
+          registerDate: newPayment.registerDate,
+        }),
+      });
+      if (res.ok) {
+        onRefresh();
+        onClose();
+      }
+    } catch (error) {
+      console.log("Error posting Payment:", error);
+    }
+  };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        onClose();
+        return true;
+      }
+    );
+    return () => backHandler.remove();
+  }, [onClose]);
 
   return (
     <KeyboardAvoidingView
@@ -22,14 +73,8 @@ export default function PaymentModal({ onClose }: { onClose: () => void }) {
       keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       className="absolute justify-center items-center bg-black/75 w-full h-full"
     >
-      <Pressable
-        onPress={onClose}
-        className="absolute justify-center items-center bg-blackBlue/50 w-full h-full"
-      >
-        <Pressable
-          onPress={() => {}}
-          className="gap-2 bg-whiteBlue px-5 py-2 rounded-xl w-2/3"
-        >
+      <View className="absolute justify-center items-center bg-blackBlue/50 w-full h-full">
+        <View className="gap-2 bg-whiteBlue px-5 py-2 rounded-xl w-2/3">
           <Text className="font-bold text-blackBlue text-2xl text-center">
             Registrar Cuota
           </Text>
@@ -37,9 +82,10 @@ export default function PaymentModal({ onClose }: { onClose: () => void }) {
             <Text className="font-bold text-blackBlue">Monto:</Text>
             <TextInput
               keyboardType="decimal-pad"
-              value={newPayment.amount}
+              value={newPayment.amount.toString()}
+              placeholderTextColor={"gray"}
               onChangeText={(text) =>
-                setNewPayment({ ...newPayment, amount: text })
+                setNewPayment({ ...newPayment, amount: +text })
               }
               placeholder="123.50"
               className="flex-1 p-1 border border-blackBlue rounded-lg text-center"
@@ -53,14 +99,14 @@ export default function PaymentModal({ onClose }: { onClose: () => void }) {
               mode="date"
               open={showDatePicker}
               date={
-                newPayment.date
-                  ? new Date(newPayment.date)
+                newPayment.registerDate
+                  ? new Date(newPayment.registerDate)
                   : new Date(2000, 6, 1)
               }
               onConfirm={(date) => {
                 setNewPayment({
                   ...newPayment,
-                  date: date.toISOString(),
+                  registerDate: date.toISOString(),
                 });
                 setShowDatePicker(false);
               }}
@@ -75,19 +121,24 @@ export default function PaymentModal({ onClose }: { onClose: () => void }) {
               <TextInput
                 className="flex-1 bg-whiteBlue p-1 border rounded-md text-center"
                 value={
-                  newPayment.date
-                    ? new Date(newPayment.date).toLocaleDateString("es-BO")
+                  newPayment.registerDate
+                    ? new Date(newPayment.registerDate).toLocaleDateString(
+                        "es-BO"
+                      )
                     : ""
                 }
                 editable={false}
               />
             </Pressable>
           </View>
-          <Pressable className="justify-center items-center bg-darkBlue active:bg-blackBlue mt-5 p-2 rounded-full">
+          <Pressable
+            onPress={() => handlePostPayment()}
+            className="justify-center items-center bg-darkBlue active:bg-blackBlue mt-5 p-2 rounded-full"
+          >
             <Text className="font-semibold text-whiteBlue">Registrar</Text>
           </Pressable>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </KeyboardAvoidingView>
   );
 }

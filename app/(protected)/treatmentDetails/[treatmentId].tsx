@@ -2,13 +2,49 @@ import { PlusIcon } from "@/components/Icons";
 import PaymentModal from "@/components/treatments/paymentModal";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function TreatmentDetails() {
   const { treatmentId } = useLocalSearchParams();
   const [openModal, setOpenModal] = useState(false);
+  const [treatmentDetails, setTreatmentDetails] = useState<{
+    totalPaid: number;
+    totalDue: number;
+    description: string;
+    totalCost: number;
+    treatment: string;
+    registerDate: string;
+    totalPieces: number[];
+    payments: { Id: number; amount: number; registerDate: string }[];
+  }>({
+    totalPaid: 0,
+    totalDue: 0,
+    description: "",
+    totalCost: 0,
+    treatment: "",
+    registerDate: "",
+    totalPieces: [],
+    payments: [],
+  });
+
+  const fetchProcedures = useCallback(async () => {
+    try {
+      const data = await fetch(
+        `${apiUrl}/payments/procedure/${treatmentId}`
+      ).then((res) => res.json());
+      setTreatmentDetails(data);
+    } catch (error) {
+      console.log("Error fetching treatment Details:", error);
+    }
+  }, [treatmentId]);
+
+  useEffect(() => {
+    fetchProcedures();
+  }, [fetchProcedures]);
+
   return (
     <>
       <LinearGradient
@@ -37,18 +73,25 @@ export default function TreatmentDetails() {
         <View className="flex-1 items-end gap-3 w-full">
           <View className="items-center bg-whiteBlue p-2 rounded-lg w-full">
             <Text className="my-5 font-extrabold text-blackBlue text-4xl">
-              ORTODONCIA
+              {treatmentDetails.treatment}
+            </Text>
+            <Text className="italic mb-5 text-blackBlue">
+              {treatmentDetails.description}
             </Text>
             <View className="flex-row justify-between items-center w-full">
               <View className="items-center">
                 <Text className="font-bold text-blackBlue">Fecha Inicio:</Text>
-                <Text>01/01/2025</Text>
+                <Text>
+                  {new Date(treatmentDetails.registerDate).toLocaleDateString(
+                    "es-BO"
+                  )}
+                </Text>
               </View>
               <View className="flex-1 items-center">
                 <Text className="font-bold text-blackBlue">
                   Piezas Dentales:
                 </Text>
-                <Text>14 - 16 - 20</Text>
+                <Text>{treatmentDetails.totalPieces.join(" - ")}</Text>
               </View>
               <View className="flex-row">
                 <View className="items-end">
@@ -56,30 +99,42 @@ export default function TreatmentDetails() {
                   <Text className="font-bold text-blackBlue">Pagado: </Text>
                   <Text className="font-bold text-blackBlue">A Cuenta: </Text>
                 </View>
-                <View>
-                  <Text>XXXBs.</Text>
-                  <Text>XXXBs.</Text>
-                  <Text>XXXBs.</Text>
+                <View className="items-end">
+                  <Text>{treatmentDetails.totalCost}Bs.</Text>
+                  <Text>{treatmentDetails.totalPaid}Bs.</Text>
+                  <Text>{treatmentDetails.totalDue}Bs.</Text>
                 </View>
               </View>
             </View>
           </View>
-          <ScrollView className="flex-1 border w-full">
+          <ScrollView className="flex-1 w-full">
             <View className="flex-1 bg-whiteBlue p-3 rounded-lg w-full">
-              <View className="px-5 py-3 border-y border-blackBlue">
-                <View className="flex-row justify-between">
-                  <Text className="font-bold text-blackBlue text-lg">
-                    1ra Cuota:
-                  </Text>
-                  <Text className="text-lg">50Bs.</Text>
-                </View>
-                <View className="flex-row justify-between">
-                  <Text className="font-bold text-blackBlue text-lg">
-                    Fecha de Pago:
-                  </Text>
-                  <Text className="text-lg">10/05/2025</Text>
-                </View>
-              </View>
+              {treatmentDetails.payments.length === 0 ? (
+                <Text className="text-center italic text-blackBlue">
+                  No hay pagos registrados
+                </Text>
+              ) : (
+                treatmentDetails.payments.map((payment, i) => (
+                  <View key={i} className="px-5 py-3 border-y border-blackBlue">
+                    <View className="flex-row justify-between">
+                      <Text className="font-bold text-blackBlue text-lg">
+                        {i + 1}° Cuota:
+                      </Text>
+                      <Text className="text-lg">{payment.amount}Bs.</Text>
+                    </View>
+                    <View className="flex-row justify-between">
+                      <Text className="font-bold text-blackBlue text-lg">
+                        Fecha de Pago:
+                      </Text>
+                      <Text className="text-lg">
+                        {new Date(payment.registerDate).toLocaleDateString(
+                          "es-BO"
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              )}
             </View>
           </ScrollView>
           <Pressable
@@ -90,7 +145,13 @@ export default function TreatmentDetails() {
           </Pressable>
         </View>
       </SafeAreaView>
-      {openModal && <PaymentModal onClose={() => setOpenModal(false)} />}
+      {openModal && (
+        <PaymentModal
+          onRefresh={fetchProcedures}
+          procedureId={+treatmentId}
+          onClose={() => setOpenModal(false)}
+        />
+      )}
     </>
   );
 }

@@ -1,15 +1,33 @@
 import { PlusIcon, UserCircleIcon } from "@/components/Icons";
 import TreatmentCard from "@/components/treatments/treatmentCard";
 import TreatmentModal from "@/components/treatments/treatmentModal";
+import { DiagnosedProcedureDto } from "@/interfaces/interfaces";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Treatments() {
   const { patientId } = useLocalSearchParams();
   const [showModal, setShowModal] = useState(false);
+  const [procedures, setProcedures] = useState<DiagnosedProcedureDto[]>([]);
+
+  const fetchProcedures = useCallback(async () => {
+    try {
+      const data = await fetch(
+        `${apiUrl}/diagnosed-procedure/${patientId}`
+      ).then((res) => res.json());
+      setProcedures(data);
+    } catch (error) {
+      console.log("Error fetching Diagnosed Procedures:", error);
+    }
+  }, [patientId]);
+
+  useEffect(() => {
+    fetchProcedures();
+  }, [fetchProcedures]);
 
   return (
     <>
@@ -38,8 +56,13 @@ export default function Treatments() {
         />
         <View className="flex-1 items-center bg-whiteBlue p-2 rounded-xl w-full">
           <UserCircleIcon size={100} color="#02457A" />
-          <View className="flex-1 w-full mt-5">
-            <TreatmentCard treatmentId="123" />
+          <Text className="text-blackBlue text-lg mt-5 mb-2 w-full font-semibold">
+            Tratamientos recientes:
+          </Text>
+          <View className="flex-1 w-full gap-3">
+            {procedures.map((procedure, i) => (
+              <TreatmentCard procedure={procedure} key={i} />
+            ))}
           </View>
           <Pressable
             onPress={() => setShowModal(true)}
@@ -52,7 +75,12 @@ export default function Treatments() {
           </Pressable>
         </View>
       </SafeAreaView>
-      {showModal && <TreatmentModal onClose={() => setShowModal(false)} />}
+      {showModal && (
+        <TreatmentModal
+          patientId={+patientId}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </>
   );
 }
