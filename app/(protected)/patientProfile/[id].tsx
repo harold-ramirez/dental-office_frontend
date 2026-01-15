@@ -109,6 +109,9 @@ export default function PatientProfile() {
   //sections api calls
   const [images, setImages] = useState<MedicalImageDto[]>([]);
   const [treatments, setTreatments] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<
+    { dateHour: string; treatment: string | null }[]
+  >([]);
   const [medicalHistories, setMedicalHistories] = useState<
     { registerDate: string }[]
   >([]);
@@ -144,18 +147,31 @@ export default function PatientProfile() {
     }
   }, [apiUrl, id]);
 
+  const fetchAppointments = useCallback(async () => {
+    try {
+      const data = await fetch(`${apiUrl}/appointments/preview/${id}`).then(
+        (res) => res.json()
+      );
+      setAppointments(data);
+    } catch (e) {
+      console.error("Error fetching Appointments:", e);
+    }
+  }, [apiUrl, id]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchPatient();
     await fetchAllPatientImages();
     await fetchMedicalHistories();
     await fetchTreatments();
+    await fetchAppointments();
     setRefreshing(false);
   }, [
     fetchPatient,
     fetchAllPatientImages,
     fetchMedicalHistories,
     fetchTreatments,
+    fetchAppointments,
   ]);
   useEffect(() => {
     onRefresh();
@@ -388,14 +404,14 @@ export default function PatientProfile() {
                 <RightArrowIcon color="#001B48" />
               </View>
             </Link>
-            <View className="bg-whiteBlue mb-3 p-3 rounded-md w-full h-32">
+            <View className="bg-whiteBlue mb-3 p-3 rounded-md w-full h-32 overflow-hidden">
               {treatments.length === 0 ? (
                 <Text className="w-full text-blackBlue text-center italic">
                   No se tiene registrado ningún tratamiento realizado a este
                   paciente
                 </Text>
               ) : (
-                treatments.slice(0, 5).map((treatment) => (
+                treatments.map((treatment) => (
                   <View key={treatment.Id} className="flex-row">
                     <Text className="text-blackBlue">
                       {treatment.treatment.name}
@@ -414,8 +430,17 @@ export default function PatientProfile() {
             {/* Appointments History */}
             <Link
               href={{
-                pathname: "./#",
-                params: { patientId: id.toString() },
+                pathname: "/(protected)/appointmentHistory/[patientId]",
+                params: {
+                  patientId: id.toString(),
+                  patientName: [
+                    patient?.name,
+                    patient?.paternalSurname,
+                    patient?.maternalSurname,
+                  ]
+                    .filter(Boolean)
+                    .join(" "),
+                },
               }}
               className="active:bg-blackBlue/30 py-1 rounded-md"
             >
@@ -426,7 +451,36 @@ export default function PatientProfile() {
                 <RightArrowIcon color="#001B48" />
               </View>
             </Link>
-            <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
+            <View className="bg-whiteBlue mb-3 px-3 pt-1 rounded-md w-full h-32 overflow-hidden">
+              {appointments.length === 0 ? (
+                <Text className="w-full text-blackBlue text-center italic">
+                  No se tiene registrado ninguna cita de este paciente
+                </Text>
+              ) : (
+                appointments.map((appointment, i) => (
+                  <View key={i} className="flex-row justify-between gap-1">
+                    <Text className="text-blackBlue text-left">
+                      {new Date(appointment.dateHour).toLocaleDateString(
+                        "es-BO",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "2-digit",
+                        }
+                      )}
+                    </Text>
+                    <View className="flex-1 border-blackBlue border-b border-dotted" />
+                    <Text
+                      className={`text-center text-blackBlue ${
+                        appointment.treatment ?? `italic`
+                      }`}
+                    >
+                      {appointment.treatment ?? "Sin tratamiento"}
+                    </Text>
+                  </View>
+                ))
+              )}
+            </View>
 
             {/* Medical Images */}
             <Link

@@ -22,9 +22,9 @@ export default function DayScheduleDetails() {
   const [appointment, setAppoinment] = useState({
     dateHour: new Date(),
     AppointmentRequest_Id: null,
-    DiagnosedProcedure_Id: null,
-    Patient_Id: null,
-    minutesDuration: null,
+    DiagnosedProcedure_Id: 0,
+    Patient_Id: 0,
+    minutesDuration: 0,
     AppUser_Id: 1, //Hardcoded
   });
   const date = selectedDate ? new Date(selectedDate) : null;
@@ -89,7 +89,14 @@ export default function DayScheduleDetails() {
               Paciente:
             </Text>
             <Suspense fallback={<View>no</View>}>
-              <DropdownComponent className="flex-1" data={patientsList} />
+              <DropdownComponent
+                className="flex-1"
+                data={patientsList}
+                value={appointment.Patient_Id.toString()}
+                setValue={(val) => {
+                  setAppoinment({ ...appointment, Patient_Id: +val });
+                }}
+              />
             </Suspense>
           </View>
           <View className="flex-row justify-evenly items-center w-full h-14">
@@ -97,7 +104,17 @@ export default function DayScheduleDetails() {
               Tratamiento:
             </Text>
             <Suspense fallback={<View>no</View>}>
-              <DropdownComponent className="flex-1" data={treatmentsList} />
+              <DropdownComponent
+                className="flex-1"
+                data={treatmentsList}
+                value={appointment.DiagnosedProcedure_Id.toString()}
+                setValue={(val) => {
+                  setAppoinment({
+                    ...appointment,
+                    DiagnosedProcedure_Id: +val,
+                  });
+                }}
+              />
             </Suspense>
           </View>
 
@@ -138,6 +155,10 @@ export default function DayScheduleDetails() {
                 { label: "2 horas y media", value: "150" },
                 { label: "3 horas", value: "180" },
               ]}
+              value={appointment.minutesDuration.toString()}
+              setValue={(val) => {
+                setAppoinment({ ...appointment, minutesDuration: +val });
+              }}
             />
           </View>
 

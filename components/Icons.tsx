@@ -167,3 +167,7 @@ export const LogoutIcon = (props: any) => (
 export const DocumentIcon = (props: any) => (
   <MaterialCommunityIcons name="file-document-outline" size={24} color="black" {...props} />
 );
+
+export const SentMessageIcon = (props: any) => (
+  <MaterialCommunityIcons name="message-text-fast-outline" size={24} color="black" {...props} />
+);
