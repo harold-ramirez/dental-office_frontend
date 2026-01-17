@@ -1,7 +1,7 @@
 import Loading from "@/components/loading";
 import { MedicalImageDto } from "@/interfaces/interfaces";
 import * as ImagePicker from "expo-image-picker";
-import { RelativePathString, useRouter } from "expo-router";
+import { Link, RelativePathString, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   BackHandler,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -29,20 +30,17 @@ interface ImageModalProps {
   patientId: number;
 }
 
-export default function ImageModal({ ...props }: ImageModalProps) {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+export default function ImageModal(props: ImageModalProps) {
+  const { onClose, image, patientId } = props;
+  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPhoto, setNewPhoto] = useState({
-    imageID: props.image?.Id ?? 0,
-    photoURL: props.image?.filename
-      ? `${apiUrl}/uploads/${props.image.filename}`
-      : ``,
-    description: props.image?.description ?? "",
-    captureDate: props.image?.captureDate
-      ? new Date(props.image.captureDate)
-      : new Date(),
+    imageID: image?.Id ?? 0,
+    photoURL: image?.filename ? `${API_URL}/uploads/${image.filename}` : ``,
+    description: image?.description ?? "",
+    captureDate: image?.captureDate ? new Date(image.captureDate) : new Date(),
   });
   const [imageObject, setImageObject] = useState({
     uri: "",
@@ -93,9 +91,9 @@ export default function ImageModal({ ...props }: ImageModalProps) {
       } as any);
       formData.append("captureDate", newPhoto.captureDate.toISOString());
       formData.append("description", newPhoto.description);
-      formData.append("Patient_Id", props.patientId.toString());
+      formData.append("Patient_Id", patientId.toString());
       formData.append("AppUser_Id", "1"); // Hardcoded
-      const response = await fetch(`${apiUrl}/images`, {
+      const response = await fetch(`${API_URL}/images`, {
         method: "POST",
         headers: {
           "Content-Type": "multipart/form-data",
@@ -106,7 +104,7 @@ export default function ImageModal({ ...props }: ImageModalProps) {
         router.replace({
           pathname: "/medicalImages/[patientId]",
           params: {
-            patientId: props.patientId.toString(),
+            patientId: patientId.toString(),
             refresh: Date.now().toString(),
           },
         });
@@ -122,9 +120,9 @@ export default function ImageModal({ ...props }: ImageModalProps) {
   const handleUpdateImage = async () => {
     try {
       setIsLoading(true);
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
       const response = await fetch(
-        `${apiUrl}/images/${props.image?.Id.toString()}`,
+        `${API_URL}/images/${image?.Id.toString()}`,
         {
           method: "PATCH",
           headers: {
@@ -133,7 +131,7 @@ export default function ImageModal({ ...props }: ImageModalProps) {
           body: JSON.stringify({
             captureDate: newPhoto.captureDate.toISOString(),
             description: newPhoto.description,
-            Patient_Id: props.patientId,
+            Patient_Id: patientId,
             AppUser_Id: 1, // Hardcoded
           }),
         }
@@ -142,7 +140,7 @@ export default function ImageModal({ ...props }: ImageModalProps) {
         router.replace({
           pathname: "/medicalImages/[patientId]",
           params: {
-            patientId: props.patientId.toString(),
+            patientId: patientId.toString(),
             refresh: Date.now().toString(),
           },
         });
@@ -159,168 +157,179 @@ export default function ImageModal({ ...props }: ImageModalProps) {
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       () => {
-        props.onClose();
+        onClose();
         return true;
       }
     );
     return () => backHandler.remove();
-  }, [props.onClose]);
+  }, [onClose]);
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-      className="absolute justify-center items-center bg-black/75 w-full h-full"
+      className="absolute justify-center items-center bg-black/85 w-full h-full"
     >
-      <View className="absolute justify-center items-center w-full h-full">
-        <View className="items-center gap-2 bg-lightBlue -mt-28 rounded-xl w-11/12">
-          <View className="items-center gap-2 px-5 pt-5 w-full">
-            {/* Exit Button */}
-            <View className="flex-row justify-end items-center w-full">
-              <Pressable className="px-2 py-1 border border-darkBlue rounded-md">
-                <XIcon color="#02457A" size={24} onPress={props.onClose} />
-              </Pressable>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        className="w-full"
+        scrollEnabled={true}
+      >
+        <View className="items-center w-full h-full">
+          {/* Exit Button */}
+          <View className="flex-row justify-end items-center my-2 w-full">
+            <Pressable onPress={onClose} className="px-4 py-2">
+              <XIcon color="#D6E8EE" size={24} />
+            </Pressable>
+          </View>
+          {/* Content */}
+          <View className="items-center gap-2 bg-lightBlue rounded-xl w-full">
+            <View className="items-center gap-2 px-5 pt-5 w-full">
+              {/* Image Preview/Placeholder */}
+              <View
+                style={{ overflow: "hidden" }}
+                className={`justify-center items-center w-full min-h-80 border-darkBlue border-dashed ${
+                  !image?.filename ? `border` : ``
+                } ${
+                  newPhoto.photoURL === ""
+                    ? `border-4 rounded-3xl`
+                    : `w-full rounded-md`
+                }`}
+              >
+                {newPhoto.photoURL === "" ? (
+                  <Pressable onPress={() => uploadImage()}>
+                    <ImagePlusIcon color="#02457A" size={100} />
+                  </Pressable>
+                ) : (
+                  <>
+                    <Link
+                      asChild
+                      className="flex-1 w-full"
+                      href={{
+                        pathname: "/(protected)/fullScreenImage/[img]",
+                        params: { img: newPhoto.photoURL },
+                      }}
+                    >
+                      <Pressable>
+                        <Image
+                          source={{ uri: newPhoto.photoURL }}
+                          resizeMode="contain"
+                          className="w-full h-full"
+                        />
+                      </Pressable>
+                    </Link>
+                    {!image?.filename && (
+                      <Pressable
+                        onPress={() => uploadImage()}
+                        className="right-0 bottom-0 absolute justify-center items-center bg-blackBlue rounded-md size-10"
+                      >
+                        <RepeatIcon color="#D6E8EE" size={24} />
+                      </Pressable>
+                    )}
+                  </>
+                )}
+              </View>
+
+              {/* Image Size */}
+              <View>
+                {imageObject.size !== 0 && (
+                  <Text>Tamaño: {imageObject.size} MB</Text>
+                )}
+              </View>
+
+              {/* Capture Date */}
+              <View className="flex-row justify-between items-center w-full">
+                <Text className="w-1/2 font-bold text-darkBlue text-lg">
+                  FECHA DE CAPTURA:
+                </Text>
+                <DatePicker
+                  modal
+                  mode="date"
+                  open={showDatePicker}
+                  date={newPhoto.captureDate}
+                  onConfirm={(date) => {
+                    setNewPhoto({ ...newPhoto, captureDate: date });
+                    setShowDatePicker(false);
+                  }}
+                  onCancel={() => {
+                    setShowDatePicker(false);
+                  }}
+                />
+                <Pressable
+                  className="bg-whiteBlue rounded-lg w-1/2"
+                  onPress={() => setShowDatePicker(true)}
+                  disabled={isLoading || !!image?.filename}
+                >
+                  <Text className="text-blackBlue text-lg text-center">
+                    {newPhoto.captureDate.toLocaleDateString("es-BO")}
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* Photo Description */}
+              <View className="w-full">
+                <Text className="font-bold text-darkBlue text-lg">
+                  DESCRIPCIÓN:
+                </Text>
+                <TextInput
+                  multiline
+                  numberOfLines={5}
+                  readOnly={isLoading}
+                  value={newPhoto.description}
+                  onChangeText={(text) =>
+                    setNewPhoto({ ...newPhoto, description: text })
+                  }
+                  style={{ textAlignVertical: "top" }}
+                  className="bg-whiteBlue rounded-lg w-full h-24 text-blackBlue"
+                />
+              </View>
             </View>
 
-            {/* Image Preview/Placeholder */}
-            <View
-              style={{ overflow: "hidden" }}
-              className={`justify-center border items-center size-80 border-darkBlue border-dashed  ${
-                newPhoto.photoURL === ""
-                  ? `border-4 rounded-3xl`
-                  : `w-full rounded-md`
-              }`}
-            >
-              {newPhoto.photoURL === "" ? (
-                <Pressable onPress={() => uploadImage()}>
-                  <ImagePlusIcon color="#02457A" size={100} />
-                </Pressable>
+            {/* Buttons */}
+            <View className="flex-row mt-5">
+              {isLoading ? (
+                <Loading className="flex-1" />
               ) : (
                 <>
-                  <Image
-                    source={{ uri: newPhoto.photoURL }}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      bottom: 0,
-                      right: 0,
-                    }}
-                    resizeMode="contain"
-                  />
-                  {!props.image?.filename && (
+                  {/* Save Image Button */}
+                  {!image?.filename && imageObject.uri && (
                     <Pressable
-                      onPress={() => uploadImage()}
-                      className="right-0 bottom-0 absolute justify-center items-center bg-blackBlue rounded-md size-10"
+                      onPress={handleSaveImage}
+                      className="flex-row flex-1 justify-center items-center gap-1 bg-darkBlue py-2 border-2 border-darkBlue rounded-b-xl"
                     >
-                      <RepeatIcon color="#D6E8EE" size={24} />
+                      <SaveIcon color="#D6E8EE" size={24} />
+                      <Text className="font-bold text-whiteBlue text-lg">
+                        Guardar Imagen
+                      </Text>
                     </Pressable>
                   )}
-                </>
-              )}
-            </View>
 
-            {/* Image Size */}
-            <View>
-              {imageObject.size !== 0 && (
-                <Text>Tamaño: {imageObject.size} MB</Text>
-              )}
-            </View>
+                  {/* Delete Image Button */}
+                  {newPhoto.photoURL !== "" && !imageObject.uri && (
+                    <Pressable
+                      onPress={() => {
+                        DeleteAlertMessage(
+                          "Confirmar Eliminación",
+                          `¿Está seguro de eliminar la imagen?`,
+                          "Eliminar",
+                          `/images/${newPhoto.imageID}`,
+                          "No se pudo eliminar la imagen. Inténtalo de nuevo.",
+                          "DELETE",
+                          "/medicalImages/[patientId]" as RelativePathString,
+                          { patientId: patientId.toString() }
+                        );
+                      }}
+                      className="flex-row flex-1 justify-center items-center py-1 border-darkBlue border-t-2 rounded-t-none"
+                    >
+                      <DeleteOutlineIcon color="#02457A" size={32} />
+                      <Text className="font-bold text-darkBlue">
+                        Eliminar Imagen
+                      </Text>
+                    </Pressable>
+                  )}
 
-            {/* Capture Date */}
-            <View className="flex-row justify-between items-center w-full">
-              <Text className="w-1/2 font-bold text-darkBlue text-lg">
-                FECHA DE CAPTURA:
-              </Text>
-              <DatePicker
-                modal
-                mode="date"
-                open={showDatePicker}
-                date={newPhoto.captureDate}
-                onConfirm={(date) => {
-                  setNewPhoto({ ...newPhoto, captureDate: date });
-                  setShowDatePicker(false);
-                }}
-                onCancel={() => {
-                  setShowDatePicker(false);
-                }}
-              />
-              <Pressable
-                className="bg-whiteBlue rounded-lg w-1/2"
-                onPress={() => setShowDatePicker(true)}
-                disabled={isLoading}
-              >
-                <Text className="text-blackBlue text-lg text-center">
-                  {newPhoto.captureDate.toLocaleDateString("es-BO")}
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* Photo Description */}
-            <View className="w-full">
-              <Text className="font-bold text-darkBlue text-lg">
-                DESCRIPCIÓN:
-              </Text>
-              <TextInput
-                multiline
-                numberOfLines={5}
-                readOnly={isLoading}
-                value={newPhoto.description}
-                onChangeText={(text) =>
-                  setNewPhoto({ ...newPhoto, description: text })
-                }
-                style={{ textAlignVertical: "top" }}
-                className="bg-whiteBlue rounded-lg w-full h-24 text-blackBlue"
-              />
-            </View>
-          </View>
-
-          {/* Buttons */}
-          <View className="flex-row mt-5">
-            {isLoading ? (
-              <Loading className="flex-1" />
-            ) : (
-              <>
-                {/* Save Image Button */}
-                {!props.image?.filename && imageObject.uri && (
-                  <Pressable
-                    onPress={handleSaveImage}
-                    className="flex-row flex-1 justify-center items-center gap-1 py-2 bg-darkBlue border-2 border-darkBlue rounded-b-xl"
-                  >
-                    <SaveIcon color="#D6E8EE" size={24} />
-                    <Text className="font-bold text-whiteBlue text-lg">
-                      Guardar Imagen
-                    </Text>
-                  </Pressable>
-                )}
-
-                {/* Delete Image Button */}
-                {newPhoto.photoURL !== "" && !imageObject.uri && (
-                  <Pressable
-                    onPress={() => {
-                      DeleteAlertMessage(
-                        "Confirmar Eliminación",
-                        `¿Está seguro de eliminar la imagen?`,
-                        "Eliminar",
-                        `/images/${newPhoto.imageID}`,
-                        "No se pudo eliminar la imagen. Inténtalo de nuevo.",
-                        "DELETE",
-                        "/medicalImages/[patientId]" as RelativePathString,
-                        { patientId: props.patientId.toString() }
-                      );
-                    }}
-                    className="flex-row flex-1 justify-center items-center py-1 border-t-2 border-darkBlue rounded-t-none"
-                  >
-                    <DeleteOutlineIcon color="#02457A" size={32} />
-                    <Text className="font-bold text-darkBlue">
-                      Eliminar Imagen
-                    </Text>
-                  </Pressable>
-                )}
-
-                {/* Update Image Button */}
-                {props.image &&
-                  props.image?.description !== newPhoto.description && (
+                  {/* Update Image Button */}
+                  {image && image?.description !== newPhoto.description && (
                     <Pressable
                       onPress={() => handleUpdateImage()}
                       className="flex-row flex-1 justify-center items-center gap-1 bg-darkBlue border-2 border-darkBlue rounded-br-xl"
@@ -331,11 +340,12 @@ export default function ImageModal({ ...props }: ImageModalProps) {
                       </Text>
                     </Pressable>
                   )}
-              </>
-            )}
+                </>
+              )}
+            </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
