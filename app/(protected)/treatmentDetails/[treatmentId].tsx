@@ -5,7 +5,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function TreatmentDetails() {
   const { treatmentId } = useLocalSearchParams();
@@ -33,7 +33,7 @@ export default function TreatmentDetails() {
   const fetchProcedures = useCallback(async () => {
     try {
       const data = await fetch(
-        `${apiUrl}/payments/procedure/${treatmentId}`
+        `${API_URL}/payments/procedure/${treatmentId}`
       ).then((res) => res.json());
       setTreatmentDetails(data);
     } catch (error) {

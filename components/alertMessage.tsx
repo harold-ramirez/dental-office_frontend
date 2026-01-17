@@ -22,9 +22,9 @@ export const DeleteAlertMessage = (
       {
         text: actionButtonText,
         onPress: async () => {
-          const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+          const API_URL = process.env.EXPO_PUBLIC_API_URL;
           try {
-            const endpoint = await fetch(`${apiUrl}${apiRoute}`, {
+            const endpoint = await fetch(`${API_URL}${apiRoute}`, {
               method: httpMethod,
               headers: {
                 "Content-Type": "application/json",

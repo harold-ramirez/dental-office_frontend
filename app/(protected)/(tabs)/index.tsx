@@ -4,13 +4,13 @@ import { Link } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Index() {
   const [summary, setSummary] = useState(0);
   const fetchAppointmentsSummary = useCallback(async () => {
     try {
-      const data = await fetch(`${apiUrl}/appointments/summary`).then((res) =>
+      const data = await fetch(`${API_URL}/appointments/summary`).then((res) =>
         res.text()
       );
       setSummary(parseInt(data, 10));

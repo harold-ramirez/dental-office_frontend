@@ -41,7 +41,7 @@ export default function PatientProfile() {
   const router = useRouter();
   const navigation = useNavigation();
   const isNavigatingBack = useRef(false);
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [patient, setPatient] = useState<PatientDto>({
@@ -74,7 +74,7 @@ export default function PatientProfile() {
   const fetchPatient = useCallback(async () => {
     setIsLoading(true);
     try {
-      const endpoint = await fetch(`${apiUrl}/patients/${id}`);
+      const endpoint = await fetch(`${API_URL}/patients/${id}`);
       const data = await endpoint.json();
       setPatient(data);
     } catch (e) {
@@ -82,7 +82,7 @@ export default function PatientProfile() {
     } finally {
       setIsLoading(false);
     }
-  }, [apiUrl, id]);
+  }, [API_URL, id]);
 
   // Refresh previous screen
   useEffect(() => {
@@ -117,46 +117,46 @@ export default function PatientProfile() {
   >([]);
   const fetchAllPatientImages = useCallback(async () => {
     try {
-      const endpoint = await fetch(`${apiUrl}/images/${id}`);
+      const endpoint = await fetch(`${API_URL}/images/${id}`);
       const data = await endpoint.json();
       setImages(data);
     } catch (e) {
       console.error("Error fetching images:", e);
     }
-  }, [apiUrl, id]);
+  }, [API_URL, id]);
 
   const fetchMedicalHistories = useCallback(async () => {
     try {
-      const data = await fetch(`${apiUrl}/medical-history/preview/${id}`).then(
+      const data = await fetch(`${API_URL}/medical-history/preview/${id}`).then(
         (res) => res.json()
       );
       setMedicalHistories(data);
     } catch (e) {
       console.error("Error fetching medical histories:", e);
     }
-  }, [apiUrl, id]);
+  }, [API_URL, id]);
 
   const fetchTreatments = useCallback(async () => {
     try {
       const data = await fetch(
-        `${apiUrl}/diagnosed-procedure/${id}/preview`
+        `${API_URL}/diagnosed-procedure/${id}/preview`
       ).then((res) => res.json());
       setTreatments(data);
     } catch (e) {
       console.error("Error fetching Treatments:", e);
     }
-  }, [apiUrl, id]);
+  }, [API_URL, id]);
 
   const fetchAppointments = useCallback(async () => {
     try {
-      const data = await fetch(`${apiUrl}/appointments/preview/${id}`).then(
+      const data = await fetch(`${API_URL}/appointments/preview/${id}`).then(
         (res) => res.json()
       );
       setAppointments(data);
     } catch (e) {
       console.error("Error fetching Appointments:", e);
     }
-  }, [apiUrl, id]);
+  }, [API_URL, id]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -510,7 +510,7 @@ export default function PatientProfile() {
                     >
                       <View className="w-[100px] h-[100px]">
                         <Image
-                          source={{ uri: `${apiUrl}/uploads/${img.filename}` }}
+                          source={{ uri: `${API_URL}/uploads/${img.filename}` }}
                           width={100}
                           height={100}
                         />
@@ -525,7 +525,7 @@ export default function PatientProfile() {
                 }
                 return (
                   <Image
-                    source={{ uri: `${apiUrl}/uploads/${img.filename}` }}
+                    source={{ uri: `${API_URL}/uploads/${img.filename}` }}
                     key={i}
                     width={100}
                     height={100}

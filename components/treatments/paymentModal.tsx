@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface Props {
   onClose: () => void;
@@ -35,7 +35,7 @@ export default function PaymentModal(props: Props) {
   const handlePostPayment = async () => {
     if (newPayment.amount === "") return;
     try {
-      const res = await fetch(`${apiUrl}/payments`, {
+      const res = await fetch(`${API_URL}/payments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

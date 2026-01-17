@@ -10,8 +10,8 @@ class SocketService {
   }
 
   connect() {
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-    this.socket = io(apiUrl);
+    const API_URL = process.env.EXPO_PUBLIC_API_URL;
+    this.socket = io(API_URL);
     this.socket.on("connect", () => {
       console.log("Conectado al servidor WebSocket");
     });

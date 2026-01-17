@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import DropdownComponent from "../dropdown";
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface Props {
   patientId: number;
@@ -42,7 +42,7 @@ export default function TreatmentModal(props: Props) {
   const fetchTreatmentList = useCallback(async () => {
     try {
       const data: { Id: number; name: string }[] = await fetch(
-        `${apiUrl}/treatments`
+        `${API_URL}/treatments`
       ).then((res) => res.json());
       const parsed: { label: string; value: string }[] = [];
       data.map((treatment) => {
@@ -54,7 +54,7 @@ export default function TreatmentModal(props: Props) {
       setTreatmentList(parsed);
       // ***********************************
       const teethDB = await fetch(
-        `${apiUrl}/odontogram/${patientId}/teeth`
+        `${API_URL}/odontogram/${patientId}/teeth`
       ).then((res) => res.json());
       setTeeth(teethDB);
     } catch (error) {
@@ -69,7 +69,7 @@ export default function TreatmentModal(props: Props) {
   const handleRegisterTreatment = async () => {
     if (formData.Treatment_Id === 0) return;
     try {
-      const res = await fetch(`${apiUrl}/diagnosed-procedure`, {
+      const res = await fetch(`${API_URL}/diagnosed-procedure`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

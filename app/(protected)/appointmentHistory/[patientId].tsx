@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalHistory() {
   const { patientId, patientName } = useLocalSearchParams();
@@ -62,7 +62,7 @@ export default function MedicalHistory() {
   const fetchAppointmentsHistory = useCallback(async () => {
     try {
       const data = await fetch(
-        `${apiUrl}/appointments/history/${patientId}`
+        `${API_URL}/appointments/history/${patientId}`
       ).then((res) => res.json());
       setAppointmentHistory(data);
     } catch (e) {

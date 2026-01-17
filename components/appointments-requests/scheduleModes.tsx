@@ -311,9 +311,9 @@ export function WorkScheduleSelection() {
     }[]
   >([]);
   useEffect(() => {
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+    const API_URL = process.env.EXPO_PUBLIC_API_URL;
     const fetchShifts = async () => {
-      const data = await fetch(`${apiUrl}/shifts`).then((response) =>
+      const data = await fetch(`${API_URL}/shifts`).then((response) =>
         response.json()
       );
       setShifts(data);

@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MedicalImages() {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const { patientId, refresh } = useLocalSearchParams();
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -22,13 +22,13 @@ export default function MedicalImages() {
 
   const fetchAllPatientImages = useCallback(async () => {
     try {
-      const endpoint = await fetch(`${apiUrl}/images/${patientId}`);
+      const endpoint = await fetch(`${API_URL}/images/${patientId}`);
       const data = await endpoint.json();
       setImages(data);
     } catch (e) {
       console.error("Error fetching images:", e);
     }
-  }, [apiUrl, patientId]);
+  }, [API_URL, patientId]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -81,7 +81,7 @@ export default function MedicalImages() {
                   }}
                 >
                   <Image
-                    source={{ uri: `${apiUrl}/uploads/${img.filename}` }}
+                    source={{ uri: `${API_URL}/uploads/${img.filename}` }}
                     width={110}
                     height={110}
                     className=""

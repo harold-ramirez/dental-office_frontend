@@ -46,9 +46,9 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
   const handleRegisterPatient = async () => {
     if (newPatient.name && newPatient.gender) {
       setIsLoading(true);
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
       try {
-        const endpoint = await fetch(`${apiUrl}/patients`, {
+        const endpoint = await fetch(`${API_URL}/patients`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -333,10 +333,10 @@ export function UpdatePatientModal({
   const handleUpdatePatient = async () => {
     if (patient.name && patient.gender) {
       setIsLoading(true);
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
       let endpoint: Response | null = null;
       try {
-        endpoint = await fetch(`${apiUrl}/patients/${patient.Id}`, {
+        endpoint = await fetch(`${API_URL}/patients/${patient.Id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",

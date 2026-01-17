@@ -23,7 +23,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalHistory() {
   const { patientId } = useLocalSearchParams();
@@ -114,7 +114,7 @@ export default function MedicalHistory() {
   const handlePostPathology = async () => {
     if (newPathologyHabit.newPathology === "") return;
     try {
-      const res = await fetch(`${apiUrl}/personal-pathologies`, {
+      const res = await fetch(`${API_URL}/personal-pathologies`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -158,7 +158,7 @@ export default function MedicalHistory() {
   const handlePostHabit = async () => {
     if (newPathologyHabit.newHabit === "") return;
     try {
-      const res = await fetch(`${apiUrl}/habits`, {
+      const res = await fetch(`${API_URL}/habits`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -199,7 +199,7 @@ export default function MedicalHistory() {
   const handlePostForm = async () => {
     try {
       setIsPosting(true);
-      const res = await fetch(`${apiUrl}/medical-history`, {
+      const res = await fetch(`${API_URL}/medical-history`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -280,14 +280,14 @@ export default function MedicalHistory() {
   // REACT HOOKS **************************************************
   const fetchAllMedicalHistories = useCallback(async () => {
     try {
-      const data = await fetch(`${apiUrl}/medical-history/${patientId}`).then(
+      const data = await fetch(`${API_URL}/medical-history/${patientId}`).then(
         (res) => res.json()
       );
       setHistories(data);
       setFormData(data[0]);
-      const habits = await fetch(`${apiUrl}/habits`).then((res) => res.json());
+      const habits = await fetch(`${API_URL}/habits`).then((res) => res.json());
       const personalPathologies = await fetch(
-        `${apiUrl}/personal-pathologies`
+        `${API_URL}/personal-pathologies`
       ).then((res) => res.json());
       setHabits(habits);
       setPersonalPathologies(personalPathologies);

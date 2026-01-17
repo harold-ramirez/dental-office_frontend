@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Patients() {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const params = useLocalSearchParams();
   const [searchValue, setSearchValue] = useState("");
   const [patients, setPatients] = useState<PatientDto[]>([]);
@@ -28,13 +28,13 @@ export default function Patients() {
 
   const fetchAllPatients = useCallback(async () => {
     try {
-      const endpoint = await fetch(`${apiUrl}/patients`);
+      const endpoint = await fetch(`${API_URL}/patients`);
       const data = await endpoint.json();
       setPatients(data);
     } catch (e) {
       console.error("Error fetching users:", e);
     }
-  }, [apiUrl]);
+  }, [API_URL]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
