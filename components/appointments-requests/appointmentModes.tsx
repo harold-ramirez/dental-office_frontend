@@ -125,20 +125,3 @@ export function AppointmentSelection({
     </View>
   );
 }
-
-export function WorkingHourSelection() {
-  const [selected, setSelected] = useState(false);
-
-  return (
-    <View className="h-10">
-      <Pressable
-        onPress={() => {
-          setSelected(!selected);
-        }}
-        className={`h-full items-center active:bg-pureBlue justify-center ${
-          selected ? `bg-darkBlue` : `bg-lightBlue`
-        }`}
-      />
-    </View>
-  );
-}

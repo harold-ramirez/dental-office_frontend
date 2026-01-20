@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { LeftArrowIcon, RightArrowIcon } from "../Icons";
 import {
@@ -7,7 +7,6 @@ import {
   DayAppointment,
   MonthAppointment,
   WeekAppointment,
-  WorkingHourSelection,
 } from "./appointmentModes";
 
 const hours = [
@@ -301,47 +300,26 @@ export function WeekAppointmentSelect() {
   );
 }
 
-export function WorkScheduleSelection() {
-  const [shifts, setShifts] = useState<
-    {
-      Id: number;
-      day: string;
-      hour: string;
-      status: boolean;
-    }[]
-  >([]);
-  useEffect(() => {
-    const API_URL = process.env.EXPO_PUBLIC_API_URL;
-    const fetchShifts = async () => {
-      const data = await fetch(`${API_URL}/shifts`).then((response) =>
-        response.json()
-      );
-      setShifts(data);
-    };
-    fetchShifts();
-  }, []);
-  const days = [
-    "Lunes",
-    "Martes",
-    "Miércoles",
-    "Jueves",
-    "Viernes",
-    "Sábado",
-    "Domingo",
-  ];
-  const groupedDays = useMemo(() => {
-    return days.map((day) => {
-      const items = shifts.filter(
-        (s) => String(s.day).toLowerCase() === day.toLowerCase()
-      );
-      items.sort((a, b) => (a.hour > b.hour ? 1 : a.hour < b.hour ? -1 : 0));
-      return { day, items };
-    });
-  }, [shifts]);
+export function WorkScheduleSelection({
+  setShifts,
+  shifts,
+}: {
+  setShifts: (val: any) => void;
+  shifts: {
+    Monday: { Id: number; hour: string; status: boolean }[];
+    Tuesday: { Id: number; hour: string; status: boolean }[];
+    Wednesday: { Id: number; hour: string; status: boolean }[];
+    Thursday: { Id: number; hour: string; status: boolean }[];
+    Friday: { Id: number; hour: string; status: boolean }[];
+    Saturday: { Id: number; hour: string; status: boolean }[];
+    Sunday: { Id: number; hour: string; status: boolean }[];
+  };
+}) {
   return (
     <View className="flex-1 bg-whiteBlue pt-1 rounded-xl w-full">
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
         <View className="flex-row gap-3">
+          {/* Hours */}
           <View className="mt-5">
             {hours.map((hour) => (
               <Text key={hour} className="h-10 font-bold text-blackBlue">
@@ -349,29 +327,245 @@ export function WorkScheduleSelection() {
               </Text>
             ))}
           </View>
+          {/* Schedule Container */}
           <View className="self-start">
+            {/* Day Titles */}
             <View className="flex-row self-start mb-1">
-              {groupedDays.map((dayObj, index) => (
+              {["L", "M", "X", "J", "V", "S", "D"].map((day, i) => (
                 <Text
-                  key={index}
+                  key={i}
                   className="w-12 font-semibold text-blackBlue text-lg text-center"
                 >
-                  {dayObj.day[0]}
+                  {day}
                 </Text>
               ))}
             </View>
-            {hours.map((hour) => (
-              <View key={hour} className="flex-row self-start h-10">
-                {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+            {/* Content */}
+            <View className="flex-row">
+              {/* Monday */}
+              <View>
+                {shifts.Monday.map((currentShift) => (
                   <View
-                    key={day}
-                    className="border-whiteBlue border-t border-r w-12"
+                    key={currentShift.Id}
+                    className="flex-row self-start h-10"
                   >
-                    <WorkingHourSelection />
+                    <View className="border-whiteBlue border-t border-r w-12">
+                      <Pressable
+                        onPress={() =>
+                          setShifts({
+                            ...shifts,
+                            Monday: [...shifts.Monday].map((mondayShift) => {
+                              if (mondayShift.Id === currentShift.Id) {
+                                return {
+                                  ...mondayShift,
+                                  status: !mondayShift.status,
+                                };
+                              }
+                              return mondayShift;
+                            }),
+                          })
+                        }
+                        className={`h-10 items-center active:bg-pureBlue justify-center ${
+                          currentShift.status ? `bg-darkBlue` : `bg-lightBlue`
+                        }`}
+                      />
+                    </View>
                   </View>
                 ))}
               </View>
-            ))}
+              {/* Tuesday */}
+              <View>
+                {shifts.Tuesday.map((currentShift) => (
+                  <View
+                    key={currentShift.Id}
+                    className="flex-row self-start h-10"
+                  >
+                    <View className="border-whiteBlue border-t border-r w-12">
+                      <Pressable
+                        onPress={() =>
+                          setShifts({
+                            ...shifts,
+                            Tuesday: [...shifts.Tuesday].map((tuesdayShift) => {
+                              if (tuesdayShift.Id === currentShift.Id) {
+                                return {
+                                  ...tuesdayShift,
+                                  status: !tuesdayShift.status,
+                                };
+                              }
+                              return tuesdayShift;
+                            }),
+                          })
+                        }
+                        className={`h-10 items-center active:bg-pureBlue justify-center ${
+                          currentShift.status ? `bg-darkBlue` : `bg-lightBlue`
+                        }`}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+              {/* Wedenesday */}
+              <View>
+                {shifts.Wednesday.map((currentShift) => (
+                  <View
+                    key={currentShift.Id}
+                    className="flex-row self-start h-10"
+                  >
+                    <View className="border-whiteBlue border-t border-r w-12">
+                      <Pressable
+                        onPress={() =>
+                          setShifts({
+                            ...shifts,
+                            Wednesday: [...shifts.Wednesday].map(
+                              (wednesdayShift) => {
+                                if (wednesdayShift.Id === currentShift.Id) {
+                                  return {
+                                    ...wednesdayShift,
+                                    status: !wednesdayShift.status,
+                                  };
+                                }
+                                return wednesdayShift;
+                              }
+                            ),
+                          })
+                        }
+                        className={`h-10 items-center active:bg-pureBlue justify-center ${
+                          currentShift.status ? `bg-darkBlue` : `bg-lightBlue`
+                        }`}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+              {/* Thursday */}
+              <View>
+                {shifts.Thursday.map((currentShift) => (
+                  <View
+                    key={currentShift.Id}
+                    className="flex-row self-start h-10"
+                  >
+                    <View className="border-whiteBlue border-t border-r w-12">
+                      <Pressable
+                        onPress={() =>
+                          setShifts({
+                            ...shifts,
+                            Thursday: [...shifts.Thursday].map(
+                              (thursdayShift) => {
+                                if (thursdayShift.Id === currentShift.Id) {
+                                  return {
+                                    ...thursdayShift,
+                                    status: !thursdayShift.status,
+                                  };
+                                }
+                                return thursdayShift;
+                              }
+                            ),
+                          })
+                        }
+                        className={`h-10 items-center active:bg-pureBlue justify-center ${
+                          currentShift.status ? `bg-darkBlue` : `bg-lightBlue`
+                        }`}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+              {/* Friday */}
+              <View>
+                {shifts.Friday.map((currentShift) => (
+                  <View
+                    key={currentShift.Id}
+                    className="flex-row self-start h-10"
+                  >
+                    <View className="border-whiteBlue border-t border-r w-12">
+                      <Pressable
+                        onPress={() =>
+                          setShifts({
+                            ...shifts,
+                            Friday: [...shifts.Friday].map((fridayShift) => {
+                              if (fridayShift.Id === currentShift.Id) {
+                                return {
+                                  ...fridayShift,
+                                  status: !fridayShift.status,
+                                };
+                              }
+                              return fridayShift;
+                            }),
+                          })
+                        }
+                        className={`h-10 items-center active:bg-pureBlue justify-center ${
+                          currentShift.status ? `bg-darkBlue` : `bg-lightBlue`
+                        }`}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+              {/* Saturday */}
+              <View>
+                {shifts.Saturday.map((currentShift) => (
+                  <View
+                    key={currentShift.Id}
+                    className="flex-row self-start h-10"
+                  >
+                    <View className="border-whiteBlue border-t border-r w-12">
+                      <Pressable
+                        onPress={() =>
+                          setShifts({
+                            ...shifts,
+                            Saturday: [...shifts.Saturday].map(
+                              (saturdayShift) => {
+                                if (saturdayShift.Id === currentShift.Id) {
+                                  return {
+                                    ...saturdayShift,
+                                    status: !saturdayShift.status,
+                                  };
+                                }
+                                return saturdayShift;
+                              }
+                            ),
+                          })
+                        }
+                        className={`h-10 items-center active:bg-pureBlue justify-center ${
+                          currentShift.status ? `bg-darkBlue` : `bg-lightBlue`
+                        }`}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+              {/* Sunday */}
+              <View>
+                {shifts.Sunday.map((currentShift) => (
+                  <View
+                    key={currentShift.Id}
+                    className="flex-row self-start h-10"
+                  >
+                    <View className="border-whiteBlue border-t border-r w-12">
+                      <Pressable
+                        onPress={() =>
+                          setShifts({
+                            ...shifts,
+                            Sunday: [...shifts.Sunday].map((sundayShift) => {
+                              if (sundayShift.Id === currentShift.Id) {
+                                return {
+                                  ...sundayShift,
+                                  status: !sundayShift.status,
+                                };
+                              }
+                              return sundayShift;
+                            }),
+                          })
+                        }
+                        className={`h-10 items-center active:bg-pureBlue justify-center ${
+                          currentShift.status ? `bg-darkBlue` : `bg-lightBlue`
+                        }`}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>

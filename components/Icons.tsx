@@ -171,3 +171,7 @@ export const DocumentIcon = (props: any) => (
 export const SentMessageIcon = (props: any) => (
   <MaterialCommunityIcons name="message-text-fast-outline" size={24} color="black" {...props} />
 );
+
+export const ClockIcon = (props: any) => (
+  <FontAwesome5 name="clock" size={24} color="black" {...props} />
+);

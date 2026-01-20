@@ -1,29 +1,42 @@
 import AnimatedArc from "@/components/animatedArc";
+import { ClockIcon, ScheduleIcon } from "@/components/Icons";
+import { Summary, WeekSummary } from "@/components/summaries";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Index() {
-  const [summary, setSummary] = useState(0);
-  const fetchAppointmentsSummary = useCallback(async () => {
-    try {
-      const data = await fetch(`${API_URL}/appointments/summary`).then((res) =>
-        res.text()
-      );
-      setSummary(parseInt(data, 10));
-    } catch (e) {
-      console.error("Error getting appointments summary:", e);
-    }
-  }, []);
-  const onRefresh = useCallback(async () => {
-    await fetchAppointmentsSummary();
-  }, [fetchAppointmentsSummary]);
+  const [summary, setSummary] = useState<{
+    today: number;
+    tomorrow: number;
+    currentWeek: number;
+    currentWeekByDay: number[];
+    pendingRequests: number;
+  }>({
+    today: 0,
+    tomorrow: 0,
+    currentWeek: 0,
+    currentWeekByDay: [],
+    pendingRequests: 0,
+  });
+
   useEffect(() => {
-    onRefresh();
-  }, [onRefresh]);
+    const fetchAppointmentsSummary = async () => {
+      try {
+        const data = await fetch(`${API_URL}/appointments/summary`).then(
+          (res) => res.json()
+        );
+        setSummary(data);
+      } catch (e) {
+        console.error("Error getting appointments summary:", e);
+      }
+    };
+
+    fetchAppointmentsSummary();
+  }, []);
 
   return (
     <>
@@ -46,39 +59,41 @@ export default function Index() {
           <View className="flex-1 items-center gap-3 w-full">
             {/* Banner */}
             <AnimatedArc
-              number={summary}
-              text={`Cita${summary !== 1 ? `s` : ``} Programada${
-                summary !== 1 ? `s` : ``
+              number={summary.today}
+              text={`Cita${summary.today !== 1 ? `s` : ``} Programada${
+                summary.today !== 1 ? `s` : ``
               } ${`\n`} para el día de hoy`}
               duration={1000}
               delay={250}
             />
 
             {/* Content */}
-            <View className="flex-1 gap-2 bg-whiteBlue p-2 rounded-2xl w-full">
-              <View className="flex-row justify-between items-center w-full">
-                <Text className="font-bold text-blackBlue text-lg">
-                  Horario del día
-                </Text>
+            <View className="flex-1 items-center gap-3 bg-whiteBlue p-3 rounded-t-2xl w-full">
+              <WeekSummary weekSummary={summary.currentWeekByDay} />
+              <Summary
+                tomorrow={summary.tomorrow}
+                currentWeek={summary.currentWeek}
+                pendingRequests={summary.pendingRequests}
+              />
+              {/* Buttons */}
+              <View className="flex-row gap-3">
+                <Link href={"/workSchedule"} asChild>
+                  <Pressable className="flex-1 justify-around items-center bg-pureBlue active:bg-darkBlue px-5 py-2 rounded-lg">
+                    <ClockIcon color="#D6E8EE" size={40} />
+                    <Text className="font-semibold text-whiteBlue text-center">
+                      Configurar Horario
+                    </Text>
+                  </Pressable>
+                </Link>
                 <Link href={"/createAppointment/[selectedDate]"} asChild>
-                  <Pressable className="bg-pureBlue px-5 py-2 rounded-md">
+                  <Pressable className="flex-1 justify-around items-center bg-pureBlue active:bg-darkBlue px-5 py-2 rounded-lg">
+                    <ScheduleIcon color="#D6E8EE" size={48} />
                     <Text className="font-semibold text-whiteBlue text-center">
                       Agendar Cita
                     </Text>
                   </Pressable>
                 </Link>
               </View>
-              <View className="bg-lightBlue rounded-md w-full h-8"></View>
-              <Link href={"/workSchedule"} asChild>
-                <Pressable
-                  android_ripple={{ color: "#02457A" }}
-                  className="bg-pureBlue px-3 py-2 rounded-full"
-                >
-                  <Text className="font-semibold text-whiteBlue text-center">
-                    Configurar Horario de Trabajo
-                  </Text>
-                </Pressable>
-              </Link>
             </View>
           </View>
         </ScrollView>

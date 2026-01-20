@@ -1,10 +1,228 @@
 import { WorkScheduleSelection } from "@/components/appointments-requests/scheduleModes";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
+import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function WorkSchedule() {
+  const [message, setMessage] = useState<{ isError: boolean; text: string }>({
+    isError: false,
+    text: "",
+  });
+  const [shifts, setShifts] = useState<{
+    Monday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Tuesday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Wednesday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Thursday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Friday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Saturday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Sunday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+  }>({
+    Monday: [],
+    Tuesday: [],
+    Wednesday: [],
+    Thursday: [],
+    Friday: [],
+    Saturday: [],
+    Sunday: [],
+  });
+
+  const [originalShifts, setOriginalShifts] = useState<{
+    Monday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Tuesday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Wednesday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Thursday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Friday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Saturday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+    Sunday: {
+      Id: number;
+      hour: string;
+      status: boolean;
+    }[];
+  }>({
+    Monday: [],
+    Tuesday: [],
+    Wednesday: [],
+    Thursday: [],
+    Friday: [],
+    Saturday: [],
+    Sunday: [],
+  });
+
+  useEffect(() => {
+    const fetchShifts = async () => {
+      try {
+        const data = await fetch(`${API_URL}/shifts`).then((res) => res.json());
+        setShifts(data);
+        setOriginalShifts(data);
+      } catch (e) {
+        console.error("Error fetching shifts:", e);
+      }
+    };
+    fetchShifts();
+  }, []);
+
+  const handleSaveChanges = async () => {
+    try {
+      setMessage({
+        isError: false,
+        text: "",
+      });
+      const updatedShifts: {
+        Id: number;
+        AppUser_Id: number;
+        status: boolean;
+      }[] = [];
+      // ***************************************************
+      for (let i = 0; i < originalShifts.Monday.length; i++) {
+        if (shifts.Monday[i].status !== originalShifts.Monday[i].status) {
+          updatedShifts.push({
+            Id: shifts.Monday[i].Id,
+            AppUser_Id: 1, //Hardcoded userID
+            status: shifts.Monday[i].status,
+          });
+        }
+      }
+      for (let i = 0; i < originalShifts.Tuesday.length; i++) {
+        if (shifts.Tuesday[i].status !== originalShifts.Tuesday[i].status) {
+          updatedShifts.push({
+            Id: shifts.Tuesday[i].Id,
+            AppUser_Id: 1, //Hardcoded userID
+            status: shifts.Tuesday[i].status,
+          });
+        }
+      }
+      for (let i = 0; i < originalShifts.Wednesday.length; i++) {
+        if (shifts.Wednesday[i].status !== originalShifts.Wednesday[i].status) {
+          updatedShifts.push({
+            Id: shifts.Wednesday[i].Id,
+            AppUser_Id: 1, //Hardcoded userID
+            status: shifts.Wednesday[i].status,
+          });
+        }
+      }
+      for (let i = 0; i < originalShifts.Thursday.length; i++) {
+        if (shifts.Thursday[i].status !== originalShifts.Thursday[i].status) {
+          updatedShifts.push({
+            Id: shifts.Thursday[i].Id,
+            AppUser_Id: 1, //Hardcoded userID
+            status: shifts.Thursday[i].status,
+          });
+        }
+      }
+      for (let i = 0; i < originalShifts.Friday.length; i++) {
+        if (shifts.Friday[i].status !== originalShifts.Friday[i].status) {
+          updatedShifts.push({
+            Id: shifts.Friday[i].Id,
+            AppUser_Id: 1, //Hardcoded userID
+            status: shifts.Friday[i].status,
+          });
+        }
+      }
+      for (let i = 0; i < originalShifts.Saturday.length; i++) {
+        if (shifts.Saturday[i].status !== originalShifts.Saturday[i].status) {
+          updatedShifts.push({
+            Id: shifts.Saturday[i].Id,
+            AppUser_Id: 1, //Hardcoded userID
+            status: shifts.Saturday[i].status,
+          });
+        }
+      }
+      for (let i = 0; i < originalShifts.Sunday.length; i++) {
+        if (shifts.Sunday[i].status !== originalShifts.Sunday[i].status) {
+          updatedShifts.push({
+            Id: shifts.Sunday[i].Id,
+            AppUser_Id: 1, //Hardcoded userID
+            status: shifts.Sunday[i].status,
+          });
+        }
+      }
+      if (updatedShifts.length === 0) {
+        setMessage({
+          isError: true,
+          text: "No se hayaron cambios para aplicar en el horario de atención",
+        });
+        return;
+      }
+      setOriginalShifts(shifts);
+      // ***************************************************
+      const res = await fetch(`${API_URL}/shifts`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedShifts),
+      });
+      if (res.ok) {
+        setMessage({
+          isError: false,
+          text: "Se aplicaron los cambios exitosamente",
+        });
+      } else {
+        setMessage({
+          isError: true,
+          text: "Se produjo un error al actualizar el horario",
+        });
+      }
+    } catch (error) {
+      console.log("Error updating shifts", error);
+    }
+  };
+
   return (
     <>
       <LinearGradient
@@ -45,9 +263,21 @@ export default function WorkSchedule() {
             </View>
           </View>
           <View className="flex-1">
-            <WorkScheduleSelection />
+            <WorkScheduleSelection shifts={shifts} setShifts={setShifts} />
           </View>
-          <Pressable className="items-center bg-blackBlue active:bg-darkBlue my-2 py-2 rounded-full w-3/4">
+
+          <Text
+            className={`font-semibold text-center ${
+              message.text === "" ? "hidden" : "block"
+            } ${message.isError ? "text-red-500" : "text-blackBlue"}`}
+          >
+            {message.text}
+          </Text>
+
+          <Pressable
+            onPress={() => handleSaveChanges()}
+            className="items-center bg-blackBlue active:bg-darkBlue my-2 py-2 rounded-full w-3/4"
+          >
             <Text className="font-semibold text-whiteBlue text-lg">
               Guardar
             </Text>
