@@ -288,7 +288,7 @@ export default function ImageModal(props: ImageModalProps) {
             {/* Buttons */}
             <View className="flex-row mt-5">
               {isLoading ? (
-                <Loading className="flex-1" />
+                <Loading className="flex-1" innerClassName="w-full p-1 justify-center items-center" />
               ) : (
                 <>
                   {/* Save Image Button */}

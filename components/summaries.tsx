@@ -18,7 +18,10 @@ export function WeekSummary({ weekSummary }: { weekSummary: number[] }) {
     <View className="flex-row gap-5 bg-lightBlue p-2 rounded-xl w-full h-44">
       {days.map((day) => {
         const value = weekSummary[day.dayIndex] || 0;
-        const heightPercentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
+        const heightPercentage = Math.min(
+          maxValue > 0 ? (value / maxValue) * 100 : 0,
+          75,
+        );
 
         return (
           <View key={day.label} className="flex-1 justify-end">

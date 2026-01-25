@@ -14,9 +14,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Requests() {
-  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const params = useLocalSearchParams();
   const [refreshing, setRefreshing] = useState(false);
   const [requests, setRequests] = useState<AppointmentRequestDto[]>([]);
@@ -32,7 +32,7 @@ export default function Requests() {
     } catch (e) {
       console.error("Error fetching requests:", e);
     }
-  }, [API_URL]);
+  }, []);
 
   const fetchAllPastRequests = useCallback(async () => {
     try {
@@ -44,7 +44,7 @@ export default function Requests() {
     } catch (e) {
       console.error("Error fetching requests:", e);
     }
-  }, [API_URL]);
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

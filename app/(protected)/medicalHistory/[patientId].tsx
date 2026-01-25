@@ -1078,7 +1078,7 @@ export default function MedicalHistory() {
                     className="items-center bg-blackBlue active:bg-pureBlue p-2 border border-whiteBlue rounded-full w-2/3"
                   >
                     {isPosting ? (
-                      <Loading className="flex-1" size={24} />
+                      <Loading className="flex-1" innerClassName="w-full p-1 justify-center items-center" size={24} />
                     ) : (
                       <Text className="font-bold text-whiteBlue text-xl">
                         Guardar
