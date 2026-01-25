@@ -3,23 +3,21 @@ import {
   MonthSchedule,
   WeekSchedule,
 } from "@/components/appointments-requests/scheduleModes";
+import { RepeatIcon } from "@/components/Icons";
 import Loading from "@/components/loading";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Animated, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Mode = "day" | "week" | "month";
 
 export default function Schedule() {
   const [isLoading, setIsLoading] = useState(true);
+  const [refresh, setRefresh] = useState<string>(new Date().toISOString());
   const [activeMode, setActiveMode] = useState<Mode>("day");
-
-  const [hasRendered, setHasRendered] = useState<Record<Mode, boolean>>({
-    day: true,
-    week: false,
-    month: false,
-  });
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rotateValue] = useState(new Animated.Value(0));
 
   const handleModeChange = (mode: Mode) => {
     if (!hasRendered[mode]) {
@@ -30,6 +28,30 @@ export default function Schedule() {
       setActiveMode(mode);
     }, 0);
   };
+
+  const handleRefresh = () => {
+    setIsSpinning(true);
+    setRefresh(new Date().toISOString());
+    Animated.timing(rotateValue, {
+      toValue: 2,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start(() => {
+      setIsSpinning(false);
+      rotateValue.setValue(0);
+    });
+  };
+
+  const spin = rotateValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
+
+  const [hasRendered, setHasRendered] = useState<Record<Mode, boolean>>({
+    day: true,
+    week: false,
+    month: false,
+  });
 
   useEffect(() => {
     setIsLoading(false);
@@ -49,6 +71,7 @@ export default function Schedule() {
         <Text className="font-bold text-white text-3xl text-center">
           Mi Agenda
         </Text>
+        {/* Schedule Mode */}
         <View className="flex-row gap-2">
           {(["day", "week", "month"] as const).map((mode) => {
             const labels: Record<Mode, string> = {
@@ -76,9 +99,19 @@ export default function Schedule() {
               </Pressable>
             );
           })}
+          <View className="flex-1" />
+          <Animated.View style={{ transform: [{ rotate: spin }] }}>
+            <Pressable
+              onPress={handleRefresh}
+              disabled={isSpinning}
+              className="items-center rounded-lg justify-center px-3"
+            >
+              <RepeatIcon color="#D6E8EE" />
+            </Pressable>
+          </Animated.View>
         </View>
+        {/* Content */}
         <View className="flex-1">
-          {/* bg-whiteBlue p-2 rounded-xl */}
           {hasRendered.day && (
             <View
               style={{
@@ -86,7 +119,16 @@ export default function Schedule() {
                 flex: 1,
               }}
             >
-              <DaySchedule date={new Date()} />
+              <DaySchedule
+                refresh={refresh}
+                date={
+                  new Date(
+                    new Date().getFullYear(),
+                    new Date().getMonth(),
+                    new Date().getDate(),
+                  )
+                }
+              />
             </View>
           )}
           {hasRendered.week && (
@@ -96,7 +138,7 @@ export default function Schedule() {
                 flex: 1,
               }}
             >
-              <WeekSchedule />
+              <WeekSchedule refresh={refresh} />
             </View>
           )}
           {hasRendered.month && (
@@ -106,10 +148,15 @@ export default function Schedule() {
                 flex: 1,
               }}
             >
-              <MonthSchedule />
+              <MonthSchedule refresh={refresh} />
             </View>
           )}
-          {isLoading && <Loading />}
+          {isLoading && (
+            <Loading
+              className="top-0 right-0 bottom-0 left-0 absolute justify-center items-center"
+              innerClassName="rounded-lg p-5 bg-blackBlue/80 items-center justify-center"
+            />
+          )}
         </View>
       </SafeAreaView>
     </>

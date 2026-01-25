@@ -1,12 +1,11 @@
 import { DaySchedule } from "@/components/appointments-requests/scheduleModes";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DayScheduleDetails() {
   const { day } = useLocalSearchParams();
-  const date = typeof day === "string" ? new Date(day) : null;
+  const date = typeof day === "string" ? new Date(day) : new Date();
 
   return (
     <>
@@ -33,7 +32,7 @@ export default function DayScheduleDetails() {
             headerRight: () => <></>,
           }}
         />
-          <DaySchedule date={date} />
+        <DaySchedule date={date} />
       </SafeAreaView>
     </>
   );

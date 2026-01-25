@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { LeftArrowIcon, RightArrowIcon } from "../Icons";
 import {
@@ -8,6 +8,46 @@ import {
   MonthAppointment,
   WeekAppointment,
 } from "./appointmentModes";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+interface AppointmentDto {
+  Id: number;
+  dateHour: string;
+  patient: string;
+  treatment?: string | null;
+  patientID?: number;
+  minutesDuration:
+    | 15
+    | 30
+    | 45
+    | 60
+    | 75
+    | 90
+    | 105
+    | 120
+    | 135
+    | 150
+    | 165
+    | 180;
+}
+
+const DAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+const DAY_LABELS = {
+  monday: "Lunes",
+  tuesday: "Martes",
+  wednesday: "Miércoles",
+  thursday: "Jueves",
+  friday: "Viernes",
+  saturday: "Sábado",
+  sunday: "Domingo",
+} as const;
 
 const hours = [
   "07:00",
@@ -61,7 +101,84 @@ const currentWeek = () => {
   return `${mondayDate}  -  ${sundayDate}`;
 };
 
-export function DaySchedule({ date }: { date: Date | null }) {
+export function DaySchedule({
+  date,
+  refresh,
+}: {
+  date: Date;
+  refresh: string;
+}) {
+  const [todaySchedule, setTodaySchedule] = useState<AppointmentDto[]>([]);
+
+  useEffect(() => {
+    const makeSchedule = (appointments: any[]) => {
+      const result: AppointmentDto[] = [];
+
+      const iHour = new Date();
+      iHour.setHours(
+        Number(hours[0].split(":")[0]),
+        Number(hours[0].split(":")[1]),
+        0,
+        0,
+      );
+
+      while (
+        iHour.getHours() <= Number(hours[hours.length - 1].split(":")[0])
+      ) {
+        const appointment = appointments.find((appointment) =>
+          appointment.dateHour.includes(
+            iHour.toISOString().split("T")[1].split(".")[0].slice(0, 5),
+          ),
+        );
+
+        let step:
+          | 15
+          | 30
+          | 45
+          | 60
+          | 75
+          | 90
+          | 105
+          | 120
+          | 135
+          | 150
+          | 165
+          | 180 = 15;
+
+        if (appointment) {
+          // Cita
+          result.push(appointment);
+          step = appointment.minutesDuration;
+        } else {
+          // Relleno
+          step = iHour.getMinutes().toString().endsWith("5") ? 15 : 30;
+          result.push({
+            Id: 0,
+            dateHour: "",
+            treatment: null,
+            patientID: 0,
+            patient: "",
+            minutesDuration: step,
+          });
+        }
+
+        iHour.setMinutes(iHour.getMinutes() + step);
+      }
+
+      setTodaySchedule(result);
+    };
+
+    const fetchAppointments = async () => {
+      const data = await fetch(
+        `${API_URL}/appointments/day/${date.toISOString()}`,
+      ).then((res) => res.json());
+      makeSchedule(data);
+    };
+
+    const timeoutId = setTimeout(fetchAppointments, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [date, refresh]);
+
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
       <Text className="mb-2 w-full font-bold text-blackBlue text-xl text-center capitalize">
@@ -81,74 +198,216 @@ export function DaySchedule({ date }: { date: Date | null }) {
       </Text>
 
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-        <View>
-          {hours.map((hour) => (
-            <View key={hour} className="w-full">
-              <View className="flex-row items-center gap-3 w-full">
-                <Text className="font-semibold text-blackBlue text-lg">
-                  {hour}
-                </Text>
-                <View className="flex-1 border-t-2 border-blackBlue/50 rounded-full"></View>
+        {/* Grid */}
+        <View className="flex-row gap-2">
+          {/* Hours */}
+          <View>
+            {hours.map((hour, i) => (
+              <Text key={i} className="h-[80px] text-blackBlue">
+                {hour}
+              </Text>
+            ))}
+            <Text className="text-blackBlue">20:00</Text>
+          </View>
+
+          {/*  */}
+          <View className="flex-1 mt-3">
+            {todaySchedule.map((appointment, i) => (
+              <View key={i}>
+                {appointment.Id === 0 ? (
+                  <DayAppointment duration={appointment.minutesDuration} />
+                ) : (
+                  <DayAppointment
+                    patient={appointment.patient}
+                    duration={appointment.minutesDuration}
+                    treatment={appointment.treatment ?? "N/A"}
+                  />
+                )}
               </View>
-              {Math.floor(Math.random() * 5) === 3 ? (
-                <DayAppointment patient="Juan Perez" treatment="Ortodoncia" />
-              ) : (
-                <DayAppointment />
-              )}
-            </View>
-          ))}
+            ))}
+            <View className="border-blackBlue border-t" />
+          </View>
         </View>
       </ScrollView>
     </View>
   );
 }
 
-export function WeekSchedule() {
+export function WeekSchedule({ refresh }: { refresh: string }) {
+  const [weekSchedule, setWeekSchedule] = useState<{
+    monday: AppointmentDto[];
+    tuesday: AppointmentDto[];
+    wednesday: AppointmentDto[];
+    thursday: AppointmentDto[];
+    friday: AppointmentDto[];
+    saturday: AppointmentDto[];
+    sunday: AppointmentDto[];
+  }>({
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+    sunday: [],
+  });
+
+  useEffect(() => {
+    const makeSchedule = (appointments: AppointmentDto[], day: string) => {
+      const result: AppointmentDto[] = [];
+
+      const iHour = new Date();
+      iHour.setHours(
+        Number(hours[0].split(":")[0]),
+        Number(hours[0].split(":")[1]),
+        0,
+        0,
+      );
+
+      while (
+        iHour.getHours() <= Number(hours[hours.length - 1].split(":")[0])
+      ) {
+        const appointment = appointments.find((appointment) =>
+          appointment.dateHour.includes(
+            iHour.toISOString().split("T")[1].split(".")[0].slice(0, 5),
+          ),
+        );
+
+        let step:
+          | 15
+          | 30
+          | 45
+          | 60
+          | 75
+          | 90
+          | 105
+          | 120
+          | 135
+          | 150
+          | 165
+          | 180 = 15;
+
+        if (appointment) {
+          // Cita
+          result.push(appointment);
+          step = appointment.minutesDuration;
+        } else {
+          // Relleno
+          step = iHour.getMinutes().toString().endsWith("5") ? 15 : 30;
+          result.push({
+            Id: 0,
+            dateHour: "",
+            patient: "",
+            minutesDuration: step,
+          });
+        }
+
+        iHour.setMinutes(iHour.getMinutes() + step);
+      }
+      switch (day) {
+        case "monday":
+          setWeekSchedule((prev) => ({
+            ...prev,
+            monday: result,
+          }));
+          break;
+        case "tuesday":
+          setWeekSchedule((prev) => ({
+            ...prev,
+            tuesday: result,
+          }));
+          break;
+        case "wednesday":
+          setWeekSchedule((prev) => ({
+            ...prev,
+            wednesday: result,
+          }));
+          break;
+        case "thursday":
+          setWeekSchedule((prev) => ({
+            ...prev,
+            thursday: result,
+          }));
+          break;
+        case "friday":
+          setWeekSchedule((prev) => ({
+            ...prev,
+            friday: result,
+          }));
+          break;
+        case "saturday":
+          setWeekSchedule((prev) => ({
+            ...prev,
+            saturday: result,
+          }));
+          break;
+        case "sunday":
+          setWeekSchedule((prev) => ({
+            ...prev,
+            sunday: result,
+          }));
+          break;
+      }
+    };
+
+    const fetchAppointments = async () => {
+      try {
+        const data = await fetch(`${API_URL}/appointments/week`).then((res) =>
+          res.json(),
+        );
+        makeSchedule(data.monday, "monday");
+        makeSchedule(data.tuesday, "tuesday");
+        makeSchedule(data.wednesday, "wednesday");
+        makeSchedule(data.thursday, "thursday");
+        makeSchedule(data.friday, "friday");
+        makeSchedule(data.saturday, "saturday");
+        makeSchedule(data.sunday, "sunday");
+      } catch (error) {
+        console.log("Error fetching week appointments:", error);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchAppointments, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [refresh]);
+
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
       <Text className="w-full font-bold text-blackBlue text-xl text-center capitalize">
         {currentWeek()}
       </Text>
+
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
         <View className="flex-row gap-2">
-          <View className="mt-5">
-            {hours.map((hour) => (
-              <Text key={hour} className="h-16 font-bold text-blackBlue">
+          {/* Hours */}
+          <View className="pt-4">
+            {hours.map((hour, i) => (
+              <Text key={i} className="h-[80px] text-blackBlue">
                 {hour}
               </Text>
             ))}
+            <Text className="text-blackBlue">20:00</Text>
           </View>
+
+          {/* Grid */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className="flex-1 mr-2 mb-2">
-              <View className="flex-row mb-1">
-                {[
-                  "Lunes",
-                  "Martes",
-                  "Miércoles",
-                  "Jueves",
-                  "Viernes",
-                  "Sábado",
-                  "Domingo",
-                ].map((day) => (
-                  <Text
-                    key={day}
-                    className="w-24 font-semibold text-blackBlue text-lg text-center"
-                  >
-                    {day}
+            <View className="flex-row pr-2">
+              {DAYS.map((day) => (
+                <View key={day} className="flex-1 w-24">
+                  <Text className="w-24 font-semibold text-blackBlue text-lg text-center">
+                    {DAY_LABELS[day]}
                   </Text>
-                ))}
-              </View>
-              {hours.map((hour) => (
-                <View
-                  key={hour}
-                  className="flex-row border-t border-blackBlue h-16"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-                    <View key={day} className="border-r border-blackBlue w-24">
-                      {Math.floor(Math.random() * 9) === 3 ? (
-                        <WeekAppointment patient="Juan Perez" />
+                  {weekSchedule[day].map((appointment, i) => (
+                    <View key={i} className="border-blackBlue border-r">
+                      {appointment.Id === 0 ? (
+                        <WeekAppointment
+                          duration={appointment.minutesDuration}
+                        />
                       ) : (
-                        <WeekAppointment />
+                        <WeekAppointment
+                          duration={appointment.minutesDuration}
+                          patient={appointment.patient}
+                        />
                       )}
                     </View>
                   ))}
@@ -162,56 +421,138 @@ export function WeekSchedule() {
   );
 }
 
-export function MonthSchedule() {
+export function MonthSchedule({ refresh }: { refresh: string }) {
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const startingDayOfWeek = firstDay.getDay();
+  const adjustedStartDay = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
+  const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const totalCells = adjustedStartDay + lastDay;
+  const totalRows = Math.ceil(totalCells / 7);
+  const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+  const prevMonthDays =
+    adjustedStartDay > 0
+      ? Array.from(
+          { length: adjustedStartDay },
+          (_, i) => prevMonthLastDay - adjustedStartDay + i + 1,
+        )
+      : [];
+  const currentMonthDays = Array.from({ length: lastDay }, (_, i) => i + 1);
+  const nextMonthDays = Array.from(
+    { length: totalRows * 7 - totalCells },
+    (_, i) => i + 1,
+  );
+  const allDays = [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
+
+  const [monthAppointments, setMonthAppointments] = useState<
+    { day: string; count: number }[]
+  >([]);
+
+  const appointmentMap = new Map(
+    monthAppointments.map((item) => [
+      new Date(item.day).toDateString(),
+      item.count,
+    ]),
+  );
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const data = await fetch(`${API_URL}/appointments/month`).then((res) =>
+          res.json(),
+        );
+        setMonthAppointments(data);
+      } catch (error) {
+        console.log("Error fetching month appointments:", error);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchAppointments, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [refresh]);
+
   return (
     <View className="flex-1 justify-center items-center bg-whiteBlue p-2 rounded-xl w-full">
-      <View>
-        <Text className="self-center mb-2 font-bold text-blackBlue text-xl text-center uppercase">
-          {new Date().toLocaleDateString("es-BO", {
-            month: "long",
-          })}
-          {" - "}
-          {new Date().getFullYear()}
-        </Text>
+      {/* Month Title */}
+      <Text className="self-center mb-2 font-bold text-blackBlue text-xl text-center uppercase">
+        {today.toLocaleDateString("es-BO", {
+          month: "long",
+        })}
+        {" - "}
+        {today.getFullYear()}
+      </Text>
 
-        <View className="flex-1 self-start">
-          <View className="flex-row mb-1">
-            {["L", "M", "X", "J", "V", "S", "D"].map((day) => (
-              <Text
-                key={day}
-                className="w-14 font-semibold text-blackBlue text-lg text-center"
-              >
-                {day}
-              </Text>
-            ))}
-          </View>
-          <View className="justify-center border-t border-l">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <View key={i} className="flex-row h-24">
-                {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+      <View className="flex-1 self-start">
+        {/* Days */}
+        <View className="flex-row mb-1">
+          {["L", "M", "X", "J", "V", "S", "D"].map((day) => (
+            <Text
+              key={day}
+              className="w-14 font-semibold text-blackBlue text-lg text-center"
+            >
+              {day}
+            </Text>
+          ))}
+        </View>
+        {/* Month Grid */}
+        <View className="justify-center border-t border-l">
+          {Array.from({ length: totalRows }).map((_, weekIndex) => (
+            <View key={weekIndex} className="flex-row h-24">
+              {Array.from({ length: 7 }).map((_, dayIndex) => {
+                const cellIndex = weekIndex * 7 + dayIndex;
+                const dayNumber = allDays[cellIndex];
+                const isCurrentMonth =
+                  cellIndex >= adjustedStartDay &&
+                  cellIndex < adjustedStartDay + lastDay;
+
+                const dateKey = new Date(
+                  currentYear,
+                  currentMonth,
+                  dayNumber,
+                ).toDateString();
+                const appointmentCount = isCurrentMonth
+                  ? (appointmentMap.get(dateKey) ?? 0)
+                  : 0;
+
+                return (
                   <Link
+                    asChild
+                    key={cellIndex}
                     href={{
                       pathname: "/dayScheduleDetails/[day]",
                       params: {
-                        day: new Date("2025-07-30T12:00:00").toDateString(),
+                        day: new Date(dateKey).toISOString(),
                       },
                     }}
-                    key={day}
-                    asChild
                   >
-                    <Pressable className="active:bg-lightBlue border-r border-b border-blackBlue w-14">
-                      <Text className="mb-1 pl-1 font-semibold text-blackBlue text-sm">
-                        {i * 7 + day}
-                      </Text>
-                      {Math.floor(Math.random() * 9) === 3 && (
-                        <MonthAppointment dayAppointments={3} />
+                    <Pressable
+                      disabled={!isCurrentMonth}
+                      className={`border-blackBlue border-r border-b w-14 justify-start pt-1 ${
+                        isCurrentMonth
+                          ? "active:bg-lightBlue bg-whiteBlue"
+                          : "bg-darkBlue"
+                      }`}
+                    >
+                      {isCurrentMonth && (
+                        <>
+                          <Text className="pl-1 font-semibold text-blackBlue text-sm">
+                            {dayNumber}
+                          </Text>
+                          {appointmentCount > 0 && (
+                            <MonthAppointment
+                              dayAppointments={appointmentCount}
+                            />
+                          )}
+                        </>
                       )}
                     </Pressable>
                   </Link>
-                ))}
-              </View>
-            ))}
-          </View>
+                );
+              })}
+            </View>
+          ))}
         </View>
       </View>
     </View>
@@ -223,25 +564,31 @@ export function WeekAppointmentSelect() {
 
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
+      {/* Header */}
       <View className="flex-row justify-center items-center">
+        {/* Go last week */}
         <Pressable
           onPress={() => {}}
-          className="active:bg-lightBlue p-1 justify-center items-center"
+          disabled={true}
+          className="justify-center items-center active:bg-lightBlue p-1"
         >
           <LeftArrowIcon color="#02457A" size={32} />
         </Pressable>
+        {/* Week Text */}
         <Text className="flex-1 font-bold text-blackBlue text-xl text-center capitalize">
           {currentWeek()}
         </Text>
+        {/* Go next week */}
         <Pressable
           onPress={() => {}}
-          className="active:bg-lightBlue p-1 justify-center items-center"
+          className="justify-center items-center active:bg-lightBlue p-1"
         >
           <RightArrowIcon color="#02457A" size={32} />
         </Pressable>
       </View>
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
         <View className="flex-row gap-2">
+          {/* Hours */}
           <View className="mt-5">
             {hours.map((hour) => (
               <Text key={hour} className="h-16 font-bold text-blackBlue">
@@ -272,10 +619,10 @@ export function WeekAppointmentSelect() {
               {hours.map((hour) => (
                 <View
                   key={hour}
-                  className="flex-row border-t border-blackBlue h-16"
+                  className="flex-row border-blackBlue border-t h-16"
                 >
                   {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-                    <View key={day} className="border-r border-blackBlue w-24">
+                    <View key={day} className="border-blackBlue border-r w-24">
                       {Math.floor(Math.random() * 9) === 3 ? (
                         <AppointmentSelection
                           dateId={dateId}
@@ -404,7 +751,7 @@ export function WorkScheduleSelection({
                   </View>
                 ))}
               </View>
-              {/* Wedenesday */}
+              {/* Wednesday */}
               <View>
                 {shifts.Wednesday.map((currentShift) => (
                   <View
@@ -425,7 +772,7 @@ export function WorkScheduleSelection({
                                   };
                                 }
                                 return wednesdayShift;
-                              }
+                              },
                             ),
                           })
                         }
@@ -458,7 +805,7 @@ export function WorkScheduleSelection({
                                   };
                                 }
                                 return thursdayShift;
-                              }
+                              },
                             ),
                           })
                         }
@@ -522,7 +869,7 @@ export function WorkScheduleSelection({
                                   };
                                 }
                                 return saturdayShift;
-                              }
+                              },
                             ),
                           })
                         }

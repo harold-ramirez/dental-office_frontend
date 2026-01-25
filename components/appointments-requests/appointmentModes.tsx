@@ -6,6 +6,7 @@ import { CheckCircleIcon, PlusIcon } from "../Icons";
 interface appointmentProps {
   patient?: string;
   treatment?: string;
+  duration?: 15 | 30 | 45 | 60 | 75 | 90 | 105 | 120 | 135 | 150 | 165 | 180;
 }
 interface appointmentSelectionProps {
   isAvailable?: boolean;
@@ -13,11 +14,18 @@ interface appointmentSelectionProps {
   setDateId: (id: number | null) => void;
 }
 
-export function DayAppointment({ patient, treatment }: appointmentProps) {
+export function DayAppointment(props: appointmentProps) {
+  const { patient, treatment, duration = 30 } = props;
+  const heightPx = (duration / 15) * 40;
+
   return (
-    <View className="items-end h-16">
+    <View
+      className={`w-full border-blackBlue ${duration !== 15 || patient ? `border-t` : ``}`}
+      style={{ height: heightPx }}
+    >
       {patient ? (
         <Link
+          asChild
           href={{
             pathname: "/createAppointment/[selectedDate]",
             params: {
@@ -25,22 +33,25 @@ export function DayAppointment({ patient, treatment }: appointmentProps) {
               patient: "Juanito",
             },
           }}
-          asChild
         >
-          <Pressable className="flex-row justify-between items-center bg-pureBlue active:bg-darkBlue mr-2 p-2 border border-blackBlue rounded-lg w-4/5 h-full">
-            <Text className="font-bold text-whiteBlue text-lg">{patient}</Text>
-            <Text className="font-semibold text-whiteBlue">{treatment}</Text>
+          <Pressable className="flex-row justify-between items-center gap-3 bg-pureBlue active:bg-darkBlue p-2 rounded-xl h-full">
+            <Text className="flex-1 font-bold text-whiteBlue text-lg shrink">
+              {patient}
+            </Text>
+            <Text className="flex-1 font-semibold text-whiteBlue text-right shrink">
+              {treatment}
+            </Text>
           </Pressable>
         </Link>
       ) : (
         <Link
+          asChild
           href={{
             pathname: "/createAppointment/[selectedDate]",
             params: { selectedDate: new Date().toDateString() },
           }}
-          asChild
         >
-          <Pressable className="flex-row justify-center items-center active:bg-lightBlue mr-2 p-2 w-4/5 h-full">
+          <Pressable className="flex-row justify-center items-center active:bg-lightBlue h-full">
             <PlusIcon size={45} color="#D6E8EE" />
           </Pressable>
         </Link>
@@ -49,11 +60,17 @@ export function DayAppointment({ patient, treatment }: appointmentProps) {
   );
 }
 
-export function WeekAppointment({ patient }: appointmentProps) {
+export function WeekAppointment(props: appointmentProps) {
+  const { duration = 30, patient } = props;
+  const heightPx = (duration / 15) * 40;
   return (
-    <View className="h-16">
+    <View
+      style={{ height: heightPx }}
+      className={`w-full border-blackBlue ${duration !== 15 || patient ? `border-t` : ``}`}
+    >
       {patient ? (
         <Link
+          asChild
           href={{
             pathname: "/createAppointment/[selectedDate]",
             params: {
@@ -61,21 +78,20 @@ export function WeekAppointment({ patient }: appointmentProps) {
               patient: "Juanito",
             },
           }}
-          asChild
         >
           <Pressable className="justify-center items-center bg-pureBlue active:bg-darkBlue p-1 h-full">
-            <Text className="font-bold text-whiteBlue text-sm text-center">
+            <Text className="flex-1 font-bold text-whiteBlue text-sm text-center shrink">
               {patient}
             </Text>
           </Pressable>
         </Link>
       ) : (
         <Link
+          asChild
           href={{
             pathname: "/createAppointment/[selectedDate]",
             params: { selectedDate: new Date().toDateString() },
           }}
-          asChild
         >
           <Pressable className="justify-center items-center active:bg-lightBlue h-full">
             <PlusIcon size={32} color="#D6E8EE" />
