@@ -1,7 +1,14 @@
+import { FormatDuration } from "@/services/formatAppointmentDuration";
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { LeftArrowIcon, RightArrowIcon } from "../Icons";
+import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  EditIcon,
+  LeftArrowIcon,
+  RightArrowIcon,
+  WhatsappIcon,
+} from "../Icons";
+import PopupModal from "../popupModal";
 import {
   AppointmentSelection,
   DayAppointment,
@@ -15,6 +22,10 @@ interface AppointmentDto {
   patient: string;
   treatment?: string | null;
   patientID?: number;
+  notes?: string | null;
+  requestMessage?: string | null;
+  requestPhoneNumber?: string | null;
+  patientPhoneNumber?: string | null;
   minutesDuration:
     | 15
     | 30
@@ -109,6 +120,20 @@ export function DaySchedule({
   refresh: string;
 }) {
   const [todaySchedule, setTodaySchedule] = useState<AppointmentDto[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<AppointmentDto>({
+      Id: 0,
+      dateHour: "",
+      patient: "",
+      minutesDuration: 15,
+      patientID: 0,
+      treatment: null,
+      notes: null,
+      requestMessage: null,
+      requestPhoneNumber: null,
+      patientPhoneNumber: null,
+    });
 
   useEffect(() => {
     const makeSchedule = (appointments: any[]) => {
@@ -154,7 +179,7 @@ export function DaySchedule({
           step = iHour.getMinutes().toString().endsWith("5") ? 15 : 30;
           result.push({
             Id: 0,
-            dateHour: "",
+            dateHour: iHour.toISOString(),
             treatment: null,
             patientID: 0,
             patient: "",
@@ -215,12 +240,19 @@ export function DaySchedule({
             {todaySchedule.map((appointment, i) => (
               <View key={i}>
                 {appointment.Id === 0 ? (
-                  <DayAppointment duration={appointment.minutesDuration} />
+                  <DayAppointment
+                    dateHour={appointment.dateHour}
+                    duration={appointment.minutesDuration}
+                  />
                 ) : (
                   <DayAppointment
                     patient={appointment.patient}
                     duration={appointment.minutesDuration}
                     treatment={appointment.treatment ?? "N/A"}
+                    onPress={() => {
+                      setSelectedAppointment(appointment);
+                      setModalVisible(true);
+                    }}
                   />
                 )}
               </View>
@@ -229,11 +261,31 @@ export function DaySchedule({
           </View>
         </View>
       </ScrollView>
+      {/* Appointment Details */}
+      <ModalDetails
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        selectedAppointment={selectedAppointment}
+      />
     </View>
   );
 }
 
 export function WeekSchedule({ refresh }: { refresh: string }) {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<AppointmentDto>({
+      Id: 0,
+      dateHour: "",
+      patient: "",
+      minutesDuration: 15,
+      patientID: 0,
+      treatment: null,
+      notes: null,
+      requestMessage: null,
+      requestPhoneNumber: null,
+      patientPhoneNumber: null,
+    });
   const [weekSchedule, setWeekSchedule] = useState<{
     monday: AppointmentDto[];
     tuesday: AppointmentDto[];
@@ -296,7 +348,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
           step = iHour.getMinutes().toString().endsWith("5") ? 15 : 30;
           result.push({
             Id: 0,
-            dateHour: "",
+            dateHour: iHour.toISOString(),
             patient: "",
             minutesDuration: step,
           });
@@ -402,11 +454,16 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
                       {appointment.Id === 0 ? (
                         <WeekAppointment
                           duration={appointment.minutesDuration}
+                          dateHour={appointment.dateHour}
                         />
                       ) : (
                         <WeekAppointment
                           duration={appointment.minutesDuration}
                           patient={appointment.patient}
+                          onPress={() => {
+                            setSelectedAppointment(appointment);
+                            setModalVisible(true);
+                          }}
                         />
                       )}
                     </View>
@@ -417,6 +474,13 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
           </ScrollView>
         </View>
       </ScrollView>
+
+      {/* Appointment Details */}
+      <ModalDetails
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        selectedAppointment={selectedAppointment}
+      />
     </View>
   );
 }
@@ -917,5 +981,174 @@ export function WorkScheduleSelection({
         </View>
       </ScrollView>
     </View>
+  );
+}
+
+export function ModalDetails({
+  modalVisible,
+  setModalVisible,
+  selectedAppointment,
+}: {
+  modalVisible: boolean;
+  setModalVisible: (val: boolean) => void;
+  selectedAppointment: AppointmentDto;
+}) {
+  return (
+    <PopupModal
+      showModal={modalVisible}
+      setShowModal={setModalVisible}
+      customDesign={true}
+    >
+      <View className="flex-1 items-center">
+        <Pressable
+          onPress={() => setModalVisible(false)}
+          className="flex-1 w-full"
+        />
+        <View className="bg-darkBlue px-4 py-4 rounded-t-2xl w-full">
+          {/* Patient's Name */}
+          <Text className="font-bold text-whiteBlue text-2xl text-center">
+            {selectedAppointment.patient}
+          </Text>
+          {/* Date */}
+          <View className="flex-row justify-between gap-1">
+            <Text className="font-bold text-whiteBlue">Fecha:</Text>
+            <View className="flex-1 border-whiteBlue border-b border-dotted" />
+            <Text className="text-whiteBlue">
+              {new Date(selectedAppointment.dateHour).toLocaleDateString(
+                "es-BO",
+                {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                },
+              )}
+            </Text>
+          </View>
+          {/* Duration */}
+          <View className="flex-row justify-between gap-1">
+            <Text className="font-bold text-whiteBlue">Duración:</Text>
+            <View className="flex-1 border-whiteBlue border-b border-dotted" />
+            <Text className="text-whiteBlue">
+              {(() => {
+                const starAppt = new Date(selectedAppointment.dateHour);
+                const endAppt = new Date(selectedAppointment.dateHour);
+                endAppt.setMinutes(
+                  endAppt.getMinutes() + selectedAppointment.minutesDuration,
+                );
+                const formated: string =
+                  starAppt
+                    .toLocaleDateString("es-BO", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })
+                    .split(", ")[1] +
+                  " - " +
+                  endAppt
+                    .toLocaleDateString("es-BO", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })
+                    .split(", ")[1] +
+                  "  (" +
+                  FormatDuration(selectedAppointment.minutesDuration) +
+                  ")";
+                return formated;
+              })()}
+            </Text>
+          </View>
+          {/* Treatment */}
+          <View className="flex-row justify-between gap-1">
+            <Text className="font-bold text-whiteBlue">Tratamiento:</Text>
+            <View className="flex-1 border-whiteBlue border-b border-dotted" />
+            <Text
+              className={`text-whiteBlue text-right ${
+                selectedAppointment.treatment ?? `italic`
+              }`}
+            >
+              {selectedAppointment.treatment ?? "N/A"}
+            </Text>
+          </View>
+          {/* Notes */}
+          <View
+            className={`gap-1 ${
+              !selectedAppointment.notes ? `flex-row justify-between` : `mb-2`
+            }`}
+          >
+            <Text className="font-bold text-whiteBlue">Notas:</Text>
+            {!selectedAppointment.notes && (
+              <View className="flex-1 border-whiteBlue border-b border-dotted" />
+            )}
+            <Text
+              className={`rounded-md text-whiteBlue ${
+                selectedAppointment.notes
+                  ? `text-center py-1 bg-pureBlue font-semibold`
+                  : `italic`
+              }`}
+            >
+              {selectedAppointment.notes ?? "N/A"}
+            </Text>
+          </View>
+          {/* Request Message */}
+          <View
+            className={`gap-1 mb-5 ${
+              !selectedAppointment.requestMessage
+                ? `flex-row justify-between`
+                : ``
+            }`}
+          >
+            <Text className="font-bold text-whiteBlue">
+              Mensaje de Solicitud:
+            </Text>
+            {!selectedAppointment.requestMessage && (
+              <View className="flex-1 border-whiteBlue border-b border-dotted" />
+            )}
+            <Text
+              className={`rounded-md italic ${
+                selectedAppointment.requestMessage
+                  ? `bg-darkBlue p-2 text-whiteBlue text-center`
+                  : `text-whiteBlue`
+              }`}
+            >
+              {selectedAppointment.requestMessage
+                ? `"${selectedAppointment.requestMessage}"`
+                : "N/A"}
+            </Text>
+          </View>
+
+          <View className="flex-row justify-between">
+            {/* Edit Button */}
+            <Link
+              asChild
+              href={{
+                pathname: "/(protected)/createAppointment/[selectedDate]",
+                params: { selectedDate: selectedAppointment.dateHour },
+              }}
+            >
+              <Pressable className="flex-row justify-center items-center gap-2 bg-blackBlue active:bg-pureBlue px-4 py-1 rounded-md">
+                <EditIcon color="#D6E8EE" />
+                <Text className="text-whiteBlue font-semibold">Editar</Text>
+              </Pressable>
+            </Link>
+            {/* WA Button */}
+            {(selectedAppointment.patientPhoneNumber ||
+              selectedAppointment.requestPhoneNumber) && (
+              <Pressable
+                onPress={() => {
+                  const url = `https://wa.me/591${selectedAppointment.requestPhoneNumber ?? selectedAppointment.patientPhoneNumber}`;
+                  Linking.openURL(url);
+                }}
+                className="flex-row justify-center items-center gap-2 bg-green-700 active:bg-green-600 px-4 py-1 rounded-md"
+              >
+                <WhatsappIcon color="#D6E8EE" />
+                <Text className="font-semibold text-whiteBlue">Mensaje</Text>
+              </Pressable>
+            )}
+          </View>
+          <View className="h-16" />
+        </View>
+      </View>
+    </PopupModal>
   );
 }

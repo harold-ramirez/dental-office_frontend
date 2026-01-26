@@ -1,4 +1,6 @@
 import { TriangleDownIcon, TriangleUpIcon } from "@/components/Icons";
+import PopupModal from "@/components/popupModal";
+import { FormatDuration } from "@/services/formatAppointmentDuration";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -15,12 +17,20 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalHistory() {
   const { patientId, patientName } = useLocalSearchParams();
+  const [modalVisible, setModalVisible] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<{
     dateHour: string;
     minutesDuration: number;
     requestMessage: string | null;
     treatment: string | null;
-  } | null>(null);
+    notes: string | null;
+  }>({
+    dateHour: "",
+    minutesDuration: 15,
+    requestMessage: null,
+    treatment: null,
+    notes: null,
+  });
   const [isOpen, setIsOpen] = useState({
     last10: true,
     currentMonth: false,
@@ -33,24 +43,28 @@ export default function MedicalHistory() {
       minutesDuration: number;
       requestMessage: string | null;
       treatment: string | null;
+      notes: null;
     }[];
     currentMonthAppointments: {
       dateHour: string;
       minutesDuration: number;
       requestMessage: string | null;
       treatment: string | null;
+      notes: null;
     }[];
     lastMonthAppointments: {
       dateHour: string;
       minutesDuration: number;
       requestMessage: string | null;
       treatment: string | null;
+      notes: null;
     }[];
     allAppointments: {
       dateHour: string;
       minutesDuration: number;
       requestMessage: string | null;
       treatment: string | null;
+      notes: null;
     }[];
   }>({
     last10Appointments: [],
@@ -62,7 +76,7 @@ export default function MedicalHistory() {
   const fetchAppointmentsHistory = useCallback(async () => {
     try {
       const data = await fetch(
-        `${API_URL}/appointments/history/${patientId}`
+        `${API_URL}/appointments/history/${patientId}`,
       ).then((res) => res.json());
       setAppointmentHistory(data);
     } catch (e) {
@@ -146,9 +160,12 @@ export default function MedicalHistory() {
                         <AppointmentRecord
                           key={i}
                           appointment={appointment}
-                          setSelectedAppointment={setSelectedAppointment}
+                          onPress={() => {
+                            setSelectedAppointment(appointment);
+                            setModalVisible(true);
+                          }}
                         />
-                      )
+                      ),
                     )}
                   </View>
                 </>
@@ -189,9 +206,12 @@ export default function MedicalHistory() {
                         <AppointmentRecord
                           key={i}
                           appointment={appointment}
-                          setSelectedAppointment={setSelectedAppointment}
+                          onPress={() => {
+                            setSelectedAppointment(appointment);
+                            setModalVisible(true);
+                          }}
                         />
-                      )
+                      ),
                     )}
                   </View>
                 </>
@@ -232,9 +252,12 @@ export default function MedicalHistory() {
                         <AppointmentRecord
                           key={i}
                           appointment={appointment}
-                          setSelectedAppointment={setSelectedAppointment}
+                          onPress={() => {
+                            setSelectedAppointment(appointment);
+                            setModalVisible(true);
+                          }}
                         />
-                      )
+                      ),
                     )}
                   </View>
                 </>
@@ -278,107 +301,144 @@ export default function MedicalHistory() {
                         <AppointmentRecord
                           key={i}
                           appointment={appointment}
-                          setSelectedAppointment={setSelectedAppointment}
+                          onPress={() => {
+                            setSelectedAppointment(appointment);
+                            setModalVisible(true);
+                          }}
                         />
-                      )
+                      ),
                     )}
                   </View>
                 </>
               ))}
           </ScrollView>
 
-          {/* Details Box */}
-          <View className="px-2 border-2 border-darkBlue rounded-md w-full min-h-28 max-h-64">
-            <ScrollView
-              className="gap-1 py-2"
-              showsVerticalScrollIndicator={false}
-            >
-              {!selectedAppointment ? (
-                <Text className="w-full text-blackBlue/75 text-center italic">
-                  Seleccione una cita para ver los detalles
-                </Text>
-              ) : (
-                <>
-                  <View className="flex-row justify-between gap-1">
-                    <Text className="font-bold text-blackBlue">Fecha:</Text>
-                    <View className="flex-1 border-blackBlue border-b-2 border-dotted" />
-                    <Text className="text-blackBlue text-right">
-                      {new Date(
-                        selectedAppointment.dateHour
-                      ).toLocaleDateString("es-BO", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
+          {/* Details Modal */}
+          <PopupModal
+            showModal={modalVisible}
+            setShowModal={setModalVisible}
+            customDesign={true}
+          >
+            <View className="flex-1 items-center">
+              <Pressable
+                onPress={() => setModalVisible(false)}
+                className="flex-1 bg-black/50 w-full"
+              />
+              <View className="bg-pureBlue px-4 py-4 rounded-t-2xl w-full">
+                {/* Date */}
+                <View className="flex-row justify-between gap-1">
+                  <Text className="font-bold text-whiteBlue">Fecha:</Text>
+                  <View className="flex-1 border-whiteBlue border-b border-dotted" />
+                  <Text className="text-whiteBlue">
+                    {new Date(selectedAppointment.dateHour).toLocaleDateString(
+                      "es-BO",
+                      {
+                        day: "2-digit",
+                        month: "long",
                         year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false,
-                      })}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between gap-1">
-                    <Text className="font-bold text-blackBlue">Duración:</Text>
-                    <View className="flex-1 border-blackBlue border-b-2 border-dotted" />
-                    <Text className="text-blackBlue text-right">
-                      {(() => {
-                        const totalMinutes =
-                          selectedAppointment.minutesDuration;
-                        const hours = Math.floor(totalMinutes / 60);
-                        const minutes = totalMinutes % 60;
-                        if (hours > 0 && minutes > 0) {
-                          return `${hours} ${
-                            hours === 1 ? "hora" : "horas"
-                          } ${minutes} min`;
-                        } else if (hours > 0) {
-                          return `${hours} ${hours === 1 ? "hora" : "horas"}`;
-                        } else {
-                          return `${minutes} min`;
-                        }
-                      })()}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between gap-1">
-                    <Text className="font-bold text-blackBlue">
-                      Tratamiento:
-                    </Text>
-                    <View className="flex-1 border-blackBlue border-b-2 border-dotted" />
-                    <Text
-                      className={`text-blackBlue text-right ${
-                        selectedAppointment.treatment ?? `italic`
-                      }`}
-                    >
-                      {selectedAppointment.treatment ?? "No especificado"}
-                    </Text>
-                  </View>
-                  <View
-                    className={`gap-1 mb-5 ${
-                      !selectedAppointment.requestMessage
-                        ? `flex-row justify-between`
-                        : ``
+                      },
+                    )}
+                  </Text>
+                </View>
+                {/* Duration */}
+                <View className="flex-row justify-between gap-1">
+                  <Text className="font-bold text-whiteBlue">Duración:</Text>
+                  <View className="flex-1 border-whiteBlue border-b border-dotted" />
+                  <Text className="text-whiteBlue">
+                    {(() => {
+                      const starAppt = new Date(selectedAppointment.dateHour);
+                      const endAppt = new Date(selectedAppointment.dateHour);
+                      endAppt.setMinutes(
+                        endAppt.getMinutes() +
+                          selectedAppointment.minutesDuration,
+                      );
+                      const formated: string =
+                        starAppt
+                          .toLocaleDateString("es-BO", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })
+                          .split(", ")[1] +
+                        " - " +
+                        endAppt
+                          .toLocaleDateString("es-BO", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })
+                          .split(", ")[1] +
+                        "  (" +
+                        FormatDuration(selectedAppointment.minutesDuration) +
+                        ")";
+                      return formated;
+                    })()}
+                  </Text>
+                </View>
+                {/* Treatment */}
+                <View className="flex-row justify-between gap-1">
+                  <Text className="font-bold text-whiteBlue">Tratamiento:</Text>
+                  <View className="flex-1 border-whiteBlue border-b border-dotted" />
+                  <Text
+                    className={`text-whiteBlue text-right ${
+                      selectedAppointment.treatment ?? `italic`
                     }`}
                   >
-                    <Text className="font-bold text-blackBlue">
-                      Mensaje de Solicitud:
-                    </Text>
-                    {!selectedAppointment.requestMessage && (
-                      <View className="flex-1 border-blackBlue border-b-2 border-dotted" />
-                    )}
-                    <Text
-                      className={`rounded-md  italic ${
-                        selectedAppointment.requestMessage
-                          ? `bg-darkBlue p-2 text-whiteBlue text-center`
-                          : `text-blackBlue`
-                      }`}
-                    >
-                      {selectedAppointment.requestMessage
-                        ? `"${selectedAppointment.requestMessage}"`
-                        : "No especificado"}
-                    </Text>
-                  </View>
-                </>
-              )}
-            </ScrollView>
-          </View>
+                    {selectedAppointment.treatment ?? "N/A"}
+                  </Text>
+                </View>
+                {/* Notes */}
+                <View
+                  className={`gap-1 ${
+                    !selectedAppointment.notes
+                      ? `flex-row justify-between`
+                      : `mb-2`
+                  }`}
+                >
+                  <Text className="font-bold text-whiteBlue">Notas:</Text>
+                  {!selectedAppointment.notes && (
+                    <View className="flex-1 border-whiteBlue border-b border-dotted" />
+                  )}
+                  <Text
+                    className={`rounded-md text-whiteBlue ${
+                      selectedAppointment.notes
+                        ? `text-center py-1 bg-pureBlue font-semibold`
+                        : `italic`
+                    }`}
+                  >
+                    {selectedAppointment.notes ?? "N/A"}
+                  </Text>
+                </View>
+                {/* Request Message */}
+                <View
+                  className={`gap-1 mb-5 ${
+                    !selectedAppointment.requestMessage
+                      ? `flex-row justify-between`
+                      : ``
+                  }`}
+                >
+                  <Text className="font-bold text-whiteBlue">
+                    Mensaje de Solicitud:
+                  </Text>
+                  {!selectedAppointment.requestMessage && (
+                    <View className="flex-1 border-whiteBlue border-b border-dotted" />
+                  )}
+                  <Text
+                    className={`rounded-md italic ${
+                      selectedAppointment.requestMessage
+                        ? `bg-darkBlue p-2 text-whiteBlue text-center`
+                        : `text-whiteBlue`
+                    }`}
+                  >
+                    {selectedAppointment.requestMessage
+                      ? `"${selectedAppointment.requestMessage}"`
+                      : "N/A"}
+                  </Text>
+                </View>
+                <View className="h-16" />
+              </View>
+            </View>
+          </PopupModal>
         </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -386,14 +446,17 @@ export default function MedicalHistory() {
 }
 
 interface AppointmentRecordProps {
-  appointment: any;
-  setSelectedAppointment: (ap: any) => void;
+  appointment: {
+    dateHour: string;
+    treatment: string | null;
+  };
+  onPress: () => void;
 }
 export function AppointmentRecord(props: AppointmentRecordProps) {
-  const { appointment, setSelectedAppointment } = props;
+  const { appointment, onPress } = props;
   return (
     <Pressable
-      onPress={() => setSelectedAppointment(appointment)}
+      onPress={onPress}
       className="flex-row justify-between gap-1 active:bg-lightBlue/50 py-3 rounded-md"
     >
       <Text className="text-left">
