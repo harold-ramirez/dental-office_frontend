@@ -10,7 +10,6 @@ export interface PatientDto {
   birthdate: string;
   occupation?: string | null;
   address?: string | null;
-  AppUser_Id: number;
 }
 
 export interface CreatePatientDto {
@@ -24,7 +23,6 @@ export interface CreatePatientDto {
   birthdate: string;
   occupation?: string | null;
   address?: string | null;
-  AppUser_Id: number;
 }
 
 export interface AppointmentRequestDto {
@@ -34,7 +32,7 @@ export interface AppointmentRequestDto {
   phoneNumber: string;
   message: string;
   registerDate: string;
-  AppUser_Id: number;
+
   status: boolean;
 }
 
@@ -58,7 +56,6 @@ export interface UploadMedicalImageDto {
   captureDate?: Date;
   description?: string;
   Patient_Id: number;
-  AppUser_Id: number;
 }
 
 export interface MedicalHistoryDto {
@@ -101,7 +98,7 @@ export interface DiagnosedProcedureDto {
   Id?: number;
   description: string | null;
   totalCost: number | null;
-  Treatment:{
+  Treatment: {
     Id: number;
     name: string;
     description: string | null;
@@ -109,4 +106,20 @@ export interface DiagnosedProcedureDto {
   totalPieces: number;
   registerDate: string;
   updateDate?: string;
+}
+
+export interface AppUserDto {
+  Id: number;
+  username: string;
+  name: string;
+  paternalSurname?: string | null;
+  maternalSurname?: string | null;
+  gender: string;
+  phoneNumber?: string;
+  defaultMessage?: string | null;
+  sessionDurationMinutes: number;
+
+  registerDate: string;
+  updateDate?: string | null;
+  status: boolean;
 }

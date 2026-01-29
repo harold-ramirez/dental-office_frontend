@@ -1,5 +1,6 @@
 import Loading from "@/components/loading";
 import { MedicalImageDto } from "@/interfaces/interfaces";
+import { authService } from "@/services/authService";
 import * as ImagePicker from "expo-image-picker";
 import { Link, RelativePathString, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -24,6 +25,9 @@ import {
 } from "../Icons";
 import { DeleteAlertMessage } from "../alertMessage";
 
+const token = await authService.getToken();
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 interface ImageModalProps {
   onClose: () => void;
   image?: MedicalImageDto;
@@ -32,7 +36,6 @@ interface ImageModalProps {
 
 export default function ImageModal(props: ImageModalProps) {
   const { onClose, image, patientId } = props;
-  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -60,7 +63,7 @@ export default function ImageModal(props: ImageModalProps) {
         const asset = result.assets[0];
         if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
           alert(
-            "La imagen es demasiado pesada. Elige una de menos de 5 MB o recorta la imagen"
+            "La imagen es demasiado pesada. Elige una de menos de 5 MB o recorta la imagen",
           );
           return;
         }
@@ -92,10 +95,10 @@ export default function ImageModal(props: ImageModalProps) {
       formData.append("captureDate", newPhoto.captureDate.toISOString());
       formData.append("description", newPhoto.description);
       formData.append("Patient_Id", patientId.toString());
-      formData.append("AppUser_Id", "1"); // Hardcoded
       const response = await fetch(`${API_URL}/images`, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
         body: formData,
@@ -126,15 +129,15 @@ export default function ImageModal(props: ImageModalProps) {
         {
           method: "PATCH",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             captureDate: newPhoto.captureDate.toISOString(),
             description: newPhoto.description,
             Patient_Id: patientId,
-            AppUser_Id: 1, // Hardcoded
           }),
-        }
+        },
       );
       if (response.ok) {
         router.replace({
@@ -159,7 +162,7 @@ export default function ImageModal(props: ImageModalProps) {
       () => {
         onClose();
         return true;
-      }
+      },
     );
     return () => backHandler.remove();
   }, [onClose]);
@@ -288,7 +291,10 @@ export default function ImageModal(props: ImageModalProps) {
             {/* Buttons */}
             <View className="flex-row mt-5">
               {isLoading ? (
-                <Loading className="flex-1" innerClassName="w-full p-1 justify-center items-center" />
+                <Loading
+                  className="flex-1"
+                  innerClassName="w-full p-1 justify-center items-center"
+                />
               ) : (
                 <>
                   {/* Save Image Button */}
@@ -316,7 +322,7 @@ export default function ImageModal(props: ImageModalProps) {
                           "No se pudo eliminar la imagen. Inténtalo de nuevo.",
                           "DELETE",
                           "/medicalImages/[patientId]" as RelativePathString,
-                          { patientId: patientId.toString() }
+                          { patientId: patientId.toString() },
                         );
                       }}
                       className="flex-row flex-1 justify-center items-center py-1 border-darkBlue border-t-2 rounded-t-none"

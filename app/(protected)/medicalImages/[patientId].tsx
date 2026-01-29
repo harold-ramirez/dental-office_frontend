@@ -1,6 +1,7 @@
 import { PlusIcon } from "@/components/Icons";
 import ImageModal from "@/components/patients/imageModal";
 import { MedicalImageDto } from "@/interfaces/interfaces";
+import { authService } from "@/services/authService";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -12,8 +13,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const token = await authService.getToken();
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 export default function MedicalImages() {
-  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const { patientId, refresh } = useLocalSearchParams();
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -22,7 +25,13 @@ export default function MedicalImages() {
 
   const fetchAllPatientImages = useCallback(async () => {
     try {
-      const endpoint = await fetch(`${API_URL}/images/${patientId}`);
+      const endpoint = await fetch(`${API_URL}/images/${patientId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       const data = await endpoint.json();
       setImages(data);
     } catch (e) {

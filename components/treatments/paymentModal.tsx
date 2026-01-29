@@ -1,3 +1,4 @@
+import { authService } from "@/services/authService";
 import { useEffect, useState } from "react";
 import {
   BackHandler,
@@ -9,6 +10,8 @@ import {
   View,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
+
+const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface Props {
@@ -23,12 +26,10 @@ export default function PaymentModal(props: Props) {
   const [newPayment, setNewPayment] = useState<{
     amount: number | "";
     DiagnosedProcedure_Id: number;
-    AppUser_Id: number;
     registerDate: string;
   }>({
     amount: "",
     DiagnosedProcedure_Id: procedureId,
-    AppUser_Id: 1, // Hardcoded userID
     registerDate: new Date().toISOString(),
   });
 
@@ -38,12 +39,12 @@ export default function PaymentModal(props: Props) {
       const res = await fetch(`${API_URL}/payments`, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           amount: newPayment.amount,
           DiagnosedProcedure_Id: procedureId,
-          AppUser_Id: newPayment.AppUser_Id,
           registerDate: newPayment.registerDate,
         }),
       });
@@ -62,7 +63,7 @@ export default function PaymentModal(props: Props) {
       () => {
         onClose();
         return true;
-      }
+      },
     );
     return () => backHandler.remove();
   }, [onClose]);
@@ -123,7 +124,7 @@ export default function PaymentModal(props: Props) {
                 value={
                   newPayment.registerDate
                     ? new Date(newPayment.registerDate).toLocaleDateString(
-                        "es-BO"
+                        "es-BO",
                       )
                     : ""
                 }

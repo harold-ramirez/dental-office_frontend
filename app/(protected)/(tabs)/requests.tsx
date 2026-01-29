@@ -1,6 +1,7 @@
 import RequestCard from "@/components/appointments-requests/requestCard";
 import { SadIcon, TriangleDownIcon, TriangleUpIcon } from "@/components/Icons";
 import { AppointmentRequestDto } from "@/interfaces/interfaces";
+import { authService } from "@/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -14,6 +15,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Requests() {
@@ -26,7 +29,13 @@ export default function Requests() {
 
   const fetchAllRequests = useCallback(async () => {
     try {
-      const endpoint = await fetch(`${API_URL}/appointment-requests`);
+      const endpoint = await fetch(`${API_URL}/appointment-requests`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       const data = await endpoint.json();
       setRequests(data);
     } catch (e) {
@@ -37,7 +46,14 @@ export default function Requests() {
   const fetchAllPastRequests = useCallback(async () => {
     try {
       const endpoint = await fetch(
-        `${API_URL}/appointment-requests/pastRequests`
+        `${API_URL}/appointment-requests/pastRequests`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
       );
       const data = await endpoint.json();
       setPastRequests(data);
@@ -62,7 +78,7 @@ export default function Requests() {
       "newAppointmentRequest",
       () => {
         onRefresh();
-      }
+      },
     );
 
     return () => {

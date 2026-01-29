@@ -1,5 +1,8 @@
+import { authService } from "@/services/authService";
 import { RelativePathString, router } from "expo-router";
 import { Alert } from "react-native";
+
+const token = await authService.getToken();
 
 export const DeleteAlertMessage = (
   title: string,
@@ -9,7 +12,7 @@ export const DeleteAlertMessage = (
   errorMessage: string,
   httpMethod: string,
   refreshPath: RelativePathString,
-  param?: { [key: string]: string }
+  param?: { [key: string]: string },
 ) => {
   Alert.alert(
     title,
@@ -27,6 +30,7 @@ export const DeleteAlertMessage = (
             const endpoint = await fetch(`${API_URL}${apiRoute}`, {
               method: httpMethod,
               headers: {
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
             });
@@ -45,6 +49,6 @@ export const DeleteAlertMessage = (
         style: "destructive",
       },
     ],
-    { cancelable: false }
+    { cancelable: false },
   );
 };

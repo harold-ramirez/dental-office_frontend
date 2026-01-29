@@ -1,5 +1,4 @@
 import { Link } from "expo-router";
-import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { CheckCircleIcon, PlusIcon } from "../Icons";
 
@@ -12,8 +11,9 @@ interface appointmentProps {
 }
 interface appointmentSelectionProps {
   isAvailable?: boolean;
-  dateId: number | null;
-  setDateId: (id: number | null) => void;
+  isSelected?: boolean;
+  duration?: 15 | 30 | 45 | 60 | 75 | 90 | 105 | 120 | 135 | 150 | 165 | 180;
+  onPress?: () => void;
 }
 
 export function DayAppointment(props: appointmentProps) {
@@ -48,7 +48,9 @@ export function DayAppointment(props: appointmentProps) {
           asChild
           href={{
             pathname: "/createAppointment/[selectedDate]",
-            params: { selectedDate: dateHour },
+            params: {
+              selectedDate: dateHour,
+            },
           }}
         >
           <Pressable className="flex-row justify-center items-center active:bg-lightBlue h-full">
@@ -88,7 +90,9 @@ export function WeekAppointment(props: appointmentProps) {
           asChild
           href={{
             pathname: "/createAppointment/[selectedDate]",
-            params: { selectedDate: dateHour },
+            params: {
+              selectedDate: dateHour,
+            },
           }}
         >
           <Pressable className="justify-center items-center active:bg-lightBlue h-full">
@@ -114,26 +118,27 @@ export function MonthAppointment({
 
 export function AppointmentSelection({
   isAvailable,
-  dateId,
-  setDateId,
+  isSelected,
+  duration = 30,
+  onPress,
 }: appointmentSelectionProps) {
-  const [selected, setSelected] = useState(false);
-  const selectDate = () => {
-    setSelected(!selected);
-  };
+  const heightPx = (duration / 15) * 40;
 
   return (
-    <View className="h-16">
+    <View
+      style={{ height: heightPx }}
+      className={`w-full border-blackBlue ${duration !== 15 || !isAvailable ? `border-t` : ``}`}
+    >
       {!isAvailable ? (
-        <View className="bg-darkBlue h-full"></View>
+        <View className="bg-darkBlue h-full" />
       ) : (
         <Pressable
-          onPress={selectDate}
+          onPress={onPress}
           className={`active:bg-lightBlue h-full items-center justify-center ${
-            selected ? `border-4 border-dashed border-darkBlue` : ``
+            isSelected ? `border-4 border-dashed border-darkBlue` : ``
           }`}
         >
-          {selected && <CheckCircleIcon color={`#02457A`} size={32} />}
+          {isSelected && <CheckCircleIcon color={`#02457A`} size={32} />}
         </Pressable>
       )}
     </View>

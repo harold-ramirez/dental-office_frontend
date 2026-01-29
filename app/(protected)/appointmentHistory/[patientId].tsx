@@ -1,5 +1,6 @@
 import { TriangleDownIcon, TriangleUpIcon } from "@/components/Icons";
 import PopupModal from "@/components/popupModal";
+import { authService } from "@/services/authService";
 import { FormatDuration } from "@/services/formatAppointmentDuration";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
@@ -13,6 +14,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalHistory() {
@@ -75,9 +78,13 @@ export default function MedicalHistory() {
 
   const fetchAppointmentsHistory = useCallback(async () => {
     try {
-      const data = await fetch(
-        `${API_URL}/appointments/history/${patientId}`,
-      ).then((res) => res.json());
+      const data = await fetch(`${API_URL}/appointments/history/${patientId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json());
       setAppointmentHistory(data);
     } catch (e) {
       console.error("Error fetching appointments history:", e);

@@ -1,11 +1,14 @@
 import AnimatedArc from "@/components/animatedArc";
 import { ClockIcon, ScheduleIcon } from "@/components/Icons";
 import { Summary, WeekSummary } from "@/components/summaries";
+import { authService } from "@/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Index() {
@@ -26,9 +29,13 @@ export default function Index() {
   useEffect(() => {
     const fetchAppointmentsSummary = async () => {
       try {
-        const data = await fetch(`${API_URL}/appointments/summary`).then(
-          (res) => res.json()
-        );
+        const data = await fetch(`${API_URL}/appointments/summary`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }).then((res) => res.json());
         setSummary(data);
       } catch (e) {
         console.error("Error getting appointments summary:", e);
@@ -85,7 +92,13 @@ export default function Index() {
                     </Text>
                   </Pressable>
                 </Link>
-                <Link href={"/createAppointment/[selectedDate]"} asChild>
+                <Link
+                  href={{
+                    pathname: "/(protected)/createAppointment/[selectedDate]",
+                    params: { selectedDate: new Date().toISOString() },
+                  }}
+                  asChild
+                >
                   <Pressable className="flex-1 justify-around items-center bg-pureBlue active:bg-darkBlue px-5 py-2 rounded-lg">
                     <ScheduleIcon color="#D6E8EE" size={48} />
                     <Text className="font-semibold text-whiteBlue text-center">

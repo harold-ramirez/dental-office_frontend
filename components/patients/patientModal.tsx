@@ -1,4 +1,5 @@
 import { CreatePatientDto, PatientDto } from "@/interfaces/interfaces";
+import { authService } from "@/services/authService";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -15,6 +16,8 @@ import DatePicker from "react-native-date-picker";
 import GlassyBackground from "../glassyBackground";
 import { EditIcon, SaveIcon, XIcon } from "../Icons";
 import { GenderRadio } from "../radioButton";
+
+const token = await authService.getToken();
 
 interface CreatePatientProps {
   onClose: () => void;
@@ -40,7 +43,6 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
     birthdate: "",
     placeOfBirth: "",
     address: "",
-    AppUser_Id: 1,
   });
 
   const handleRegisterPatient = async () => {
@@ -51,6 +53,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
         const endpoint = await fetch(`${API_URL}/patients`, {
           method: "POST",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(newPatient),
@@ -61,7 +64,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
             "Paciente Registrado",
             "El paciente ha sido registrado exitosamente",
             [{ text: "OK" }],
-            { cancelable: true }
+            { cancelable: true },
           );
           setNewPatient({
             name: "",
@@ -73,13 +76,12 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
             birthdate: "",
             placeOfBirth: "",
             address: "",
-            AppUser_Id: 1,
           });
         } else {
           Alert.alert(
             "Error",
             "Hubo un error al registrar el paciente. Por favor, intenta nuevamente.",
-            [{ text: "OK" }]
+            [{ text: "OK" }],
           );
         }
       } catch (error) {
@@ -246,7 +248,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
                   value={
                     newPatient.birthdate
                       ? new Date(newPatient.birthdate).toLocaleDateString(
-                          "es-BO"
+                          "es-BO",
                         )
                       : ""
                   }
@@ -339,6 +341,7 @@ export function UpdatePatientModal({
         endpoint = await fetch(`${API_URL}/patients/${patient.Id}`, {
           method: "PATCH",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(patient),
@@ -348,13 +351,13 @@ export function UpdatePatientModal({
             "Datos Actualizado",
             "Los datos del paciente se han actualizado exitosamente.",
             [{ text: "OK" }],
-            { cancelable: true }
+            { cancelable: true },
           );
         } else {
           Alert.alert(
             "Error",
             "Hubo un error al actualizar los datos del paciente. Por favor, intenta nuevamente.",
-            [{ text: "OK" }]
+            [{ text: "OK" }],
           );
         }
       } catch (error) {

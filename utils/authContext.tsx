@@ -7,15 +7,17 @@ SplashScreen.preventAutoHideAsync();
 type AuthState = {
   isLoggedIn: boolean;
   isReady: boolean;
-  logIn: () => void;
+  token: string | null;
+  logIn: (token: string) => void;
   logOut: () => void;
 };
 
-const authStoreageKey = "auth-key";
+const tokenStorageKey = "auth-token";
 
 export const AuthContext = createContext<AuthState>({
   isLoggedIn: false,
   isReady: false,
+  token: null,
   logIn: () => {},
   logOut: () => {},
 });
@@ -23,38 +25,43 @@ export const AuthContext = createContext<AuthState>({
 export function AuthProvider({ children }: PropsWithChildren) {
   const [isReady, setIsReady] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
-  const storeAuthState = async (newState: { isLoggedIn: boolean }) => {
+  const logIn = async (authToken: string) => {
     try {
-      const jsonValue = JSON.stringify(newState);
-      await AsyncStorage.setItem(authStoreageKey, jsonValue);
+      await AsyncStorage.setItem(tokenStorageKey, authToken);
+      setIsLoggedIn(true);
+      setToken(authToken);
+      router.replace("/");
     } catch (error) {
-      console.log(error);
+      console.log("Error storing auth state:", error);
     }
   };
 
-  const logIn = () => {
-    setIsLoggedIn(true);
-    storeAuthState({ isLoggedIn: true });
-    router.replace("/");
-  };
-  const logOut = () => {
-    setIsLoggedIn(false);
-    storeAuthState({ isLoggedIn: false });
-    router.replace("/login");
+  const logOut = async () => {
+    try {
+      await AsyncStorage.removeItem(tokenStorageKey);
+
+      setIsLoggedIn(false);
+      setToken(null);
+      router.replace("/login");
+    } catch (error) {
+      console.log("Error clearing auth state:", error);
+    }
   };
 
   useEffect(() => {
     const getAuthFromStorage = async () => {
       try {
-        const value = await AsyncStorage.getItem(authStoreageKey);
-        if (value !== null) {
-          const auth = JSON.parse(value);
-          setIsLoggedIn(auth.isLoggedIn);
+        const storedToken = await AsyncStorage.getItem(tokenStorageKey);
+
+        if (storedToken) {
+          setToken(storedToken);
+          setIsLoggedIn(true);
         }
       } catch (error) {
-        console.log(error);
+        console.log("Error retrieving auth state:", error);
       }
       setIsReady(true);
     };
@@ -72,6 +79,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       value={{
         isReady,
         isLoggedIn,
+        token,
         logIn,
         logOut,
       }}

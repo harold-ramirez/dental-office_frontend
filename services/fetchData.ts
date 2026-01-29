@@ -1,0 +1,29 @@
+import { authService } from "./authService";
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+export async function fetchWithToken(url: string, options: RequestInit = {}) {
+  const token = await authService.getToken();
+
+  const headers = new Headers(options.headers);
+  headers.set("Content-Type", "application/json");
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${API_URL}${url}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      // Token expirado o inválido
+      console.error("Unauthorized - token may have expired");
+    }
+    throw new Error(`API error: ${response.status}`);
+  }
+
+  return response.json();
+}

@@ -1,62 +1,107 @@
 import { WeekAppointmentSelect } from "@/components/appointments-requests/scheduleModes";
 import DropdownComponent from "@/components/dropdown";
-import { fetchData } from "@/services/fetchData";
+import { fetchWithToken } from "@/services/fetchData";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { Suspense, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import DatePicker from "react-native-date-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-// ------------------------------------------------------------------
-const patientsApiData = fetchData("/patients/names");
-const treatmentsApiData = fetchData("/treatments");
-// ------------------------------------------------------------------
 
 export default function DayScheduleDetails() {
-  const { selectedDate, patient } = useLocalSearchParams<{
-    selectedDate?: string;
-    patient?: string;
+  const {
+    selectedDate,
+    patientID,
+    duration = "15",
+    notes,
+    treatment,
+    requestID,
+    requestDate,
+  } = useLocalSearchParams<{
+    selectedDate: string;
+    patientID?: string;
+    duration?: string;
+    notes?: string;
+    treatment?: string;
+    requestID?: string;
+    requestDate?: string;
   }>();
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showWeeklySchedule, setShowWeeklySchedule] = useState(false);
+  const [patientsList, setPatientsList] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [treatmentsList, setTreatmentsList] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
   const [appointment, setAppoinment] = useState({
-    dateHour: new Date(),
+    dateHour: new Date(selectedDate),
     AppointmentRequest_Id: null,
-    Treatment_Id: 0,
-    Patient_Id: 0,
-    minutesDuration: 0,
-    AppUser_Id: 1, //Hardcoded
+    Treatment_Id: Number(treatment) ?? 0,
+    Patient_Id: Number(patientID) ?? 0,
+    minutesDuration: Number(duration),
+    notes: notes ?? "",
   });
-  const date = selectedDate ? new Date(selectedDate) : null;
-  const isValidDate = date && !isNaN(date.getTime());
-  const dateTextInput = isValidDate
-    ? `${date.toLocaleDateString("es-BO", {
-        weekday: "short",
-        day: "numeric",
-        month: "2-digit",
-        year: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })}`
-    : "...";
 
-  // ------------------------------------------------------------------
-  const patientsList: { label: string; value: string }[] = [];
-  const treatmentsList: { label: string; value: string }[] = [];
-  patientsApiData.read().map((item: { id: number; fullName: string }) => {
-    patientsList.push({
-      label: item.fullName,
-      value: item.id.toString(),
-    });
-  });
-  treatmentsApiData.read().map((item: { Id: number; name: string }) => {
-    treatmentsList.push({
-      label: item.name,
-      value: item.Id.toString(),
-    });
-  });
-  // ------------------------------------------------------------------
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [patientsData, treatmentsData] = await Promise.all([
+          fetchWithToken("/patients/names"),
+          fetchWithToken("/treatments"),
+        ]);
+
+        const patients = patientsData.map(
+          (item: { id: number; fullName: string }) => ({
+            label: item.fullName,
+            value: item.id.toString(),
+          }),
+        );
+
+        const treatments = treatmentsData.map(
+          (item: { Id: number; name: string }) => ({
+            label: item.name,
+            value: item.Id.toString(),
+          }),
+        );
+
+        setPatientsList(patients);
+        setTreatmentsList(treatments);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <>
+        <LinearGradient
+          colors={["#018ABE", "#02457A", "#018ABE"]}
+          className="top-0 right-0 left-0 absolute h-full"
+        />
+        <SafeAreaView
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color="#D6E8EE" />
+          <Text className="text-whiteBlue mt-4">Cargando datos...</Text>
+        </SafeAreaView>
+      </>
+    );
+  }
 
   return (
     <>
@@ -89,35 +134,31 @@ export default function DayScheduleDetails() {
             <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
               Paciente:
             </Text>
-            <Suspense fallback={<View>no</View>}>
-              <DropdownComponent
-                className="flex-1"
-                data={patientsList}
-                value={appointment.Patient_Id.toString()}
-                setValue={(val) => {
-                  setAppoinment({ ...appointment, Patient_Id: +val });
-                }}
-              />
-            </Suspense>
+            <DropdownComponent
+              className="flex-1"
+              data={patientsList}
+              value={appointment.Patient_Id.toString()}
+              setValue={(val) => {
+                setAppoinment({ ...appointment, Patient_Id: +val });
+              }}
+            />
           </View>
           {/* Treatment */}
           <View className="flex-row justify-evenly items-center w-full h-14">
             <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
               Tratamiento:
             </Text>
-            <Suspense fallback={<View>no</View>}>
-              <DropdownComponent
-                className="flex-1"
-                data={treatmentsList}
-                value={appointment.Treatment_Id.toString()}
-                setValue={(val) => {
-                  setAppoinment({
-                    ...appointment,
-                    Treatment_Id: +val,
-                  });
-                }}
-              />
-            </Suspense>
+            <DropdownComponent
+              className="flex-1"
+              data={treatmentsList}
+              value={appointment.Treatment_Id.toString()}
+              setValue={(val) => {
+                setAppoinment({
+                  ...appointment,
+                  Treatment_Id: +val,
+                });
+              }}
+            />
           </View>
 
           {/* Date Hour */}
@@ -181,10 +222,27 @@ export default function DayScheduleDetails() {
               className="flex-1 bg-whiteBlue p-2 rounded-md text-blackBlue text-center"
               placeholder="Notas / Descripción de la cita"
               placeholderTextColor={"gray"}
+              value={appointment.notes}
+              onChangeText={(val) => {
+                setAppoinment({ ...appointment, notes: val });
+              }}
             />
           </View>
+          {/* Request */}
+          {requestID && (
+            <View className="flex-row items-center">
+              <Text className="font-bold w-1/3 text-whiteBlue text-lg text-center">
+                Solicitado el:
+              </Text>
+              <View className="flex-1 items-center">
+                <Text className="bg-blackBlue border border-whiteBlue text-whiteBlue rounded-full px-5 py-1">
+                  {requestDate}
+                </Text>
+              </View>
+            </View>
+          )}
           {/* Weekly Schedule */}
-          <View className="flex-1 justify-center items-center bg-whiteBlue/20 rounded-lg w-full">
+          <View className="flex-1 justify-center items-center rounded-lg w-full">
             {!showWeeklySchedule ? (
               <Pressable
                 onPress={() => setShowWeeklySchedule(true)}
@@ -195,13 +253,17 @@ export default function DayScheduleDetails() {
                 </Text>
               </Pressable>
             ) : (
-              <WeekAppointmentSelect />
+              <WeekAppointmentSelect
+                setSelectesDate={(val) => {
+                  setAppoinment({ ...appointment, dateHour: val });
+                }}
+              />
             )}
           </View>
         </View>
-        
+
         {/* Buttons */}
-        {patient ? (
+        {patientID ? (
           <View className="flex-row gap-5">
             <Pressable className="flex-1 items-center bg-red-600 active:bg-red-800 my-2 py-2 border border-whiteBlue rounded-full">
               <Text className="font-semibold text-whiteBlue text-lg">
@@ -222,6 +284,7 @@ export default function DayScheduleDetails() {
           </Pressable>
         )}
       </SafeAreaView>
+
       <DatePicker
         modal
         mode="datetime"

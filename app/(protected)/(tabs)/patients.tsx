@@ -2,6 +2,7 @@ import { AddPatientIcon, SadIcon, SearchIcon } from "@/components/Icons";
 import PatientCard from "@/components/patients/patientCard";
 import { CreatePatientModal } from "@/components/patients/patientModal";
 import { PatientDto } from "@/interfaces/interfaces";
+import { authService } from "@/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -16,6 +17,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const token = await authService.getToken();
+
 export default function Patients() {
   const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const params = useLocalSearchParams();
@@ -28,7 +31,13 @@ export default function Patients() {
 
   const fetchAllPatients = useCallback(async () => {
     try {
-      const endpoint = await fetch(`${API_URL}/patients`);
+      const endpoint = await fetch(`${API_URL}/patients`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       const data = await endpoint.json();
       setPatients(data);
     } catch (e) {
@@ -48,7 +57,7 @@ export default function Patients() {
       const filter = patients.filter((p) =>
         `${p.name} ${p.paternalSurname ?? ""} ${p.maternalSurname ?? ""}`
           .toLowerCase()
-          .includes(searchValue.trim().toLowerCase())
+          .includes(searchValue.trim().toLowerCase()),
       );
       setFilteredPatients(filter);
     }, 500);

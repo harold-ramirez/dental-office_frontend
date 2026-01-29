@@ -2,11 +2,14 @@ import { PlusIcon, UserCircleIcon } from "@/components/Icons";
 import TreatmentCard from "@/components/treatments/treatmentCard";
 import TreatmentModal from "@/components/treatments/treatmentModal";
 import { DiagnosedProcedureDto } from "@/interfaces/interfaces";
+import { authService } from "@/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Treatments() {
@@ -16,9 +19,13 @@ export default function Treatments() {
 
   const fetchProcedures = useCallback(async () => {
     try {
-      const data = await fetch(
-        `${API_URL}/diagnosed-procedure/${patientId}`
-      ).then((res) => res.json());
+      const data = await fetch(`${API_URL}/diagnosed-procedure/${patientId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json());
       setProcedures(data);
     } catch (error) {
       console.log("Error fetching Diagnosed Procedures:", error);

@@ -1,10 +1,13 @@
 import { PlusIcon } from "@/components/Icons";
 import PaymentModal from "@/components/treatments/paymentModal";
+import { authService } from "@/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function TreatmentDetails() {
@@ -32,9 +35,13 @@ export default function TreatmentDetails() {
 
   const fetchProcedures = useCallback(async () => {
     try {
-      const data = await fetch(
-        `${API_URL}/payments/procedure/${treatmentId}`
-      ).then((res) => res.json());
+      const data = await fetch(`${API_URL}/payments/procedure/${treatmentId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json());
       setTreatmentDetails(data);
     } catch (error) {
       console.log("Error fetching treatment Details:", error);
@@ -75,7 +82,7 @@ export default function TreatmentDetails() {
             <Text className="my-5 font-extrabold text-blackBlue text-4xl">
               {treatmentDetails.treatment}
             </Text>
-            <Text className="italic mb-5 text-blackBlue">
+            <Text className="mb-5 text-blackBlue italic">
               {treatmentDetails.description}
             </Text>
             <View className="flex-row justify-between items-center w-full">
@@ -83,7 +90,7 @@ export default function TreatmentDetails() {
                 <Text className="font-bold text-blackBlue">Fecha Inicio:</Text>
                 <Text>
                   {new Date(treatmentDetails.registerDate).toLocaleDateString(
-                    "es-BO"
+                    "es-BO",
                   )}
                 </Text>
               </View>
@@ -110,12 +117,12 @@ export default function TreatmentDetails() {
           <ScrollView className="flex-1 w-full">
             <View className="flex-1 bg-whiteBlue p-3 rounded-lg w-full">
               {treatmentDetails.payments.length === 0 ? (
-                <Text className="text-center italic text-blackBlue">
+                <Text className="text-blackBlue text-center italic">
                   No hay pagos registrados
                 </Text>
               ) : (
                 treatmentDetails.payments.map((payment, i) => (
-                  <View key={i} className="px-5 py-3 border-y border-blackBlue">
+                  <View key={i} className="px-5 py-3 border-blackBlue border-y">
                     <View className="flex-row justify-between">
                       <Text className="font-bold text-blackBlue text-lg">
                         {i + 1}° Cuota:
@@ -128,21 +135,32 @@ export default function TreatmentDetails() {
                       </Text>
                       <Text className="text-lg">
                         {new Date(payment.registerDate).toLocaleDateString(
-                          "es-BO"
+                          "es-BO",
                         )}
                       </Text>
                     </View>
                   </View>
                 ))
               )}
+              {treatmentDetails.totalDue === 0 && (
+                <View className="flex-row items-center gap-2 mt-5">
+                  <View className="flex-1 border-darkBlue border-t-2 border-dashed" />
+                  <Text className="font-semibold text-darkBlue text-center">
+                    Pago del Tratamiento{`\n`}Completado
+                  </Text>
+                  <View className="flex-1 border-darkBlue border-t-2 border-dashed" />
+                </View>
+              )}
             </View>
           </ScrollView>
-          <Pressable
-            onPress={() => setOpenModal(true)}
-            className="right-4 bottom-4 absolute flex-row justify-center items-center bg-blackBlue rounded-2xl size-16"
-          >
-            <PlusIcon color="#D6E8EE" size={35} />
-          </Pressable>
+          {treatmentDetails.totalDue > 0 && (
+            <Pressable
+              onPress={() => setOpenModal(true)}
+              className="right-4 bottom-4 absolute flex-row justify-center items-center bg-blackBlue rounded-2xl size-16"
+            >
+              <PlusIcon color="#D6E8EE" size={35} />
+            </Pressable>
+          )}
         </View>
       </SafeAreaView>
       {openModal && (

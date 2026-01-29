@@ -32,7 +32,7 @@ export default function DayScheduleDetails() {
             headerRight: () => <></>,
           }}
         />
-        <DaySchedule date={date} />
+        <DaySchedule date={date} refresh={new Date().toISOString()} />
       </SafeAreaView>
     </>
   );

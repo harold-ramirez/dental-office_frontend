@@ -1,9 +1,12 @@
 import { WorkScheduleSelection } from "@/components/appointments-requests/scheduleModes";
+import { authService } from "@/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function WorkSchedule() {
@@ -106,7 +109,13 @@ export default function WorkSchedule() {
   useEffect(() => {
     const fetchShifts = async () => {
       try {
-        const data = await fetch(`${API_URL}/shifts`).then((res) => res.json());
+        const data = await fetch(`${API_URL}/shifts`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }).then((res) => res.json());
         setShifts(data);
         setOriginalShifts(data);
       } catch (e) {
@@ -124,7 +133,6 @@ export default function WorkSchedule() {
       });
       const updatedShifts: {
         Id: number;
-        AppUser_Id: number;
         status: boolean;
       }[] = [];
       // ***************************************************
@@ -132,7 +140,7 @@ export default function WorkSchedule() {
         if (shifts.Monday[i].status !== originalShifts.Monday[i].status) {
           updatedShifts.push({
             Id: shifts.Monday[i].Id,
-            AppUser_Id: 1, //Hardcoded userID
+
             status: shifts.Monday[i].status,
           });
         }
@@ -141,7 +149,7 @@ export default function WorkSchedule() {
         if (shifts.Tuesday[i].status !== originalShifts.Tuesday[i].status) {
           updatedShifts.push({
             Id: shifts.Tuesday[i].Id,
-            AppUser_Id: 1, //Hardcoded userID
+
             status: shifts.Tuesday[i].status,
           });
         }
@@ -150,7 +158,6 @@ export default function WorkSchedule() {
         if (shifts.Wednesday[i].status !== originalShifts.Wednesday[i].status) {
           updatedShifts.push({
             Id: shifts.Wednesday[i].Id,
-            AppUser_Id: 1, //Hardcoded userID
             status: shifts.Wednesday[i].status,
           });
         }
@@ -159,7 +166,7 @@ export default function WorkSchedule() {
         if (shifts.Thursday[i].status !== originalShifts.Thursday[i].status) {
           updatedShifts.push({
             Id: shifts.Thursday[i].Id,
-            AppUser_Id: 1, //Hardcoded userID
+
             status: shifts.Thursday[i].status,
           });
         }
@@ -168,7 +175,7 @@ export default function WorkSchedule() {
         if (shifts.Friday[i].status !== originalShifts.Friday[i].status) {
           updatedShifts.push({
             Id: shifts.Friday[i].Id,
-            AppUser_Id: 1, //Hardcoded userID
+
             status: shifts.Friday[i].status,
           });
         }
@@ -177,7 +184,7 @@ export default function WorkSchedule() {
         if (shifts.Saturday[i].status !== originalShifts.Saturday[i].status) {
           updatedShifts.push({
             Id: shifts.Saturday[i].Id,
-            AppUser_Id: 1, //Hardcoded userID
+
             status: shifts.Saturday[i].status,
           });
         }
@@ -186,7 +193,7 @@ export default function WorkSchedule() {
         if (shifts.Sunday[i].status !== originalShifts.Sunday[i].status) {
           updatedShifts.push({
             Id: shifts.Sunday[i].Id,
-            AppUser_Id: 1, //Hardcoded userID
+
             status: shifts.Sunday[i].status,
           });
         }
@@ -203,6 +210,7 @@ export default function WorkSchedule() {
       const res = await fetch(`${API_URL}/shifts`, {
         method: "PATCH",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(updatedShifts),

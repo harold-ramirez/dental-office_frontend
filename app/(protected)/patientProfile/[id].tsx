@@ -14,6 +14,7 @@ import {
 } from "@/components/Icons";
 import { UpdatePatientModal } from "@/components/patients/patientModal";
 import { MedicalImageDto, PatientDto } from "@/interfaces/interfaces";
+import { authService } from "@/services/authService";
 import { EventArg, NavigationAction } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -36,12 +37,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const token = await authService.getToken();
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 export default function PatientProfile() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const navigation = useNavigation();
   const isNavigatingBack = useRef(false);
-  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [patient, setPatient] = useState<PatientDto>({
@@ -56,7 +59,6 @@ export default function PatientProfile() {
     birthdate: "",
     placeOfBirth: "",
     address: "",
-    AppUser_Id: 1,
   });
   const [showUpdatePatient, setShowUpdatePatient] = useState(false);
   const [dataModified, setDataModified] = useState(false);
@@ -74,7 +76,13 @@ export default function PatientProfile() {
   const fetchPatient = useCallback(async () => {
     setIsLoading(true);
     try {
-      const endpoint = await fetch(`${API_URL}/patients/${id}`);
+      const endpoint = await fetch(`${API_URL}/patients/${id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       const data = await endpoint.json();
       setPatient(data);
     } catch (e) {
@@ -82,7 +90,7 @@ export default function PatientProfile() {
     } finally {
       setIsLoading(false);
     }
-  }, [API_URL, id]);
+  }, [id]);
 
   // Refresh previous screen
   useEffect(() => {
@@ -101,7 +109,7 @@ export default function PatientProfile() {
           pathname: "/(protected)/(tabs)/patients",
           params: { refresh: Date.now().toString() },
         });
-      }
+      },
     );
     return unsubscribe;
   }, [navigation, router, dataModified]);
@@ -117,46 +125,64 @@ export default function PatientProfile() {
   >([]);
   const fetchAllPatientImages = useCallback(async () => {
     try {
-      const endpoint = await fetch(`${API_URL}/images/${id}`);
+      const endpoint = await fetch(`${API_URL}/images/${id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       const data = await endpoint.json();
       setImages(data);
     } catch (e) {
       console.error("Error fetching images:", e);
     }
-  }, [API_URL, id]);
+  }, [id]);
 
   const fetchMedicalHistories = useCallback(async () => {
     try {
-      const data = await fetch(`${API_URL}/medical-history/preview/${id}`).then(
-        (res) => res.json()
-      );
+      const data = await fetch(`${API_URL}/medical-history/preview/${id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json());
       setMedicalHistories(data);
     } catch (e) {
       console.error("Error fetching medical histories:", e);
     }
-  }, [API_URL, id]);
+  }, [id]);
 
   const fetchTreatments = useCallback(async () => {
     try {
-      const data = await fetch(
-        `${API_URL}/diagnosed-procedure/${id}/preview`
-      ).then((res) => res.json());
+      const data = await fetch(`${API_URL}/diagnosed-procedure/${id}/preview`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json());
       setTreatments(data);
     } catch (e) {
       console.error("Error fetching Treatments:", e);
     }
-  }, [API_URL, id]);
+  }, [id]);
 
   const fetchAppointments = useCallback(async () => {
     try {
-      const data = await fetch(`${API_URL}/appointments/preview/${id}`).then(
-        (res) => res.json()
-      );
+      const data = await fetch(`${API_URL}/appointments/preview/${id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json());
       setAppointments(data);
     } catch (e) {
       console.error("Error fetching Appointments:", e);
     }
-  }, [API_URL, id]);
+  }, [id]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -343,7 +369,7 @@ export default function PatientProfile() {
                           <DocumentIcon color="#001B48" size={32} />
                           <Text className="text-blackBlue">
                             {new Date(history.registerDate).toLocaleDateString(
-                              "es-BO"
+                              "es-BO",
                             )}
                           </Text>
                         </View>
@@ -364,7 +390,7 @@ export default function PatientProfile() {
                     <DocumentIcon color="#001B48" size={32} />
                     <Text className="text-blackBlue">
                       {new Date(history.registerDate).toLocaleDateString(
-                        "es-BO"
+                        "es-BO",
                       )}
                     </Text>
                   </View>
@@ -419,7 +445,7 @@ export default function PatientProfile() {
                     <View className="flex-1 mx-2 mb-1 border-blackBlue border-b border-dotted" />
                     <Text className="text-blackBlue">
                       {new Date(treatment.registerDate).toLocaleDateString(
-                        "es-BO"
+                        "es-BO",
                       )}
                     </Text>
                   </View>
@@ -466,7 +492,7 @@ export default function PatientProfile() {
                           day: "2-digit",
                           month: "short",
                           year: "2-digit",
-                        }
+                        },
                       )}
                     </Text>
                     <View className="flex-1 border-blackBlue border-b border-dotted" />
@@ -550,7 +576,7 @@ export default function PatientProfile() {
                   `/patients/${id}`,
                   "No se pudo eliminar el paciente. Inténtalo de nuevo.",
                   "DELETE",
-                  "/(tabs)/patients" as RelativePathString
+                  "/(tabs)/patients" as RelativePathString,
                 );
               }}
               className="justify-center items-center bg-red-600 active:bg-red-800 mt-16 mb-5 p-2 rounded-full w-full"

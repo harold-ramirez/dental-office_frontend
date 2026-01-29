@@ -5,6 +5,7 @@ import Loading from "@/components/loading";
 import OptionalTextInput from "@/components/optionalTextInput";
 import { YesNoRadio } from "@/components/radioButton";
 import { MedicalHistoryDto } from "@/interfaces/interfaces";
+import { authService } from "@/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   RelativePathString,
@@ -23,6 +24,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalHistory() {
@@ -117,11 +120,11 @@ export default function MedicalHistory() {
       const res = await fetch(`${API_URL}/personal-pathologies`, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: newPathologyHabit.newPathology,
-          AppUser_Id: 1, // Hardcoded UserID
         }),
       });
       if (!res.ok) {
@@ -161,11 +164,11 @@ export default function MedicalHistory() {
       const res = await fetch(`${API_URL}/habits`, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: newPathologyHabit.newHabit,
-          AppUser_Id: 1, // Hardcoded UserID
         }),
       });
       if (!res.ok) {
@@ -202,10 +205,10 @@ export default function MedicalHistory() {
       const res = await fetch(`${API_URL}/medical-history`, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          AppUser_Id: 1, //Hardcoded userID
           Patient_Id: Number(patientId),
           personalPathologieshistory: formData.personalPathologieshistory,
           habits: formData.habits,
@@ -280,14 +283,31 @@ export default function MedicalHistory() {
   // REACT HOOKS **************************************************
   const fetchAllMedicalHistories = useCallback(async () => {
     try {
-      const data = await fetch(`${API_URL}/medical-history/${patientId}`).then(
-        (res) => res.json()
-      );
+      const data = await fetch(`${API_URL}/medical-history/${patientId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json());
       setHistories(data);
       setFormData(data[0]);
-      const habits = await fetch(`${API_URL}/habits`).then((res) => res.json());
+      const habits = await fetch(`${API_URL}/habits`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json());
       const personalPathologies = await fetch(
-        `${API_URL}/personal-pathologies`
+        `${API_URL}/personal-pathologies`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
       ).then((res) => res.json());
       setHabits(habits);
       setPersonalPathologies(personalPathologies);
@@ -359,7 +379,7 @@ export default function MedicalHistory() {
                     }`}
                   >
                     {new Date(
-                      history.registerDate as string
+                      history.registerDate as string,
                     ).toLocaleDateString("es-BO", {
                       day: "2-digit",
                       month: "short",
@@ -438,7 +458,7 @@ export default function MedicalHistory() {
                           }}
                           className={`justify-center items-center active:bg-lightBlue px-5 border-2 border-blackBlue rounded-full ${
                             formData.personalPathologieshistory?.some(
-                              (p: any) => p.Id === pathology.Id
+                              (p: any) => p.Id === pathology.Id,
                             )
                               ? "bg-blackBlue"
                               : "bg-whiteBlue"
@@ -447,7 +467,7 @@ export default function MedicalHistory() {
                           <Text
                             className={`font-semibold ${
                               formData.personalPathologieshistory?.some(
-                                (p: any) => p.Id === pathology.Id
+                                (p: any) => p.Id === pathology.Id,
                               )
                                 ? "text-whiteBlue"
                                 : "text-blackBlue"
@@ -652,8 +672,8 @@ export default function MedicalHistory() {
                         formData.breathingType === ""
                           ? `bg-whiteBlue border-blackBlue`
                           : formData.breathingType === "Nasal"
-                          ? `bg-darkBlue border-whiteBlue`
-                          : `bg-whiteBlue/30 border-blackBlue`
+                            ? `bg-darkBlue border-whiteBlue`
+                            : `bg-whiteBlue/30 border-blackBlue`
                       }`}
                     >
                       <Text
@@ -675,8 +695,8 @@ export default function MedicalHistory() {
                         formData.breathingType === ""
                           ? `bg-whiteBlue border-blackBlue`
                           : formData.breathingType === "Mouth"
-                          ? `bg-darkBlue border-whiteBlue`
-                          : `bg-whiteBlue/30 border-blackBlue`
+                            ? `bg-darkBlue border-whiteBlue`
+                            : `bg-whiteBlue/30 border-blackBlue`
                       }`}
                     >
                       <Text
@@ -701,8 +721,8 @@ export default function MedicalHistory() {
                         formData.breathingType === ""
                           ? `bg-whiteBlue border-blackBlue`
                           : formData.breathingType === "Oral-Nasal"
-                          ? `bg-darkBlue border-whiteBlue`
-                          : `bg-whiteBlue/30 border-blackBlue`
+                            ? `bg-darkBlue border-whiteBlue`
+                            : `bg-whiteBlue/30 border-blackBlue`
                       }`}
                     >
                       <Text
@@ -869,7 +889,7 @@ export default function MedicalHistory() {
                           <Text
                             className={`font-semibold text-blackBlue ${
                               formData.habits?.some(
-                                (p: any) => p.Id === habit.Id
+                                (p: any) => p.Id === habit.Id,
                               )
                                 ? "text-whiteBlue"
                                 : "text-blackBlue"
@@ -1005,8 +1025,8 @@ export default function MedicalHistory() {
                         formData.oralHygiene === ""
                           ? `bg-whiteBlue border-blackBlue`
                           : formData.oralHygiene === "Good"
-                          ? `bg-blackBlue border-whiteBlue`
-                          : `bg-whiteBlue/30 border-blackBlue`
+                            ? `bg-blackBlue border-whiteBlue`
+                            : `bg-whiteBlue/30 border-blackBlue`
                       }`}
                     >
                       <Text
@@ -1028,8 +1048,8 @@ export default function MedicalHistory() {
                         formData.oralHygiene === ""
                           ? `bg-whiteBlue border-blackBlue`
                           : formData.oralHygiene === "Regular"
-                          ? `bg-blackBlue border-whiteBlue`
-                          : `bg-whiteBlue/30 border-blackBlue`
+                            ? `bg-blackBlue border-whiteBlue`
+                            : `bg-whiteBlue/30 border-blackBlue`
                       }`}
                     >
                       <Text
@@ -1051,8 +1071,8 @@ export default function MedicalHistory() {
                         formData.oralHygiene === ""
                           ? `bg-whiteBlue border-blackBlue`
                           : formData.oralHygiene === "Bad"
-                          ? `bg-blackBlue border-whiteBlue`
-                          : `bg-whiteBlue/30 border-blackBlue`
+                            ? `bg-blackBlue border-whiteBlue`
+                            : `bg-whiteBlue/30 border-blackBlue`
                       }`}
                     >
                       <Text
@@ -1078,7 +1098,11 @@ export default function MedicalHistory() {
                     className="items-center bg-blackBlue active:bg-pureBlue p-2 border border-whiteBlue rounded-full w-2/3"
                   >
                     {isPosting ? (
-                      <Loading className="flex-1" innerClassName="w-full p-1 justify-center items-center" size={24} />
+                      <Loading
+                        className="flex-1"
+                        innerClassName="w-full p-1 justify-center items-center"
+                        size={24}
+                      />
                     ) : (
                       <Text className="font-bold text-whiteBlue text-xl">
                         Guardar
@@ -1097,7 +1121,7 @@ export default function MedicalHistory() {
                         "No se pudo eliminar la historia clínica. Inténtalo de nuevo.",
                         "DELETE",
                         `/(protected)/patientProfile/[id]` as RelativePathString,
-                        { id: patientId.toString() }
+                        { id: patientId.toString() },
                       );
                     }}
                   >

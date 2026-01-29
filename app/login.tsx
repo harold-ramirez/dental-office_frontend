@@ -4,10 +4,12 @@ import {
   LockIcon,
   ProfileIconAlt,
 } from "@/components/Icons";
+import { authService } from "@/services/authService";
 import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { useContext, useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -21,12 +23,38 @@ import {
 
 export default function Login() {
   const [peekPassword, setPeekPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     user: "",
     password: "",
   });
 
   const authContext = useContext(AuthContext);
+
+  const handleLogin = async () => {
+    if (!formData.user || !formData.password) {
+      Alert.alert("Error", "Por favor completa todos los campos");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await authService.login({
+        username: formData.user,
+        password: formData.password,
+      });
+
+      authContext.logIn(response.token);
+    } catch (error: any) {
+      Alert.alert(
+        "Error de inicio de sesión",
+        error.message || "Usuario o contraseña incorrectos",
+      );
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -90,6 +118,7 @@ export default function Login() {
                     onChangeText={(text) =>
                       setFormData({ ...formData, user: text })
                     }
+                    editable={!loading}
                   />
                 </View>
                 <View className="flex-row items-center gap-1 bg-whiteBlue rounded-lg h-14">
@@ -103,10 +132,12 @@ export default function Login() {
                     onChangeText={(text) =>
                       setFormData({ ...formData, password: text })
                     }
+                    editable={!loading}
                   />
                   <Pressable
                     className="justify-center items-center p-1 h-full"
                     onPress={() => setPeekPassword(!peekPassword)}
+                    disabled={loading}
                   >
                     {peekPassword ? (
                       <EyeIcon color="#999999" size={16} />
@@ -118,12 +149,15 @@ export default function Login() {
 
                 {/* Login Button */}
                 <Pressable
-                  onPress={authContext.logIn}
+                  onPress={handleLogin}
+                  disabled={loading}
                   android_ripple={{ color: "#018ABE" }}
-                  className="bg-blackBlue mt-5 px-5 py-2 border border-whiteBlue rounded-lg"
+                  className={`${
+                    loading ? "bg-gray-400" : "bg-blackBlue"
+                  } mt-5 px-5 py-2 border border-whiteBlue rounded-lg`}
                 >
                   <Text className="font-semibold text-whiteBlue text-lg">
-                    Iniciar Sesión
+                    {loading ? "Cargando..." : "Iniciar Sesión"}
                   </Text>
                 </Pressable>
               </LinearGradient>

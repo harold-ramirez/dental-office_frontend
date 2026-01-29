@@ -1,3 +1,4 @@
+import { authService } from "@/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -12,6 +13,8 @@ import {
   View,
 } from "react-native";
 import DropdownComponent from "../dropdown";
+
+const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface Props {
@@ -26,13 +29,11 @@ export default function TreatmentModal(props: Props) {
     totalCost: number | "";
     Treatment_Id: number;
     dentalPieces: number[];
-    AppUser_Id: number;
   }>({
     description: "",
     totalCost: "",
     Treatment_Id: 0,
     dentalPieces: [],
-    AppUser_Id: 1, //Hardcoded userID
   });
   const [treatmentList, setTreatmentList] = useState<
     { label: string; value: string }[]
@@ -42,7 +43,14 @@ export default function TreatmentModal(props: Props) {
   const fetchTreatmentList = useCallback(async () => {
     try {
       const data: { Id: number; name: string }[] = await fetch(
-        `${API_URL}/treatments`
+        `${API_URL}/treatments`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
       ).then((res) => res.json());
       const parsed: { label: string; value: string }[] = [];
       data.map((treatment) => {
@@ -53,9 +61,13 @@ export default function TreatmentModal(props: Props) {
       });
       setTreatmentList(parsed);
       // ***********************************
-      const teethDB = await fetch(
-        `${API_URL}/odontogram/${patientId}/teeth`
-      ).then((res) => res.json());
+      const teethDB = await fetch(`${API_URL}/odontogram/${patientId}/teeth`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json());
       setTeeth(teethDB);
     } catch (error) {
       console.log("Error fetching Treatments or Teeth:", error);
@@ -72,6 +84,7 @@ export default function TreatmentModal(props: Props) {
       const res = await fetch(`${API_URL}/diagnosed-procedure`, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -81,7 +94,6 @@ export default function TreatmentModal(props: Props) {
           Patient_Id: patientId,
           Treatment_Id: formData.Treatment_Id,
           dentalPieces: formData.dentalPieces,
-          AppUser_Id: formData.AppUser_Id,
         }),
       });
       if (res.ok) {
@@ -105,7 +117,7 @@ export default function TreatmentModal(props: Props) {
       () => {
         onClose();
         return true;
-      }
+      },
     );
     return () => backHandler.remove();
   }, [onClose]);
@@ -251,7 +263,6 @@ interface ToothButtonProps {
     totalCost: number | "";
     Treatment_Id: number;
     dentalPieces: number[];
-    AppUser_Id: number;
   };
   teeth: { Id: number; pieceNumber: number }[];
   setFormData: (newForm: any) => void;
@@ -267,7 +278,7 @@ export function ToothButton(props: ToothButtonProps) {
         .filter((tooth) =>
           tooth.pieceNumber
             .toString()
-            .startsWith(teeth.length > 20 ? adultStartWith : childStartWith)
+            .startsWith(teeth.length > 20 ? adultStartWith : childStartWith),
         )
         .map((tooth) => (
           <Pressable
