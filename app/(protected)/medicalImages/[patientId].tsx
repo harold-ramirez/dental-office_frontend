@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalImages() {
@@ -25,6 +24,7 @@ export default function MedicalImages() {
 
   const fetchAllPatientImages = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const endpoint = await fetch(`${API_URL}/images/${patientId}`, {
         method: "GET",
         headers: {
@@ -37,7 +37,7 @@ export default function MedicalImages() {
     } catch (e) {
       console.error("Error fetching images:", e);
     }
-  }, [API_URL, patientId]);
+  }, [patientId]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

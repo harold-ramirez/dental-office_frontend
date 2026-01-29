@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalHistory() {
@@ -78,6 +77,7 @@ export default function MedicalHistory() {
 
   const fetchAppointmentsHistory = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const data = await fetch(`${API_URL}/appointments/history/${patientId}`, {
         method: "GET",
         headers: {

@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function WorkSchedule() {
@@ -109,6 +108,7 @@ export default function WorkSchedule() {
   useEffect(() => {
     const fetchShifts = async () => {
       try {
+        const token = await authService.getToken();
         const data = await fetch(`${API_URL}/shifts`, {
           method: "GET",
           headers: {
@@ -207,6 +207,7 @@ export default function WorkSchedule() {
       }
       setOriginalShifts(shifts);
       // ***************************************************
+      const token = await authService.getToken();
       const res = await fetch(`${API_URL}/shifts`, {
         method: "PATCH",
         headers: {

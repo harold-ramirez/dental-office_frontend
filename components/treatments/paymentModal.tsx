@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import DatePicker from "react-native-date-picker";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface Props {
@@ -36,6 +35,7 @@ export default function PaymentModal(props: Props) {
   const handlePostPayment = async () => {
     if (newPayment.amount === "") return;
     try {
+      const token = await authService.getToken();
       const res = await fetch(`${API_URL}/payments`, {
         method: "POST",
         headers: {

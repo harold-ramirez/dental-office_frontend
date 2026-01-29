@@ -37,7 +37,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function PatientProfile() {
@@ -76,6 +75,7 @@ export default function PatientProfile() {
   const fetchPatient = useCallback(async () => {
     setIsLoading(true);
     try {
+      const token = await authService.getToken();
       const endpoint = await fetch(`${API_URL}/patients/${id}`, {
         method: "GET",
         headers: {
@@ -125,6 +125,7 @@ export default function PatientProfile() {
   >([]);
   const fetchAllPatientImages = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const endpoint = await fetch(`${API_URL}/images/${id}`, {
         method: "GET",
         headers: {
@@ -141,6 +142,7 @@ export default function PatientProfile() {
 
   const fetchMedicalHistories = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const data = await fetch(`${API_URL}/medical-history/preview/${id}`, {
         method: "GET",
         headers: {
@@ -156,6 +158,7 @@ export default function PatientProfile() {
 
   const fetchTreatments = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const data = await fetch(`${API_URL}/diagnosed-procedure/${id}/preview`, {
         method: "GET",
         headers: {
@@ -171,6 +174,7 @@ export default function PatientProfile() {
 
   const fetchAppointments = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const data = await fetch(`${API_URL}/appointments/preview/${id}`, {
         method: "GET",
         headers: {

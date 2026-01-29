@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "notification": {
       "icon": "./assets/images/icon.png",
-      "color": "#D6E8EE"
+      "color": "#FCFCF7"
     },
     "ios": {
       "supportsTablet": true
@@ -18,7 +18,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#D6E8EE"
+        "backgroundColor": "#FCFCF7"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.haroldramirez.mydentaloffice"
@@ -36,7 +36,7 @@
           "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "cover",
-          "backgroundColor": "#D6E8EE"
+          "backgroundColor": "#FCFCF7"
         }
       ],
       "expo-web-browser"

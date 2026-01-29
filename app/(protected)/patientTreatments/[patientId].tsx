@@ -9,7 +9,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Treatments() {
@@ -19,6 +18,7 @@ export default function Treatments() {
 
   const fetchProcedures = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const data = await fetch(`${API_URL}/diagnosed-procedure/${patientId}`, {
         method: "GET",
         headers: {

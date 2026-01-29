@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Index() {
@@ -29,6 +28,7 @@ export default function Index() {
   useEffect(() => {
     const fetchAppointmentsSummary = async () => {
       try {
+        const token = await authService.getToken();
         const data = await fetch(`${API_URL}/appointments/summary`, {
           method: "GET",
           headers: {

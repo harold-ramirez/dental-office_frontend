@@ -17,8 +17,6 @@ import GlassyBackground from "../glassyBackground";
 import { EditIcon, SaveIcon, XIcon } from "../Icons";
 import { GenderRadio } from "../radioButton";
 
-const token = await authService.getToken();
-
 interface CreatePatientProps {
   onClose: () => void;
 }
@@ -50,6 +48,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
       setIsLoading(true);
       const API_URL = process.env.EXPO_PUBLIC_API_URL;
       try {
+        const token = await authService.getToken();
         const endpoint = await fetch(`${API_URL}/patients`, {
           method: "POST",
           headers: {
@@ -338,6 +337,7 @@ export function UpdatePatientModal({
       const API_URL = process.env.EXPO_PUBLIC_API_URL;
       let endpoint: Response | null = null;
       try {
+        const token = await authService.getToken();
         endpoint = await fetch(`${API_URL}/patients/${patient.Id}`, {
           method: "PATCH",
           headers: {

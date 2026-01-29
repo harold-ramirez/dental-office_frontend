@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import DropdownComponent from "../dropdown";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface Props {
@@ -42,6 +41,7 @@ export default function TreatmentModal(props: Props) {
 
   const fetchTreatmentList = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const data: { Id: number; name: string }[] = await fetch(
         `${API_URL}/treatments`,
         {
@@ -81,6 +81,7 @@ export default function TreatmentModal(props: Props) {
   const handleRegisterTreatment = async () => {
     if (formData.Treatment_Id === 0) return;
     try {
+      const token = await authService.getToken();
       const res = await fetch(`${API_URL}/diagnosed-procedure`, {
         method: "POST",
         headers: {

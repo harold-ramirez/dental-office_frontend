@@ -17,7 +17,6 @@ import {
   WeekAppointment,
 } from "./appointmentModes";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 interface AppointmentDto {
   Id: number;
@@ -197,6 +196,7 @@ export function DaySchedule({
     };
 
     const fetchAppointments = async () => {
+      const token = await authService.getToken();
       const data = await fetch(
         `${API_URL}/appointments/day/${date.toISOString()}`,
         {
@@ -426,6 +426,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
 
     const fetchAppointments = async () => {
       try {
+        const token = await authService.getToken();
         const data = await fetch(`${API_URL}/appointments/week`, {
           method: "GET",
           headers: {
@@ -550,6 +551,7 @@ export function MonthSchedule({ refresh }: { refresh: string }) {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
+        const token = await authService.getToken();
         const data = await fetch(`${API_URL}/appointments/month`, {
           method: "GET",
           headers: {
@@ -801,6 +803,7 @@ export function WeekAppointmentSelect({
 
     const fetchAppointments = async () => {
       try {
+        const token = await authService.getToken();
         const data = await fetch(`${API_URL}/appointments/week`, {
           method: "GET",
           headers: {

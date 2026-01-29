@@ -25,7 +25,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalHistory() {
@@ -117,6 +116,7 @@ export default function MedicalHistory() {
   const handlePostPathology = async () => {
     if (newPathologyHabit.newPathology === "") return;
     try {
+      const token = await authService.getToken();
       const res = await fetch(`${API_URL}/personal-pathologies`, {
         method: "POST",
         headers: {
@@ -161,6 +161,7 @@ export default function MedicalHistory() {
   const handlePostHabit = async () => {
     if (newPathologyHabit.newHabit === "") return;
     try {
+      const token = await authService.getToken();
       const res = await fetch(`${API_URL}/habits`, {
         method: "POST",
         headers: {
@@ -202,6 +203,7 @@ export default function MedicalHistory() {
   const handlePostForm = async () => {
     try {
       setIsPosting(true);
+      const token = await authService.getToken();
       const res = await fetch(`${API_URL}/medical-history`, {
         method: "POST",
         headers: {
@@ -283,6 +285,7 @@ export default function MedicalHistory() {
   // REACT HOOKS **************************************************
   const fetchAllMedicalHistories = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const data = await fetch(`${API_URL}/medical-history/${patientId}`, {
         method: "GET",
         headers: {

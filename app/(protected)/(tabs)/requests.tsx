@@ -16,7 +16,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Requests() {
@@ -29,6 +28,7 @@ export default function Requests() {
 
   const fetchAllRequests = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const endpoint = await fetch(`${API_URL}/appointment-requests`, {
         method: "GET",
         headers: {
@@ -45,6 +45,7 @@ export default function Requests() {
 
   const fetchAllPastRequests = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const endpoint = await fetch(
         `${API_URL}/appointment-requests/pastRequests`,
         {

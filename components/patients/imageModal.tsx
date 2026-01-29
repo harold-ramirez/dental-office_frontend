@@ -25,7 +25,6 @@ import {
 } from "../Icons";
 import { DeleteAlertMessage } from "../alertMessage";
 
-const token = await authService.getToken();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface ImageModalProps {
@@ -95,6 +94,7 @@ export default function ImageModal(props: ImageModalProps) {
       formData.append("captureDate", newPhoto.captureDate.toISOString());
       formData.append("description", newPhoto.description);
       formData.append("Patient_Id", patientId.toString());
+      const token = await authService.getToken();
       const response = await fetch(`${API_URL}/images`, {
         method: "POST",
         headers: {
@@ -124,6 +124,7 @@ export default function ImageModal(props: ImageModalProps) {
     try {
       setIsLoading(true);
       const API_URL = process.env.EXPO_PUBLIC_API_URL;
+      const token = await authService.getToken();
       const response = await fetch(
         `${API_URL}/images/${image?.Id.toString()}`,
         {

@@ -17,8 +17,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const token = await authService.getToken();
-
 export default function Patients() {
   const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const params = useLocalSearchParams();
@@ -31,6 +29,7 @@ export default function Patients() {
 
   const fetchAllPatients = useCallback(async () => {
     try {
+      const token = await authService.getToken();
       const endpoint = await fetch(`${API_URL}/patients`, {
         method: "GET",
         headers: {

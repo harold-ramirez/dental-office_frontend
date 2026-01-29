@@ -2,8 +2,6 @@ import { authService } from "@/services/authService";
 import { RelativePathString, router } from "expo-router";
 import { Alert } from "react-native";
 
-const token = await authService.getToken();
-
 export const DeleteAlertMessage = (
   title: string,
   message: string,
@@ -27,6 +25,7 @@ export const DeleteAlertMessage = (
         onPress: async () => {
           const API_URL = process.env.EXPO_PUBLIC_API_URL;
           try {
+            const token = await authService.getToken();
             const endpoint = await fetch(`${API_URL}${apiRoute}`, {
               method: httpMethod,
               headers: {
