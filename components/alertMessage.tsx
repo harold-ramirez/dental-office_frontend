@@ -1,4 +1,4 @@
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
 import { RelativePathString, router } from "expo-router";
 import { Alert } from "react-native";
 
@@ -10,6 +10,7 @@ export const DeleteAlertMessage = (
   errorMessage: string,
   httpMethod: string,
   refreshPath: RelativePathString,
+  logOut: () => void,
   param?: { [key: string]: string },
 ) => {
   Alert.alert(
@@ -23,26 +24,15 @@ export const DeleteAlertMessage = (
       {
         text: actionButtonText,
         onPress: async () => {
-          const API_URL = process.env.EXPO_PUBLIC_API_URL;
           try {
-            const token = await authService.getToken();
-            const endpoint = await fetch(`${API_URL}${apiRoute}`, {
-              method: httpMethod,
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
+            await fetchWithToken(apiRoute, { method: httpMethod }, logOut);
+            router.replace({
+              pathname: refreshPath,
+              params: { refresh: Date.now().toString(), ...param },
             });
-            if (endpoint.ok) {
-              router.replace({
-                pathname: refreshPath,
-                params: { refresh: Date.now().toString(), ...param },
-              });
-            } else {
-              Alert.alert("Error", errorMessage, [{ text: "OK" }]);
-            }
           } catch (error) {
-            console.error(errorMessage, error);
+            console.log(error);
+            Alert.alert("Error", errorMessage);
           }
         },
         style: "destructive",

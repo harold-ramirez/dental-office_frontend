@@ -1,9 +1,10 @@
 import { PlusIcon } from "@/components/Icons";
 import ImageModal from "@/components/patients/imageModal";
 import { MedicalImageDto } from "@/interfaces/interfaces";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   Image,
   Pressable,
@@ -17,6 +18,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalImages() {
   const { patientId, refresh } = useLocalSearchParams();
+  const { logOut, token } = useContext(AuthContext);
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [images, setImages] = useState<MedicalImageDto[]>([]);
@@ -24,20 +26,16 @@ export default function MedicalImages() {
 
   const fetchAllPatientImages = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const endpoint = await fetch(`${API_URL}/images/${patientId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await endpoint.json();
-      setImages(data);
+      const endpoint = await fetchWithToken(
+        `/images/${patientId}`,
+        { method: "GET" },
+        logOut,
+      );
+      setImages(endpoint);
     } catch (e) {
       console.error("Error fetching images:", e);
     }
-  }, [patientId]);
+  }, [patientId, logOut]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -90,10 +88,14 @@ export default function MedicalImages() {
                   }}
                 >
                   <Image
-                    source={{ uri: `${API_URL}/uploads/${img.filename}` }}
+                    source={{
+                      uri: `${API_URL}/images/file/${img.filename}`,
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }}
                     width={110}
                     height={110}
-                    className=""
                   />
                 </Pressable>
               ))}

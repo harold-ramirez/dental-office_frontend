@@ -1,10 +1,11 @@
 import RequestCard from "@/components/appointments-requests/requestCard";
 import { SadIcon, TriangleDownIcon, TriangleUpIcon } from "@/components/Icons";
 import { AppointmentRequestDto } from "@/interfaces/interfaces";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   DeviceEventEmitter,
@@ -16,10 +17,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export default function Requests() {
   const params = useLocalSearchParams();
+  const { logOut } = useContext(AuthContext);
   const [refreshing, setRefreshing] = useState(false);
   const [requests, setRequests] = useState<AppointmentRequestDto[]>([]);
   const [pastRequests, setPastRequests] = useState<AppointmentRequestDto[]>([]);
@@ -28,40 +28,29 @@ export default function Requests() {
 
   const fetchAllRequests = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const endpoint = await fetch(`${API_URL}/appointment-requests`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await endpoint.json();
-      setRequests(data);
+      const endpoint = await fetchWithToken(
+        "/appointment-requests",
+        { method: "GET" },
+        logOut,
+      );
+      setRequests(endpoint);
     } catch (e) {
       console.error("Error fetching requests:", e);
     }
-  }, []);
+  }, [logOut]);
 
   const fetchAllPastRequests = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const endpoint = await fetch(
-        `${API_URL}/appointment-requests/pastRequests`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
+      const endpoint = await fetchWithToken(
+        "/appointment-requests/pastRequests",
+        { method: "GET" },
+        logOut,
       );
-      const data = await endpoint.json();
-      setPastRequests(data);
+      setPastRequests(endpoint);
     } catch (e) {
       console.error("Error fetching requests:", e);
     }
-  }, []);
+  }, [logOut]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

@@ -1,9 +1,10 @@
 import { WeekAppointmentSelect } from "@/components/appointments-requests/scheduleModes";
 import DropdownComponent from "@/components/dropdown";
 import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -15,6 +16,7 @@ import DatePicker from "react-native-date-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DayScheduleDetails() {
+  const { logOut } = useContext(AuthContext);
   const {
     selectedDate,
     patientID,
@@ -56,8 +58,8 @@ export default function DayScheduleDetails() {
       try {
         setLoading(true);
         const [patientsData, treatmentsData] = await Promise.all([
-          fetchWithToken("/patients/names"),
-          fetchWithToken("/treatments"),
+          fetchWithToken("/patients/names", { method: "GET" }, logOut),
+          fetchWithToken("/treatments", { method: "GET" }, logOut),
         ]);
 
         const patients = patientsData.map(
@@ -84,7 +86,7 @@ export default function DayScheduleDetails() {
     };
 
     fetchData();
-  }, []);
+  }, [logOut]);
 
   if (loading) {
     return (

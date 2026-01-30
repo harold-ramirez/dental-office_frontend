@@ -1,6 +1,7 @@
 import { AppointmentRequestDto } from "@/interfaces/interfaces";
+import { AuthContext } from "@/utils/authContext";
 import { RelativePathString } from "expo-router";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
 import DatePicker from "react-native-date-picker";
 import {
@@ -23,6 +24,7 @@ interface RequestCardProps {
 
 export default function RequestCard({ ...props }: RequestCardProps) {
   const showButtons = props.openId === props.request.Id;
+  const { logOut } = useContext(AuthContext);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const toggleButtons = () => {
@@ -31,19 +33,19 @@ export default function RequestCard({ ...props }: RequestCardProps) {
   const formatDate = (date: string) => {
     const dayName = new Date(props.request.dateHourRequest).toLocaleDateString(
       "es-BO",
-      { weekday: "long" }
+      { weekday: "long" },
     );
     const day = new Date(props.request.dateHourRequest).toLocaleDateString(
       "es-BO",
-      { day: "2-digit" }
+      { day: "2-digit" },
     );
     const month = new Date(props.request.dateHourRequest).toLocaleDateString(
       "es-BO",
-      { month: "short" }
+      { month: "short" },
     );
     const year = new Date(props.request.dateHourRequest).toLocaleDateString(
       "es-BO",
-      { year: "2-digit" }
+      { year: "2-digit" },
     );
     const hour = new Date(props.request.dateHourRequest)
       .toLocaleTimeString("es-BO", {
@@ -121,7 +123,8 @@ export default function RequestCard({ ...props }: RequestCardProps) {
                   `/appointment-requests/${props.request.Id}/1`,
                   "No se pudo descartar la solicitud. Inténtelo de nuevo.",
                   "PATCH",
-                  "/(tabs)/requests" as RelativePathString
+                  "/(tabs)/requests" as RelativePathString,
+                  logOut,
                 );
               }}
               className="justify-center items-center active:bg-red-100 px-2 py-1 border border-red-500 rounded-lg"

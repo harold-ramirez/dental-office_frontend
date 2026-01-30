@@ -1,9 +1,10 @@
 import Loading from "@/components/loading";
 import { MedicalImageDto } from "@/interfaces/interfaces";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import * as ImagePicker from "expo-image-picker";
 import { Link, RelativePathString, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   BackHandler,
   Image,
@@ -35,12 +36,13 @@ interface ImageModalProps {
 
 export default function ImageModal(props: ImageModalProps) {
   const { onClose, image, patientId } = props;
+  const { logOut } = useContext(AuthContext);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPhoto, setNewPhoto] = useState({
     imageID: image?.Id ?? 0,
-    photoURL: image?.filename ? `${API_URL}/uploads/${image.filename}` : ``,
+    photoURL: image?.filename ? `${API_URL}/images/file/${image.filename}` : ``,
     description: image?.description ?? "",
     captureDate: image?.captureDate ? new Date(image.captureDate) : new Date(),
   });
@@ -94,25 +96,21 @@ export default function ImageModal(props: ImageModalProps) {
       formData.append("captureDate", newPhoto.captureDate.toISOString());
       formData.append("description", newPhoto.description);
       formData.append("Patient_Id", patientId.toString());
-      const token = await authService.getToken();
-      const response = await fetch(`${API_URL}/images`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
+      await fetchWithToken(
+        `/images`,
+        {
+          method: "POST",
+          body: formData,
         },
-        body: formData,
+        logOut,
+      );
+      router.replace({
+        pathname: "/medicalImages/[patientId]",
+        params: {
+          patientId: patientId.toString(),
+          refresh: Date.now().toString(),
+        },
       });
-      if (response.ok) {
-        router.replace({
-          pathname: "/medicalImages/[patientId]",
-          params: {
-            patientId: patientId.toString(),
-            refresh: Date.now().toString(),
-          },
-        });
-      } else {
-      }
     } catch (e) {
       console.error("Error al subir la imagen:", e);
     } finally {
@@ -123,33 +121,25 @@ export default function ImageModal(props: ImageModalProps) {
   const handleUpdateImage = async () => {
     try {
       setIsLoading(true);
-      const API_URL = process.env.EXPO_PUBLIC_API_URL;
-      const token = await authService.getToken();
-      const response = await fetch(
-        `${API_URL}/images/${image?.Id.toString()}`,
+      await fetchWithToken(
+        `/images/${image?.Id.toString()}`,
         {
           method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify({
             captureDate: newPhoto.captureDate.toISOString(),
             description: newPhoto.description,
             Patient_Id: patientId,
           }),
         },
+        logOut,
       );
-      if (response.ok) {
-        router.replace({
-          pathname: "/medicalImages/[patientId]",
-          params: {
-            patientId: patientId.toString(),
-            refresh: Date.now().toString(),
-          },
-        });
-      } else {
-      }
+      router.replace({
+        pathname: "/medicalImages/[patientId]",
+        params: {
+          patientId: patientId.toString(),
+          refresh: Date.now().toString(),
+        },
+      });
     } catch (e) {
       console.error("Error al actualizar la imagen:", e);
     } finally {
@@ -323,6 +313,7 @@ export default function ImageModal(props: ImageModalProps) {
                           "No se pudo eliminar la imagen. Inténtalo de nuevo.",
                           "DELETE",
                           "/medicalImages/[patientId]" as RelativePathString,
+                          logOut,
                           { patientId: patientId.toString() },
                         );
                       }}

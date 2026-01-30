@@ -2,35 +2,32 @@ import { PlusIcon, UserCircleIcon } from "@/components/Icons";
 import TreatmentCard from "@/components/treatments/treatmentCard";
 import TreatmentModal from "@/components/treatments/treatmentModal";
 import { DiagnosedProcedureDto } from "@/interfaces/interfaces";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export default function Treatments() {
   const { patientId } = useLocalSearchParams();
+  const { logOut } = useContext(AuthContext);
   const [showModal, setShowModal] = useState(false);
   const [procedures, setProcedures] = useState<DiagnosedProcedureDto[]>([]);
 
   const fetchProcedures = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const data = await fetch(`${API_URL}/diagnosed-procedure/${patientId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
+      const data = await fetchWithToken(
+        `/diagnosed-procedure/${patientId}`,
+        { method: "GET" },
+        logOut,
+      );
       setProcedures(data);
     } catch (error) {
       console.log("Error fetching Diagnosed Procedures:", error);
     }
-  }, [patientId]);
+  }, [patientId, logOut]);
 
   useEffect(() => {
     fetchProcedures();

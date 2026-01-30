@@ -14,7 +14,8 @@ import {
 } from "@/components/Icons";
 import { UpdatePatientModal } from "@/components/patients/patientModal";
 import { MedicalImageDto, PatientDto } from "@/interfaces/interfaces";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { EventArg, NavigationAction } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -25,7 +26,7 @@ import {
   useNavigation,
   useRouter,
 } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -41,6 +42,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function PatientProfile() {
   const { id } = useLocalSearchParams();
+  const { logOut, token } = useContext(AuthContext);
   const router = useRouter();
   const navigation = useNavigation();
   const isNavigatingBack = useRef(false);
@@ -75,22 +77,18 @@ export default function PatientProfile() {
   const fetchPatient = useCallback(async () => {
     setIsLoading(true);
     try {
-      const token = await authService.getToken();
-      const endpoint = await fetch(`${API_URL}/patients/${id}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await endpoint.json();
-      setPatient(data);
+      const endpoint = await fetchWithToken(
+        `/patients/${id}`,
+        { method: "GET" },
+        logOut,
+      );
+      setPatient(endpoint);
     } catch (e) {
       console.error("Error fetching users:", e);
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, logOut]);
 
   // Refresh previous screen
   useEffect(() => {
@@ -125,68 +123,55 @@ export default function PatientProfile() {
   >([]);
   const fetchAllPatientImages = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const endpoint = await fetch(`${API_URL}/images/${id}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await endpoint.json();
-      setImages(data);
+      const endpoint = await fetchWithToken(
+        `/images/${id}`,
+        { method: "GET" },
+        logOut,
+      );
+      setImages(endpoint);
     } catch (e) {
       console.error("Error fetching images:", e);
     }
-  }, [id]);
+  }, [id, logOut]);
 
   const fetchMedicalHistories = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const data = await fetch(`${API_URL}/medical-history/preview/${id}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
+      const data = await fetchWithToken(
+        `/medical-history/preview/${id}`,
+        { method: "GET" },
+        logOut,
+      );
       setMedicalHistories(data);
     } catch (e) {
       console.error("Error fetching medical histories:", e);
     }
-  }, [id]);
+  }, [id, logOut]);
 
   const fetchTreatments = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const data = await fetch(`${API_URL}/diagnosed-procedure/${id}/preview`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
+      const data = await fetchWithToken(
+        `/diagnosed-procedure/${id}/preview`,
+        { method: "GET" },
+        logOut,
+      );
       setTreatments(data);
     } catch (e) {
       console.error("Error fetching Treatments:", e);
     }
-  }, [id]);
+  }, [id, logOut]);
 
   const fetchAppointments = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const data = await fetch(`${API_URL}/appointments/preview/${id}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
+      const data = await fetchWithToken(
+        `/appointments/preview/${id}`,
+        { method: "GET" },
+        logOut,
+      );
       setAppointments(data);
     } catch (e) {
       console.error("Error fetching Appointments:", e);
     }
-  }, [id]);
+  }, [id, logOut]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -540,7 +525,12 @@ export default function PatientProfile() {
                     >
                       <View className="w-[100px] h-[100px]">
                         <Image
-                          source={{ uri: `${API_URL}/uploads/${img.filename}` }}
+                          source={{
+                            uri: `${API_URL}/images/file/${img.filename}`,
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          }}
                           width={100}
                           height={100}
                         />
@@ -555,7 +545,7 @@ export default function PatientProfile() {
                 }
                 return (
                   <Image
-                    source={{ uri: `${API_URL}/uploads/${img.filename}` }}
+                    source={{ uri: `${API_URL}/images/file/${img.filename}` }}
                     key={i}
                     width={100}
                     height={100}
@@ -581,6 +571,7 @@ export default function PatientProfile() {
                   "No se pudo eliminar el paciente. Inténtalo de nuevo.",
                   "DELETE",
                   "/(tabs)/patients" as RelativePathString,
+                  logOut,
                 );
               }}
               className="justify-center items-center bg-red-600 active:bg-red-800 mt-16 mb-5 p-2 rounded-full w-full"

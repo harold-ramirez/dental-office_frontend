@@ -1,5 +1,6 @@
-import { authService } from "@/services/authService";
-import { useEffect, useState } from "react";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
+import { useContext, useEffect, useState } from "react";
 import {
   BackHandler,
   KeyboardAvoidingView,
@@ -11,8 +12,6 @@ import {
 } from "react-native";
 import DatePicker from "react-native-date-picker";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 interface Props {
   onClose: () => void;
   onRefresh: () => void;
@@ -21,6 +20,7 @@ interface Props {
 
 export default function PaymentModal(props: Props) {
   const { onClose, procedureId, onRefresh } = props;
+  const { logOut } = useContext(AuthContext);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPayment, setNewPayment] = useState<{
     amount: number | "";
@@ -35,19 +35,18 @@ export default function PaymentModal(props: Props) {
   const handlePostPayment = async () => {
     if (newPayment.amount === "") return;
     try {
-      const token = await authService.getToken();
-      const res = await fetch(`${API_URL}/payments`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetchWithToken(
+        "/payments",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            amount: newPayment.amount,
+            DiagnosedProcedure_Id: procedureId,
+            registerDate: newPayment.registerDate,
+          }),
         },
-        body: JSON.stringify({
-          amount: newPayment.amount,
-          DiagnosedProcedure_Id: procedureId,
-          registerDate: newPayment.registerDate,
-        }),
-      });
+        logOut,
+      );
       if (res.ok) {
         onRefresh();
         onClose();

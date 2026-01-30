@@ -1,7 +1,8 @@
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
 import { FormatDuration } from "@/services/formatAppointmentDuration";
+import { AuthContext } from "@/utils/authContext";
 import { Link } from "expo-router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import {
   EditIcon,
@@ -17,7 +18,6 @@ import {
   WeekAppointment,
 } from "./appointmentModes";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
 interface AppointmentDto {
   Id: number;
   dateHour: string;
@@ -122,6 +122,7 @@ export function DaySchedule({
   date: Date;
   refresh: string;
 }) {
+  const { logOut } = useContext(AuthContext);
   const [todaySchedule, setTodaySchedule] = useState<AppointmentDto[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
@@ -196,23 +197,17 @@ export function DaySchedule({
     };
 
     const fetchAppointments = async () => {
-      const token = await authService.getToken();
-      const data = await fetch(
-        `${API_URL}/appointments/day/${date.toISOString()}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      ).then((res) => res.json());
+      const data = await fetchWithToken(
+        `/appointments/day/${date.toISOString()}`,
+        { method: "GET" },
+        logOut,
+      );
       makeSchedule(data);
     };
 
     const timeoutId = setTimeout(fetchAppointments, 1000);
     return () => clearTimeout(timeoutId);
-  }, [date, refresh]);
+  }, [date, refresh, logOut]);
 
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
@@ -283,6 +278,7 @@ export function DaySchedule({
 
 export function WeekSchedule({ refresh }: { refresh: string }) {
   const [modalVisible, setModalVisible] = useState(false);
+  const { logOut } = useContext(AuthContext);
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentDto>({
       Id: 0,
@@ -426,14 +422,11 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
 
     const fetchAppointments = async () => {
       try {
-        const token = await authService.getToken();
-        const data = await fetch(`${API_URL}/appointments/week`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }).then((res) => res.json());
+        const data = await fetchWithToken(
+          `/appointments/week`,
+          { method: "GET" },
+          logOut,
+        );
         makeSchedule(data.monday, "monday", 0);
         makeSchedule(data.tuesday, "tuesday", 1);
         makeSchedule(data.wednesday, "wednesday", 2);
@@ -448,7 +441,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
 
     const timeoutId = setTimeout(fetchAppointments, 1000);
     return () => clearTimeout(timeoutId);
-  }, [refresh]);
+  }, [refresh, logOut]);
 
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
@@ -513,6 +506,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
 }
 
 export function MonthSchedule({ refresh }: { refresh: string }) {
+  const { logOut } = useContext(AuthContext);
   const today = new Date();
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
@@ -551,14 +545,11 @@ export function MonthSchedule({ refresh }: { refresh: string }) {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const token = await authService.getToken();
-        const data = await fetch(`${API_URL}/appointments/month`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }).then((res) => res.json());
+        const data = await fetchWithToken(
+          `/appointments/month`,
+          { method: "GET" },
+          logOut,
+        );
         setMonthAppointments(data);
       } catch (error) {
         console.log("Error fetching month appointments:", error);
@@ -567,7 +558,7 @@ export function MonthSchedule({ refresh }: { refresh: string }) {
 
     const timeoutId = setTimeout(fetchAppointments, 1000);
     return () => clearTimeout(timeoutId);
-  }, [refresh]);
+  }, [refresh, logOut]);
 
   return (
     <View className="flex-1 justify-center items-center bg-whiteBlue p-2 rounded-xl w-full">
@@ -660,6 +651,7 @@ export function WeekAppointmentSelect({
 }: {
   setSelectesDate: (val: Date) => void;
 }) {
+  const { logOut } = useContext(AuthContext);
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentDto>({
       Id: 0,
@@ -803,14 +795,11 @@ export function WeekAppointmentSelect({
 
     const fetchAppointments = async () => {
       try {
-        const token = await authService.getToken();
-        const data = await fetch(`${API_URL}/appointments/week`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }).then((res) => res.json());
+        const data = await fetchWithToken(
+          "/appointments/week",
+          { method: "GET" },
+          logOut,
+        );
         makeSchedule(data.monday, "monday", 0);
         makeSchedule(data.tuesday, "tuesday", 1);
         makeSchedule(data.wednesday, "wednesday", 2);
@@ -825,7 +814,7 @@ export function WeekAppointmentSelect({
 
     const timeoutId = setTimeout(fetchAppointments, 1000);
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [logOut]);
 
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">

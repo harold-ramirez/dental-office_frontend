@@ -1,16 +1,16 @@
 import { PlusIcon } from "@/components/Icons";
 import PaymentModal from "@/components/treatments/paymentModal";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export default function TreatmentDetails() {
   const { treatmentId } = useLocalSearchParams();
+  const { logOut } = useContext(AuthContext);
   const [openModal, setOpenModal] = useState(false);
   const [treatmentDetails, setTreatmentDetails] = useState<{
     totalPaid: number;
@@ -34,19 +34,16 @@ export default function TreatmentDetails() {
 
   const fetchProcedures = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const data = await fetch(`${API_URL}/payments/procedure/${treatmentId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
+      const data = await fetchWithToken(
+        `/payments/procedure/${treatmentId}`,
+        { method: "GET" },
+        logOut,
+      );
       setTreatmentDetails(data);
     } catch (error) {
       console.log("Error fetching treatment Details:", error);
     }
-  }, [treatmentId]);
+  }, [treatmentId, logOut]);
 
   useEffect(() => {
     fetchProcedures();

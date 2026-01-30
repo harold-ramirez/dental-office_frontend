@@ -55,10 +55,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const getAuthFromStorage = async () => {
       try {
         const storedToken = await AsyncStorage.getItem(tokenStorageKey);
-
         if (storedToken) {
-          setToken(storedToken);
-          setIsLoggedIn(true);
+          const res = await fetch(
+            `${process.env.EXPO_PUBLIC_API_URL}/auth/validate`,
+            {
+              headers: { Authorization: `Bearer ${storedToken}` },
+            },
+          );
+
+          if (!res.ok) {
+            await AsyncStorage.removeItem(tokenStorageKey);
+            setIsLoggedIn(false);
+            setToken(null);
+          } else {
+            setToken(storedToken);
+            setIsLoggedIn(true);
+          }
         }
       } catch (error) {
         console.log("Error retrieving auth state:", error);

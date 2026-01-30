@@ -1,7 +1,8 @@
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   BackHandler,
   KeyboardAvoidingView,
@@ -14,8 +15,6 @@ import {
 } from "react-native";
 import DropdownComponent from "../dropdown";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 interface Props {
   patientId: number;
   onClose: () => void;
@@ -23,6 +22,7 @@ interface Props {
 
 export default function TreatmentModal(props: Props) {
   const { patientId = 0, onClose } = props;
+  const { logOut } = useContext(AuthContext);
   const [formData, setFormData] = useState<{
     description: string;
     totalCost: number | "";
@@ -41,17 +41,11 @@ export default function TreatmentModal(props: Props) {
 
   const fetchTreatmentList = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const data: { Id: number; name: string }[] = await fetch(
-        `${API_URL}/treatments`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      ).then((res) => res.json());
+      const data: { Id: number; name: string }[] = await fetchWithToken(
+        "/treatments",
+        { method: "GET" },
+        logOut,
+      );
       const parsed: { label: string; value: string }[] = [];
       data.map((treatment) => {
         parsed.push({
@@ -61,18 +55,16 @@ export default function TreatmentModal(props: Props) {
       });
       setTreatmentList(parsed);
       // ***********************************
-      const teethDB = await fetch(`${API_URL}/odontogram/${patientId}/teeth`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
+      const teethDB = await fetchWithToken(
+        `/odontogram/${patientId}/teeth`,
+        { method: "GET" },
+        logOut,
+      );
       setTeeth(teethDB);
     } catch (error) {
       console.log("Error fetching Treatments or Teeth:", error);
     }
-  }, [patientId]);
+  }, [patientId, logOut]);
 
   useEffect(() => {
     fetchTreatmentList();
@@ -81,32 +73,28 @@ export default function TreatmentModal(props: Props) {
   const handleRegisterTreatment = async () => {
     if (formData.Treatment_Id === 0) return;
     try {
-      const token = await authService.getToken();
-      const res = await fetch(`${API_URL}/diagnosed-procedure`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetchWithToken(
+        "/diagnosed-procedure",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            description:
+              formData.description === "" ? null : formData.description,
+            totalCost: formData.totalCost === "" ? null : formData.totalCost,
+            Patient_Id: patientId,
+            Treatment_Id: formData.Treatment_Id,
+            dentalPieces: formData.dentalPieces,
+          }),
         },
-        body: JSON.stringify({
-          description:
-            formData.description === "" ? null : formData.description,
-          totalCost: formData.totalCost === "" ? null : formData.totalCost,
-          Patient_Id: patientId,
-          Treatment_Id: formData.Treatment_Id,
-          dentalPieces: formData.dentalPieces,
-        }),
+        logOut,
+      );
+      router.replace({
+        pathname: "/(protected)/treatmentDetails/[treatmentId]",
+        params: {
+          treatmentId: res.Id.toString(),
+        },
       });
-      if (res.ok) {
-        const created = await res.json();
-        router.replace({
-          pathname: "/(protected)/treatmentDetails/[treatmentId]",
-          params: {
-            treatmentId: created.Id.toString(),
-          },
-        });
-        onClose();
-      }
+      onClose();
     } catch (error) {
       console.log("Error posting Treatment:", error);
     }

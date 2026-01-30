@@ -1,14 +1,14 @@
 import { WorkScheduleSelection } from "@/components/appointments-requests/scheduleModes";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export default function WorkSchedule() {
+  const { logOut } = useContext(AuthContext);
   const [message, setMessage] = useState<{ isError: boolean; text: string }>({
     isError: false,
     text: "",
@@ -108,14 +108,7 @@ export default function WorkSchedule() {
   useEffect(() => {
     const fetchShifts = async () => {
       try {
-        const token = await authService.getToken();
-        const data = await fetch(`${API_URL}/shifts`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }).then((res) => res.json());
+        const data = await fetchWithToken("/shifts", { method: "GET" }, logOut);
         setShifts(data);
         setOriginalShifts(data);
       } catch (e) {
@@ -123,7 +116,7 @@ export default function WorkSchedule() {
       }
     };
     fetchShifts();
-  }, []);
+  }, [logOut]);
 
   const handleSaveChanges = async () => {
     try {
@@ -207,28 +200,24 @@ export default function WorkSchedule() {
       }
       setOriginalShifts(shifts);
       // ***************************************************
-      const token = await authService.getToken();
-      const res = await fetch(`${API_URL}/shifts`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      await fetchWithToken(
+        "/shifts",
+        {
+          method: "PATCH",
+          body: JSON.stringify(updatedShifts),
         },
-        body: JSON.stringify(updatedShifts),
+        logOut,
+      );
+      setMessage({
+        isError: false,
+        text: "Se aplicaron los cambios exitosamente",
       });
-      if (res.ok) {
-        setMessage({
-          isError: false,
-          text: "Se aplicaron los cambios exitosamente",
-        });
-      } else {
-        setMessage({
-          isError: true,
-          text: "Se produjo un error al actualizar el horario",
-        });
-      }
     } catch (error) {
       console.log("Error updating shifts", error);
+      setMessage({
+        isError: true,
+        text: "Se produjo un error al actualizar el horario",
+      });
     }
   };
 

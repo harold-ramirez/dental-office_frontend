@@ -5,7 +5,8 @@ import Loading from "@/components/loading";
 import OptionalTextInput from "@/components/optionalTextInput";
 import { YesNoRadio } from "@/components/radioButton";
 import { MedicalHistoryDto } from "@/interfaces/interfaces";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   RelativePathString,
@@ -13,7 +14,7 @@ import {
   Stack,
   useLocalSearchParams,
 } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -25,10 +26,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export default function MedicalHistory() {
   const { patientId } = useLocalSearchParams();
+  const { logOut } = useContext(AuthContext);
   const [isPosting, setIsPosting] = useState(false);
   const [showNewFormBtn, setShowNewFormBtn] = useState(true);
   const [habits, setHabits] = useState<{ Id: number; name: string }[]>([]);
@@ -116,26 +116,19 @@ export default function MedicalHistory() {
   const handlePostPathology = async () => {
     if (newPathologyHabit.newPathology === "") return;
     try {
-      const token = await authService.getToken();
-      const res = await fetch(`${API_URL}/personal-pathologies`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetchWithToken(
+        "/personal-pathologies",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            name: newPathologyHabit.newPathology,
+          }),
         },
-        body: JSON.stringify({
-          name: newPathologyHabit.newPathology,
-        }),
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        console.log("Error creando Patología:", res.status, errText);
-        return;
-      }
-      const created = await res.json();
+        logOut,
+      );
       setPersonalPathologies((prev) => [
         ...prev,
-        { Id: created.Id, name: created.name },
+        { Id: res.Id, name: res.name },
       ]);
 
       // Pre-select the pathology form
@@ -144,7 +137,7 @@ export default function MedicalHistory() {
           ...formData,
           personalPathologieshistory: [
             ...(formData.personalPathologieshistory || []),
-            { Id: created.Id, name: created.name },
+            { Id: res.Id, name: res.name },
           ],
         });
       }
@@ -161,33 +154,23 @@ export default function MedicalHistory() {
   const handlePostHabit = async () => {
     if (newPathologyHabit.newHabit === "") return;
     try {
-      const token = await authService.getToken();
-      const res = await fetch(`${API_URL}/habits`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetchWithToken(
+        "/habits",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            name: newPathologyHabit.newHabit,
+          }),
         },
-        body: JSON.stringify({
-          name: newPathologyHabit.newHabit,
-        }),
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        console.log("Error creando Hábito:", res.status, errText);
-        return;
-      }
-      const created = await res.json();
-      setHabits((prev) => [...prev, { Id: created.Id, name: created.name }]);
+        logOut,
+      );
+      setHabits((prev) => [...prev, { Id: res.Id, name: res.name }]);
 
       // Pre-select the pathology form
       if (!formData.Id) {
         setFormData({
           ...formData,
-          habits: [
-            ...(formData.habits || []),
-            { Id: created.Id, name: created.name },
-          ],
+          habits: [...(formData.habits || []), { Id: res.Id, name: res.name }],
         });
       }
     } catch (error) {
@@ -203,66 +186,69 @@ export default function MedicalHistory() {
   const handlePostForm = async () => {
     try {
       setIsPosting(true);
-      const token = await authService.getToken();
-      const res = await fetch(`${API_URL}/medical-history`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetchWithToken(
+        "/medical-history",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            Patient_Id: Number(patientId),
+            personalPathologieshistory: formData.personalPathologieshistory,
+            habits: formData.habits,
+            familyPathologicalHistory:
+              formData.familyPathologicalHistory === ""
+                ? null
+                : formData.familyPathologicalHistory,
+            allergies: formData.allergies === "" ? null : formData.allergies,
+            pregnantMonths:
+              formData.pregnantMonths === "" ? null : formData.pregnantMonths,
+            medicalTreatment:
+              formData.medicalTreatment === ""
+                ? null
+                : formData.medicalTreatment,
+            takingMedicine:
+              formData.takingMedicine === "" ? null : formData.takingMedicine,
+            hemorrhageType:
+              formData.hemorrhageType === "" ? null : formData.hemorrhageType,
+            tmj: formData.tmj === "" ? null : formData.tmj,
+            lymphNodes: formData.lymphNodes === "" ? null : formData.lymphNodes,
+            breathingType:
+              formData.breathingType === "" ? null : formData.breathingType,
+            others: formData.others === "" ? null : formData.others,
+            lipsStatus: formData.lipsStatus === "" ? null : formData.lipsStatus,
+            tongueStatus:
+              formData.tongueStatus === "" ? null : formData.tongueStatus,
+            palateStatus:
+              formData.palateStatus === "" ? null : formData.palateStatus,
+            mouthFloorStatus:
+              formData.mouthFloorStatus === ""
+                ? null
+                : formData.mouthFloorStatus,
+            buccalMucousStatus:
+              formData.buccalMucousStatus === ""
+                ? null
+                : formData.buccalMucousStatus,
+            gumsStatus: formData.gumsStatus === "" ? null : formData.gumsStatus,
+            prosthesisLocation:
+              formData.prosthesisLocation === ""
+                ? null
+                : formData.prosthesisLocation,
+            lastTimeVisitedDentist:
+              formData.lastTimeVisitedDentist === ""
+                ? null
+                : formData.lastTimeVisitedDentist,
+            useDentalFloss: formData.useDentalFloss,
+            useMouthWash: formData.useMouthWash,
+            toothBrushingFrequency:
+              formData.toothBrushingFrequency === ""
+                ? null
+                : formData.toothBrushingFrequency,
+            hasBleedOnToothBrushing: formData.hasBleedOnToothBrushing,
+            oralHygiene:
+              formData.oralHygiene === "" ? null : formData.oralHygiene,
+          }),
         },
-        body: JSON.stringify({
-          Patient_Id: Number(patientId),
-          personalPathologieshistory: formData.personalPathologieshistory,
-          habits: formData.habits,
-          familyPathologicalHistory:
-            formData.familyPathologicalHistory === ""
-              ? null
-              : formData.familyPathologicalHistory,
-          allergies: formData.allergies === "" ? null : formData.allergies,
-          pregnantMonths:
-            formData.pregnantMonths === "" ? null : formData.pregnantMonths,
-          medicalTreatment:
-            formData.medicalTreatment === "" ? null : formData.medicalTreatment,
-          takingMedicine:
-            formData.takingMedicine === "" ? null : formData.takingMedicine,
-          hemorrhageType:
-            formData.hemorrhageType === "" ? null : formData.hemorrhageType,
-          tmj: formData.tmj === "" ? null : formData.tmj,
-          lymphNodes: formData.lymphNodes === "" ? null : formData.lymphNodes,
-          breathingType:
-            formData.breathingType === "" ? null : formData.breathingType,
-          others: formData.others === "" ? null : formData.others,
-          lipsStatus: formData.lipsStatus === "" ? null : formData.lipsStatus,
-          tongueStatus:
-            formData.tongueStatus === "" ? null : formData.tongueStatus,
-          palateStatus:
-            formData.palateStatus === "" ? null : formData.palateStatus,
-          mouthFloorStatus:
-            formData.mouthFloorStatus === "" ? null : formData.mouthFloorStatus,
-          buccalMucousStatus:
-            formData.buccalMucousStatus === ""
-              ? null
-              : formData.buccalMucousStatus,
-          gumsStatus: formData.gumsStatus === "" ? null : formData.gumsStatus,
-          prosthesisLocation:
-            formData.prosthesisLocation === ""
-              ? null
-              : formData.prosthesisLocation,
-          lastTimeVisitedDentist:
-            formData.lastTimeVisitedDentist === ""
-              ? null
-              : formData.lastTimeVisitedDentist,
-          useDentalFloss: formData.useDentalFloss,
-          useMouthWash: formData.useMouthWash,
-          toothBrushingFrequency:
-            formData.toothBrushingFrequency === ""
-              ? null
-              : formData.toothBrushingFrequency,
-          hasBleedOnToothBrushing: formData.hasBleedOnToothBrushing,
-          oralHygiene:
-            formData.oralHygiene === "" ? null : formData.oralHygiene,
-        }),
-      });
+        logOut,
+      );
       if (!res.ok) {
         const errText = await res.text();
         console.log("Error creando Formulario:", res.status, errText);
@@ -285,39 +271,25 @@ export default function MedicalHistory() {
   // REACT HOOKS **************************************************
   const fetchAllMedicalHistories = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const data = await fetch(`${API_URL}/medical-history/${patientId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
+      const data = await fetchWithToken(
+        `/medical-history/${patientId}`,
+        { method: "GET" },
+        logOut,
+      );
       setHistories(data);
       setFormData(data[0]);
-      const habits = await fetch(`${API_URL}/habits`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
-      const personalPathologies = await fetch(
-        `${API_URL}/personal-pathologies`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      ).then((res) => res.json());
+      const habits = await fetchWithToken("/habits", { method: "GET" }, logOut);
+      const personalPathologies = await fetchWithToken(
+        "/personal-pathologies",
+        { method: "GET" },
+        logOut,
+      );
       setHabits(habits);
       setPersonalPathologies(personalPathologies);
     } catch (e) {
       console.error("Error fetching medical histories:", e);
     }
-  }, [patientId]);
+  }, [patientId, logOut]);
   useEffect(() => {
     fetchAllMedicalHistories();
   }, [fetchAllMedicalHistories]);
@@ -1124,6 +1096,7 @@ export default function MedicalHistory() {
                         "No se pudo eliminar la historia clínica. Inténtalo de nuevo.",
                         "DELETE",
                         `/(protected)/patientProfile/[id]` as RelativePathString,
+                        logOut,
                         { id: patientId.toString() },
                       );
                     }}

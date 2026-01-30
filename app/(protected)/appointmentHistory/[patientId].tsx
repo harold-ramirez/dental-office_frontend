@@ -1,10 +1,11 @@
 import { TriangleDownIcon, TriangleUpIcon } from "@/components/Icons";
 import PopupModal from "@/components/popupModal";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
 import { FormatDuration } from "@/services/formatAppointmentDuration";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -15,9 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export default function MedicalHistory() {
+  const { logOut } = useContext(AuthContext);
   const { patientId, patientName } = useLocalSearchParams();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<{
@@ -77,19 +77,16 @@ export default function MedicalHistory() {
 
   const fetchAppointmentsHistory = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const data = await fetch(`${API_URL}/appointments/history/${patientId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
+      const data = await fetchWithToken(
+        `/appointments/history/${patientId}`,
+        { method: "GET" },
+        logOut,
+      );
       setAppointmentHistory(data);
     } catch (e) {
       console.error("Error fetching appointments history:", e);
     }
-  }, [patientId]);
+  }, [patientId, logOut]);
   useEffect(() => {
     fetchAppointmentsHistory();
   }, [fetchAppointmentsHistory]);

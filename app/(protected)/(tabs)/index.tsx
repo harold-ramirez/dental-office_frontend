@@ -1,16 +1,16 @@
 import AnimatedArc from "@/components/animatedArc";
 import { ClockIcon, ScheduleIcon } from "@/components/Icons";
 import { Summary, WeekSummary } from "@/components/summaries";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export default function Index() {
+  const { logOut } = useContext(AuthContext);
   const [summary, setSummary] = useState<{
     today: number;
     tomorrow: number;
@@ -28,14 +28,11 @@ export default function Index() {
   useEffect(() => {
     const fetchAppointmentsSummary = async () => {
       try {
-        const token = await authService.getToken();
-        const data = await fetch(`${API_URL}/appointments/summary`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }).then((res) => res.json());
+        const data = await fetchWithToken(
+          "/appointments/summary",
+          { method: "GET" },
+          logOut,
+        );
         setSummary(data);
       } catch (e) {
         console.error("Error getting appointments summary:", e);
@@ -43,7 +40,7 @@ export default function Index() {
     };
 
     fetchAppointmentsSummary();
-  }, []);
+  }, [logOut]);
 
   return (
     <>

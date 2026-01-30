@@ -2,10 +2,11 @@ import { AddPatientIcon, SadIcon, SearchIcon } from "@/components/Icons";
 import PatientCard from "@/components/patients/patientCard";
 import { CreatePatientModal } from "@/components/patients/patientModal";
 import { PatientDto } from "@/interfaces/interfaces";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -18,8 +19,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Patients() {
-  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const params = useLocalSearchParams();
+  const { logOut } = useContext(AuthContext);
   const [searchValue, setSearchValue] = useState("");
   const [patients, setPatients] = useState<PatientDto[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<PatientDto[]>([]);
@@ -29,20 +30,16 @@ export default function Patients() {
 
   const fetchAllPatients = useCallback(async () => {
     try {
-      const token = await authService.getToken();
-      const endpoint = await fetch(`${API_URL}/patients`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await endpoint.json();
-      setPatients(data);
+      const endpoint = await fetchWithToken(
+        "/patients",
+        { method: "GET" },
+        logOut,
+      );;
+      setPatients(endpoint);
     } catch (e) {
       console.error("Error fetching users:", e);
     }
-  }, [API_URL]);
+  }, [logOut]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

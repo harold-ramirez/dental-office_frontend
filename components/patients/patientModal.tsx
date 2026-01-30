@@ -1,7 +1,8 @@
 import { CreatePatientDto, PatientDto } from "@/interfaces/interfaces";
-import { authService } from "@/services/authService";
+import { fetchWithToken } from "@/services/fetchData";
+import { AuthContext } from "@/utils/authContext";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -28,6 +29,7 @@ interface UpdatePatientProps {
 
 export function CreatePatientModal({ onClose }: CreatePatientProps) {
   const router = useRouter();
+  const { logOut } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPatient, setNewPatient] = useState<CreatePatientDto>({
@@ -46,45 +48,40 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
   const handleRegisterPatient = async () => {
     if (newPatient.name && newPatient.gender) {
       setIsLoading(true);
-      const API_URL = process.env.EXPO_PUBLIC_API_URL;
       try {
-        const token = await authService.getToken();
-        const endpoint = await fetch(`${API_URL}/patients`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+        await fetchWithToken(
+          "/patients",
+          {
+            method: "POST",
+            body: JSON.stringify(newPatient),
           },
-          body: JSON.stringify(newPatient),
+          logOut,
+        );
+        router.replace("/patients?refresh=1");
+        Alert.alert(
+          "Paciente Registrado",
+          "El paciente ha sido registrado exitosamente",
+          [{ text: "OK" }],
+          { cancelable: true },
+        );
+        setNewPatient({
+          name: "",
+          paternalSurname: "",
+          maternalSurname: "",
+          gender: "",
+          cellphoneNumber: "",
+          occupation: "",
+          birthdate: "",
+          placeOfBirth: "",
+          address: "",
         });
-        if (endpoint.ok) {
-          router.replace("/patients?refresh=1");
-          Alert.alert(
-            "Paciente Registrado",
-            "El paciente ha sido registrado exitosamente",
-            [{ text: "OK" }],
-            { cancelable: true },
-          );
-          setNewPatient({
-            name: "",
-            paternalSurname: "",
-            maternalSurname: "",
-            gender: "",
-            cellphoneNumber: "",
-            occupation: "",
-            birthdate: "",
-            placeOfBirth: "",
-            address: "",
-          });
-        } else {
-          Alert.alert(
-            "Error",
-            "Hubo un error al registrar el paciente. Por favor, intenta nuevamente.",
-            [{ text: "OK" }],
-          );
-        }
       } catch (error) {
         console.error("Error creating new patient:", error);
+        Alert.alert(
+          "Error",
+          "Hubo un error al registrar el paciente. Por favor, intenta nuevamente.",
+          [{ text: "OK" }],
+        );
       } finally {
         setIsLoading(false);
         onClose();
@@ -327,6 +324,7 @@ export function UpdatePatientModal({
   onClose,
   patient: initialPatient,
 }: UpdatePatientProps) {
+  const { logOut } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [patient, setPatient] = useState<PatientDto>({ ...initialPatient });
@@ -334,34 +332,29 @@ export function UpdatePatientModal({
   const handleUpdatePatient = async () => {
     if (patient.name && patient.gender) {
       setIsLoading(true);
-      const API_URL = process.env.EXPO_PUBLIC_API_URL;
       let endpoint: Response | null = null;
       try {
-        const token = await authService.getToken();
-        endpoint = await fetch(`${API_URL}/patients/${patient.Id}`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+        endpoint = await fetchWithToken(
+          `/patients/${patient.Id}`,
+          {
+            method: "PATCH",
+            body: JSON.stringify(patient),
           },
-          body: JSON.stringify(patient),
-        });
-        if (endpoint?.ok) {
-          Alert.alert(
-            "Datos Actualizado",
-            "Los datos del paciente se han actualizado exitosamente.",
-            [{ text: "OK" }],
-            { cancelable: true },
-          );
-        } else {
-          Alert.alert(
-            "Error",
-            "Hubo un error al actualizar los datos del paciente. Por favor, intenta nuevamente.",
-            [{ text: "OK" }],
-          );
-        }
+          logOut,
+        );
+        Alert.alert(
+          "Datos Actualizado",
+          "Los datos del paciente se han actualizado exitosamente.",
+          [{ text: "OK" }],
+          { cancelable: true },
+        );
       } catch (error) {
         console.error("Error updating patient:", error);
+        Alert.alert(
+          "Error",
+          "Hubo un error al actualizar los datos del paciente. Por favor, intenta nuevamente.",
+          [{ text: "OK" }],
+        );
       } finally {
         setIsLoading(false);
         onClose(endpoint?.ok);
