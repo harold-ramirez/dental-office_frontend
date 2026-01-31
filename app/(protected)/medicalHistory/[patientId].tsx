@@ -186,7 +186,7 @@ export default function MedicalHistory() {
   const handlePostForm = async () => {
     try {
       setIsPosting(true);
-      const res = await fetchWithToken(
+      await fetchWithToken(
         "/medical-history",
         {
           method: "POST",
@@ -249,11 +249,6 @@ export default function MedicalHistory() {
         },
         logOut,
       );
-      if (!res.ok) {
-        const errText = await res.text();
-        console.log("Error creando Formulario:", res.status, errText);
-        return;
-      }
       setIsPosting(false);
       router.replace({
         pathname: "/(protected)/patientProfile/[id]",

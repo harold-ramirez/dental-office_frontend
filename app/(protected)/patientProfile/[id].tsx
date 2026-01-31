@@ -1,16 +1,17 @@
-import { DeleteAlertMessage } from "@/components/alertMessage";
 import {
   CakeIcon,
   DocumentIcon,
   EditIcon,
   FemaleIcon,
   HouseIcon,
+  IdCardIcon,
   JobIcon,
   MaleIcon,
   MapMarkerIcon,
   PhoneIcon,
   ProfileIconAlt,
   RightArrowIcon,
+  WhatsappIcon,
 } from "@/components/Icons";
 import { UpdatePatientModal } from "@/components/patients/patientModal";
 import { MedicalImageDto, PatientDto } from "@/interfaces/interfaces";
@@ -20,7 +21,6 @@ import { EventArg, NavigationAction } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Link,
-  RelativePathString,
   Stack,
   useLocalSearchParams,
   useNavigation,
@@ -30,6 +30,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -54,6 +55,7 @@ export default function PatientProfile() {
     paternalSurname: "",
     maternalSurname: "",
     gender: "",
+    identityDocument: "",
     telephoneNumber: "",
     cellphoneNumber: "",
     occupation: "",
@@ -73,6 +75,15 @@ export default function PatientProfile() {
       age--;
     }
   }
+
+  const handleWhatsApp = () => {
+    if (patient.cellphoneNumber) {
+      const url = `https://wa.me/591${patient.cellphoneNumber}`;
+      Linking.openURL(url);
+    } else {
+      alert("El paciente no tiene número de teléfono registrado.");
+    }
+  };
 
   const fetchPatient = useCallback(async () => {
     setIsLoading(true);
@@ -226,7 +237,7 @@ export default function PatientProfile() {
           }
           className="w-full"
         >
-          <View className="flex-1 bg-lightBlue p-3 rounded-2xl w-full">
+          <View className="flex-1 bg-lightBlue p-3 rounded-t-2xl w-full">
             <View className="flex-row gap-3 mb-5">
               <View className="items-center gap-2">
                 {/* Profile Photo */}
@@ -265,11 +276,18 @@ export default function PatientProfile() {
                     .filter(Boolean)
                     .join(" ")}
                 </Text>
+                {/* Identity Document */}
+                <View className="flex-row items-center gap-2">
+                  <IdCardIcon size={21} color="#02457A" />
+                  <Text className="text-blackBlue">
+                    {patient.identityDocument}
+                  </Text>
+                </View>
                 {/* PhoneNumber */}
                 {patient?.cellphoneNumber && (
                   <View className="flex-row items-center gap-2">
                     <PhoneIcon size={21} color="#02457A" />
-                    <Text className={`text-blackBlue text-lg`}>
+                    <Text className={`text-blackBlue`}>
                       {patient.cellphoneNumber}
                       {patient?.telephoneNumber &&
                         ` - ${patient.telephoneNumber}`}
@@ -342,49 +360,57 @@ export default function PatientProfile() {
                 <RightArrowIcon color="#001B48" />
               </View>
             </Link>
-            <View className="flex-row justify-center items-center gap-2 bg-whiteBlue mb-3 rounded-md w-full h-32">
-              {medicalHistories.slice(0, 3).map((history, i) => {
-                if (i === 2 && medicalHistories.length > 2) {
+            <View
+              className={`flex-row justify-center items-center gap-2 bg-whiteBlue mb-3 rounded-md w-full h-32 ${medicalHistories.length === 0 ? `justify-center` : ``}`}
+            >
+              {medicalHistories.length === 0 ? (
+                <Text className="w-full text-blackBlue/75 text-center italic">
+                  No se ha registrado ningúna historia clínica para el paciente
+                </Text>
+              ) : (
+                medicalHistories.slice(0, 3).map((history, i) => {
+                  if (i === 2 && medicalHistories.length > 2) {
+                    return (
+                      <Link
+                        key={i}
+                        href={{
+                          pathname: "/medicalHistory/[patientId]",
+                          params: { patientId: id.toString() },
+                        }}
+                      >
+                        <View className="w-[100px] h-[100px]">
+                          <View className="justify-center items-center p-1 border border-blackBlue rounded-md w-[100px] h-[100px]">
+                            <DocumentIcon color="#001B48" size={32} />
+                            <Text className="text-blackBlue">
+                              {new Date(
+                                history.registerDate,
+                              ).toLocaleDateString("es-BO")}
+                            </Text>
+                          </View>
+                          <View className="absolute justify-center items-center bg-blackBlue/75 w-[100px] h-[100px]">
+                            <Text className="font-semibold text-whiteBlue text-3xl">
+                              +{medicalHistories.length - 2}
+                            </Text>
+                          </View>
+                        </View>
+                      </Link>
+                    );
+                  }
                   return (
-                    <Link
+                    <View
                       key={i}
-                      href={{
-                        pathname: "/medicalHistory/[patientId]",
-                        params: { patientId: id.toString() },
-                      }}
+                      className="justify-center items-center p-1 border border-blackBlue rounded-md w-[100px] h-[100px]"
                     >
-                      <View className="w-[100px] h-[100px]">
-                        <View className="justify-center items-center p-1 border border-blackBlue rounded-md w-[100px] h-[100px]">
-                          <DocumentIcon color="#001B48" size={32} />
-                          <Text className="text-blackBlue">
-                            {new Date(history.registerDate).toLocaleDateString(
-                              "es-BO",
-                            )}
-                          </Text>
-                        </View>
-                        <View className="absolute justify-center items-center bg-blackBlue/75 w-[100px] h-[100px]">
-                          <Text className="font-semibold text-whiteBlue text-3xl">
-                            +{medicalHistories.length - 2}
-                          </Text>
-                        </View>
-                      </View>
-                    </Link>
+                      <DocumentIcon color="#001B48" size={32} />
+                      <Text className="text-blackBlue">
+                        {new Date(history.registerDate).toLocaleDateString(
+                          "es-BO",
+                        )}
+                      </Text>
+                    </View>
                   );
-                }
-                return (
-                  <View
-                    key={i}
-                    className="justify-center items-center p-1 border border-blackBlue rounded-md w-[100px] h-[100px]"
-                  >
-                    <DocumentIcon color="#001B48" size={32} />
-                    <Text className="text-blackBlue">
-                      {new Date(history.registerDate).toLocaleDateString(
-                        "es-BO",
-                      )}
-                    </Text>
-                  </View>
-                );
-              })}
+                })
+              )}
             </View>
 
             {/* Odontogram */}
@@ -419,11 +445,12 @@ export default function PatientProfile() {
                 <RightArrowIcon color="#001B48" />
               </View>
             </Link>
-            <View className="bg-whiteBlue mb-3 p-3 rounded-md w-full h-32 overflow-hidden">
+            <View
+              className={`bg-whiteBlue mb-3 p-3 rounded-md w-full h-32 overflow-hidden ${treatments.length === 0 ? `justify-center` : ``}`}
+            >
               {treatments.length === 0 ? (
-                <Text className="w-full text-blackBlue text-center italic">
-                  No se tiene registrado ningún tratamiento realizado a este
-                  paciente
+                <Text className="w-full text-blackBlue/75 text-center italic">
+                  No se registró ningún tratamiento al paciente
                 </Text>
               ) : (
                 treatments.map((treatment) => (
@@ -466,10 +493,12 @@ export default function PatientProfile() {
                 <RightArrowIcon color="#001B48" />
               </View>
             </Link>
-            <View className="bg-whiteBlue mb-3 px-3 pt-1 rounded-md w-full h-32 overflow-hidden">
+            <View
+              className={`bg-whiteBlue mb-3 px-3 pt-1 rounded-md w-full h-32 overflow-hidden ${appointments.length === 0 ? `justify-center` : ``}`}
+            >
               {appointments.length === 0 ? (
-                <Text className="w-full text-blackBlue text-center italic">
-                  No se tiene registrado ninguna cita de este paciente
+                <Text className="w-full text-blackBlue/75 text-center italic">
+                  No hay registros de cita del paciente
                 </Text>
               ) : (
                 appointments.map((appointment, i) => (
@@ -513,49 +542,60 @@ export default function PatientProfile() {
               </View>
             </Link>
             <View className="flex-row justify-center items-center gap-2 bg-whiteBlue mb-3 rounded-md w-full h-32">
-              {images.slice(0, 3).map((img, i) => {
-                if (i === 2 && images.length > 2) {
-                  return (
-                    <Link
-                      key={img.Id}
-                      href={{
-                        pathname: "/medicalImages/[patientId]",
-                        params: { patientId: id.toString() },
-                      }}
-                    >
-                      <View className="w-[100px] h-[100px]">
-                        <Image
-                          source={{
-                            uri: `${API_URL}/images/file/${img.filename}`,
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                            },
-                          }}
-                          width={100}
-                          height={100}
-                        />
-                        <View className="absolute justify-center items-center bg-blackBlue/75 w-[100px] h-[100px]">
-                          <Text className="font-semibold text-whiteBlue text-3xl">
-                            +{images.length - 2}
-                          </Text>
+              {images.length === 0 ? (
+                <Text className="w-full text-blackBlue/75 text-center italic">
+                  No se encontraron imágenes complementarias del paciente
+                </Text>
+              ) : (
+                images.slice(0, 3).map((img, i) => {
+                  if (i === 2 && images.length > 2) {
+                    return (
+                      <Link
+                        key={img.Id}
+                        href={{
+                          pathname: "/medicalImages/[patientId]",
+                          params: { patientId: id.toString() },
+                        }}
+                      >
+                        <View className="w-[100px] h-[100px]">
+                          <Image
+                            source={{
+                              uri: `${API_URL}/images/file/${img.filename}`,
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            }}
+                            width={100}
+                            height={100}
+                          />
+                          <View className="absolute justify-center items-center bg-blackBlue/75 w-[100px] h-[100px]">
+                            <Text className="font-semibold text-whiteBlue text-3xl">
+                              +{images.length - 2}
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-                    </Link>
+                      </Link>
+                    );
+                  }
+                  return (
+                    <Image
+                      source={{
+                        uri: `${API_URL}/images/file/${img.filename}`,
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                        },
+                      }}
+                      key={i}
+                      width={100}
+                      height={100}
+                    />
                   );
-                }
-                return (
-                  <Image
-                    source={{ uri: `${API_URL}/images/file/${img.filename}` }}
-                    key={i}
-                    width={100}
-                    height={100}
-                  />
-                );
-              })}
+                })
+              )}
             </View>
 
             {/* Delete Button */}
-            <Pressable
+            {/* <Pressable
               onPress={() => {
                 DeleteAlertMessage(
                   "Confirmar Eliminación",
@@ -578,6 +618,17 @@ export default function PatientProfile() {
             >
               <Text className="font-semibold text-whiteBlue">
                 Eliminar Paciente
+              </Text>
+            </Pressable> */}
+
+            {/* Whatsapp Button */}
+            <Pressable
+              onPress={handleWhatsApp}
+              className="flex-row justify-center items-center gap-2 bg-green-700 active:bg-green-800 mt-5 py-2 rounded-full"
+            >
+              <WhatsappIcon color="#D6E8EE" />
+              <Text className="font-semibold text-whiteBlue">
+                Enviar mensaje por Whatsapp
               </Text>
             </Pressable>
           </View>

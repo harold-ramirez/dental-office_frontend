@@ -39,6 +39,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
     gender: "M",
     cellphoneNumber: null,
     telephoneNumber: null,
+    identityDocument: "",
     occupation: "",
     birthdate: "",
     placeOfBirth: "",
@@ -72,6 +73,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
           cellphoneNumber: "",
           occupation: "",
           birthdate: "",
+          identityDocument: "",
           placeOfBirth: "",
           address: "",
         });
@@ -117,17 +119,35 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
           <Text className="font-bold text-whiteBlue text-center">
             INFORMACIÓN DEL PACIENTE
           </Text>
-          <View>
-            <Text className="font-bold text-whiteBlue text-lg">Nombres</Text>
-            <TextInput
-              value={newPatient.name}
-              onChangeText={(val) =>
-                setNewPatient({ ...newPatient, name: val })
-              }
-              placeholder="Nombres"
-              placeholderTextColor={"gray"}
-              className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-            />
+          <View className="flex-row gap-2 w-full">
+            {/* Names */}
+            <View className="flex-1">
+              <Text className="font-bold text-whiteBlue text-lg">Nombres</Text>
+              <TextInput
+                value={newPatient.name}
+                onChangeText={(val) =>
+                  setNewPatient({ ...newPatient, name: val })
+                }
+                placeholder="Nombres"
+                placeholderTextColor={"gray"}
+                className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
+              />
+            </View>
+            {/* IDENTITY DOCUMENT */}
+            <View className="flex-1">
+              <Text className="font-bold text-whiteBlue text-lg">
+                Carnet de Identidad
+              </Text>
+              <TextInput
+                value={newPatient.identityDocument}
+                onChangeText={(val) =>
+                  setNewPatient({ ...newPatient, identityDocument: val })
+                }
+                placeholder="CI"
+                placeholderTextColor={"gray"}
+                className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
+              />
+            </View>
           </View>
           <View className="flex-row gap-2">
             <View className="flex-1">

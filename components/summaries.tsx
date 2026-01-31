@@ -54,7 +54,7 @@ export function Summary({
   currentWeek: number;
 }) {
   return (
-    <View className="flex-row mb-5 w-full">
+    <View className="flex-row my-1 w-full">
       <View className="flex-1">
         <Text className="font-semibold text-darkBlue text-3xl text-center">
           {pendingRequests}

@@ -99,17 +99,6 @@ export default function Profile() {
             />
           </View>
 
-          <View className="flex-row items-center gap-5 px-2 w-full">
-            <Text className="w-1/2 font-semibold text-whiteBlue text-lg">
-              Mostrar Resumen de Citas Programadas para:
-            </Text>
-            <BannerModeRadio
-              editable={canEdit}
-              value={config.bannerMode as "Day" | "Week"}
-              onChange={(val) => setConfig({ ...config, bannerMode: val })}
-            />
-          </View>
-
           <View className="gap-2 px-2 w-full">
             <Text className="font-semibold text-whiteBlue text-lg">
               Plantilla de Mensaje por Whatsapp:
@@ -131,7 +120,7 @@ export default function Profile() {
               Cerrar Sesión cada:
             </Text>
             <Text className="flex-1 text-whiteBlue italic">
-              combobox con opciones: cada que salga de la app, 1 hora, 4 horas,
+              combobox con opciones: 1 hora, 4 horas,
               8 horas
             </Text>
           </View>

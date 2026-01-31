@@ -13,7 +13,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function MedicalHistory() {
+export default function ImageViewerScreen() {
   const { img } = useLocalSearchParams();
   const router = useRouter();
   const imageUri = Array.isArray(img) ? img[0] : img;

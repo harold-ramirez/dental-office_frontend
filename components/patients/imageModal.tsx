@@ -97,7 +97,7 @@ export default function ImageModal(props: ImageModalProps) {
       formData.append("description", newPhoto.description);
       formData.append("Patient_Id", patientId.toString());
       await fetchWithToken(
-        `/images`,
+        "/images",
         {
           method: "POST",
           body: formData,

@@ -77,7 +77,7 @@ export default function RequestCard({ ...props }: RequestCardProps) {
           props.isRequestActive ? `bg-lightBlue` : `bg-whiteBlue/50`
         }`}
       >
-        <View className="gap-2">
+        <View>
           <View className="flex-row gap-1">
             <UserCircleIcon color="#001B48" size={75} />
             {/* Patient Info */}
@@ -105,6 +105,18 @@ export default function RequestCard({ ...props }: RequestCardProps) {
             className="bg-darkBlue/80 my-4 p-3 rounded-tr-xl rounded-bl-xl font-semibold text-whiteBlue text-lg text-justify italic"
           >
             &quot;{props.request.message}&quot;
+          </Text>
+
+          <Text className="italic text-right text-blackBlue/80 text-sm">
+            Enviado el{" "}
+            {new Date(props.request.registerDate).toLocaleDateString("es-BO", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })}
           </Text>
         </View>
       </Pressable>

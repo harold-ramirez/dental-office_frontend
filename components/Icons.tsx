@@ -175,3 +175,15 @@ export const SentMessageIcon = (props: any) => (
 export const ClockIcon = (props: any) => (
   <FontAwesome5 name="clock" size={24} color="black" {...props} />
 );
+
+export const IdCardIcon = (props: any) => (
+  <FontAwesome name="id-card" size={24} color="black" {...props} />
+);
+
+export const CigarIcon = (props: any) => (
+  <MaterialCommunityIcons name="cigar" size={24} color="black" {...props} />
+);
+
+export const SickIcon = (props: any) => (
+  <MaterialCommunityIcons name="emoticon-sick-outline" size={24} color="black" {...props} />
+);

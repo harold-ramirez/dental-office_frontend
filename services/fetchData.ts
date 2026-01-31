@@ -8,19 +8,14 @@ export async function fetchWithToken(
   onUnauthorized?: () => void,
 ) {
   const token = await authService.getToken();
-
   const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
-
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
+  if (!(options.body instanceof FormData))
+    headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
   const response = await fetch(`${API_URL}${url}`, {
     ...options,
     headers,
   });
-
   if (!response.ok) {
     if (response.status === 401) {
       onUnauthorized?.();
