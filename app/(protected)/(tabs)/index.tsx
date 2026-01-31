@@ -5,6 +5,7 @@ import {
   ScheduleIcon,
   SickIcon,
   ToothIcon,
+  XIcon,
 } from "@/components/Icons";
 import PopupModal from "@/components/popupModal";
 import { Summary, WeekSummary } from "@/components/summaries";
@@ -41,8 +42,11 @@ export default function Index() {
   >([]);
   const [newMiscData, setNewMiscData] = useState({
     treatment: "",
+    showTreatmentError: false,
     habit: "",
+    showHabitError: false,
     pathology: "",
+    showPathologyError: false,
   });
   const [miscData, setMiscData] = useState<{
     treatments: string[];
@@ -82,7 +86,20 @@ export default function Index() {
     url: string,
     newObject: { name: string },
   ) => {
-    if (!newObject.name.trim()) return;
+    if (!newObject.name.trim()) {
+      switch (url) {
+        case "/treatments":
+          setNewMiscData((prev) => ({ ...prev, showTreatmentError: true }));
+          break;
+        case "/habits":
+          setNewMiscData((prev) => ({ ...prev, showHabitError: true }));
+          break;
+        case "/personal-pathologies":
+          setNewMiscData((prev) => ({ ...prev, showPathologyError: true }));
+          break;
+      }
+      return;
+    }
     setLoading(true);
     try {
       const data = await fetchWithToken(
@@ -96,21 +113,33 @@ export default function Index() {
             ...prev,
             treatments: [...prev.treatments, data.name],
           }));
-          setNewMiscData((prev) => ({ ...prev, treatment: "" }));
+          setNewMiscData((prev) => ({
+            ...prev,
+            treatment: "",
+            showTreatmentError: false,
+          }));
           break;
         case "/habits":
           setMiscData((prev) => ({
             ...prev,
             habits: [...prev.habits, data.name],
           }));
-          setNewMiscData((prev) => ({ ...prev, habit: "" }));
+          setNewMiscData((prev) => ({
+            ...prev,
+            habit: "",
+            showHabitError: false,
+          }));
           break;
         case "/personal-pathologies":
           setMiscData((prev) => ({
             ...prev,
             pathologies: [...prev.pathologies, data.name],
           }));
-          setNewMiscData((prev) => ({ ...prev, pathology: "" }));
+          setNewMiscData((prev) => ({
+            ...prev,
+            pathology: "",
+            showPathologyError: false,
+          }));
           break;
       }
     } catch (e) {
@@ -325,127 +354,161 @@ export default function Index() {
       </SafeAreaView>
 
       {/* Treatments Modal */}
-      <PopupModal showModal={treatmentsModal} setShowModal={setTreatmentsModal}>
-        <Text className="font-bold text-whiteBlue text-xl">
-          Tratamientos Disponibles
-        </Text>
-        <View className="mb-5 p-1">
-          {miscData.treatments.length === 0 ? (
-            <Text className="text-whiteBlue italic">
-              No hay tratamientos registrados
-            </Text>
-          ) : (
-            miscData.treatments.map((treatment: string, i) => (
-              <Text key={i} className="text-whiteBlue">
-                - {treatment}
-              </Text>
-            ))
-          )}
-        </View>
-        <TextInput
-          className="bg-whiteBlue rounded-md text-center"
-          placeholder="Nuevo Tratamiento"
-          placeholderTextColor={"gray"}
-          value={newMiscData.treatment}
-          onChangeText={(val) =>
-            setNewMiscData({ ...newMiscData, treatment: val })
-          }
-        />
-        <Pressable
-          onPress={() =>
-            handlePostNewMiscData("/treatments", {
-              name: newMiscData.treatment,
-            })
-          }
-          disabled={loading}
-          className="items-center bg-blackBlue active:bg-darkBlue p-2 border border-whiteBlue rounded-full"
-        >
-          <Text className="font-semibold text-whiteBlue">
-            {loading ? "Registrando..." : "Registrar"}
-          </Text>
-        </Pressable>
-      </PopupModal>
+      <PopupComponent
+        title="Tratamientos Disponibles"
+        emptyMessage="No hay tratamientos registrados"
+        placeholder="Nuevo Tratamiento"
+        showModal={treatmentsModal}
+        setShowModal={setTreatmentsModal}
+        loading={loading}
+        data={miscData.treatments}
+        newInput={{
+          name: newMiscData.treatment,
+          showError: newMiscData.showTreatmentError,
+        }}
+        setNewInput={(val) =>
+          setNewMiscData({
+            ...newMiscData,
+            treatment: val,
+            showTreatmentError: !val.trim(),
+          })
+        }
+        handlePost={() =>
+          handlePostNewMiscData("/treatments", {
+            name: newMiscData.treatment,
+          })
+        }
+      />
       {/* Habits Modal */}
-      <PopupModal showModal={habitsModal} setShowModal={setHabitsModal}>
-        <Text className="font-bold text-whiteBlue text-xl">
-          Hábitos de Pacientes Registrados
-        </Text>
-        <View className="mb-5 p-1">
-          {miscData.habits.length === 0 ? (
-            <Text className="text-whiteBlue italic">
-              No hay hábitos registrados
-            </Text>
-          ) : (
-            miscData.habits.map((habit: string, i) => (
-              <Text key={i} className="text-whiteBlue">
-                - {habit}
-              </Text>
-            ))
-          )}
-        </View>
-        <TextInput
-          className="bg-whiteBlue rounded-md text-center"
-          placeholder="Nuevo Hábito"
-          placeholderTextColor={"gray"}
-          value={newMiscData.habit}
-          onChangeText={(val) => setNewMiscData({ ...newMiscData, habit: val })}
-        />
-        <Pressable
-          onPress={() =>
-            handlePostNewMiscData("/habits", { name: newMiscData.habit })
-          }
-          disabled={loading}
-          className="items-center bg-blackBlue active:bg-darkBlue p-2 border border-whiteBlue rounded-full"
-        >
-          <Text className="font-semibold text-whiteBlue">
-            {loading ? "Registrando..." : "Registrar"}
-          </Text>
-        </Pressable>
-      </PopupModal>
+      <PopupComponent
+        title="Hábitos de Pacientes Registrados"
+        emptyMessage="No hay hábitos registrados"
+        placeholder="Nuevo Hábito"
+        showModal={habitsModal}
+        setShowModal={setHabitsModal}
+        loading={loading}
+        data={miscData.habits}
+        newInput={{
+          name: newMiscData.habit,
+          showError: newMiscData.showHabitError,
+        }}
+        setNewInput={(val) =>
+          setNewMiscData({
+            ...newMiscData,
+            habit: val,
+            showHabitError: !val.trim(),
+          })
+        }
+        handlePost={() =>
+          handlePostNewMiscData("/habits", {
+            name: newMiscData.habit,
+          })
+        }
+      />
       {/* Pathologies Modal */}
-      <PopupModal
+      <PopupComponent
+        title="Patologías Registradas"
+        emptyMessage="No hay Patologías registradas"
+        placeholder="Nueva Patología"
         showModal={pathologiesModal}
         setShowModal={setPatologiesModal}
-      >
-        <Text className="font-bold text-whiteBlue text-xl">
-          Patologías Registradas
-        </Text>
-        <View className="mb-5 p-1">
-          {miscData.pathologies.length === 0 ? (
-            <Text className="text-whiteBlue italic">
-              No hay Patologías registradas
-            </Text>
+        loading={loading}
+        data={miscData.pathologies}
+        newInput={{
+          name: newMiscData.pathology,
+          showError: newMiscData.showPathologyError,
+        }}
+        setNewInput={(val) =>
+          setNewMiscData({
+            ...newMiscData,
+            pathology: val,
+            showPathologyError: !val.trim(),
+          })
+        }
+        handlePost={() =>
+          handlePostNewMiscData("/personal-pathologies", {
+            name: newMiscData.pathology,
+          })
+        }
+      />
+    </>
+  );
+}
+
+interface PopupComponentProps {
+  title: string;
+  emptyMessage: string;
+  placeholder: string;
+  showModal: boolean;
+  setShowModal: (val: boolean) => void;
+  loading: boolean;
+  data: string[];
+  newInput: { name: string; showError: boolean };
+  setNewInput: (val: string) => void;
+  handlePost: () => void;
+}
+
+export function PopupComponent(props: PopupComponentProps) {
+  const {
+    title,
+    emptyMessage,
+    placeholder,
+    showModal,
+    setShowModal,
+    loading,
+    data,
+    newInput,
+    setNewInput,
+    handlePost,
+  } = props;
+
+  return (
+    <PopupModal customDesign showModal={showModal} setShowModal={setShowModal}>
+      <View className="justify-center gap-2 bg-darkBlue p-5 rounded-lg w-full">
+        <View className="flex-row items-center">
+          <Text className="flex-1 font-bold text-whiteBlue text-xl text-center">
+            {title}
+          </Text>
+          <XIcon onPress={setShowModal} color="#D6E8EE" className="px-2" />
+        </View>
+        <View className="flex-row flex-wrap justify-center gap-2 my-3">
+          {data.length === 0 ? (
+            <Text className="text-whiteBlue italic">{emptyMessage}</Text>
           ) : (
-            miscData.pathologies.map((pathology: string, i) => (
-              <Text key={i} className="text-whiteBlue">
-                - {pathology}
+            data.map((pathology: string, i) => (
+              <Text
+                key={i}
+                className="px-3 py-1 border border-whiteBlue rounded-full text-whiteBlue text-center"
+              >
+                {pathology}
               </Text>
             ))
           )}
         </View>
-        <TextInput
-          className="bg-whiteBlue rounded-md text-center"
-          placeholder="Nueva Patología"
-          placeholderTextColor={"gray"}
-          value={newMiscData.pathology}
-          onChangeText={(val) =>
-            setNewMiscData({ ...newMiscData, pathology: val })
-          }
-        />
-        <Pressable
-          onPress={() =>
-            handlePostNewMiscData("/personal-pathologies", {
-              name: newMiscData.pathology,
-            })
-          }
-          disabled={loading}
-          className="items-center bg-blackBlue active:bg-darkBlue p-2 border border-whiteBlue rounded-full"
+        <View className="flex-row">
+          <TextInput
+            className="flex-1 bg-whiteBlue rounded-l-full text-center"
+            placeholder={placeholder}
+            placeholderTextColor={"gray"}
+            value={newInput.name}
+            onChangeText={setNewInput}
+          />
+          <Pressable
+            onPress={handlePost}
+            disabled={loading}
+            className="items-center bg-blackBlue active:bg-darkBlue px-4 py-2 border border-whiteBlue rounded-r-full"
+          >
+            <Text className="font-semibold text-whiteBlue">
+              {loading ? "Registrando..." : "Registrar"}
+            </Text>
+          </Pressable>
+        </View>
+        <Text
+          className={`text-red-400 ${newInput.showError ? ` block` : `hidden`}`}
         >
-          <Text className="font-semibold text-whiteBlue">
-            {loading ? "Registrando..." : "Registrar"}
-          </Text>
-        </Pressable>
-      </PopupModal>
-    </>
+          * Ingrese el nombre del campo a registrar
+        </Text>
+      </View>
+    </PopupModal>
   );
 }

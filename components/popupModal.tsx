@@ -28,21 +28,24 @@ export default function PopupModal(props: PopupModalProps) {
         setShowModal(!showModal);
       }}
     >
-      {customDesign ? (
-        <>{children}</>
-      ) : (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 justify-center items-center bg-blackBlue/50"
+      <KeyboardAvoidingView
+        behavior={"padding"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+        className="flex-1 justify-center items-center bg-blackBlue/50"
+      >
+        <ScrollView
+          className="px-5 w-full"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            width: "100%",
+          }}
         >
-          <ScrollView
-            contentContainerStyle={{
-              flexGrow: 1,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-            keyboardShouldPersistTaps="handled"
-          >
+          {customDesign ? (
+            <>{children}</>
+          ) : (
             <View className="justify-center bg-darkBlue p-5 rounded-lg gap-2">
               {children}
               <Pressable
@@ -52,9 +55,9 @@ export default function PopupModal(props: PopupModalProps) {
                 <Text className="text-whiteBlue">Cerrar</Text>
               </Pressable>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      )}
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
