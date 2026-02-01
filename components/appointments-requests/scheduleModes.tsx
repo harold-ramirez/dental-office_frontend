@@ -123,6 +123,7 @@ export function DaySchedule({
   refresh: string;
 }) {
   const { logOut } = useContext(AuthContext);
+  const [whatsappMessage, setWhatsappMessage] = useState("");
   const [todaySchedule, setTodaySchedule] = useState<AppointmentDto[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
@@ -138,6 +139,22 @@ export function DaySchedule({
       requestPhoneNumber: null,
       patientPhoneNumber: null,
     });
+
+  useEffect(() => {
+    const fetchMessage = async () => {
+      try {
+        const data = await fetchWithToken(
+          "/users/wa-message",
+          { method: "GET" },
+          logOut,
+        );
+        setWhatsappMessage(data.defaultMessage);
+      } catch (e) {
+        console.log("Error getting WA message", e);
+      }
+    };
+    fetchMessage();
+  }, [logOut]);
 
   useEffect(() => {
     const makeSchedule = (appointments: any[]) => {
@@ -268,6 +285,7 @@ export function DaySchedule({
       </ScrollView>
       {/* Appointment Details */}
       <ModalDetails
+        defaultMessage={whatsappMessage}
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
         selectedAppointment={selectedAppointment}
@@ -278,6 +296,7 @@ export function DaySchedule({
 
 export function WeekSchedule({ refresh }: { refresh: string }) {
   const [modalVisible, setModalVisible] = useState(false);
+  const [whatsappMessage, setWhatsappMessage] = useState("");
   const { logOut } = useContext(AuthContext);
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentDto>({
@@ -443,6 +462,22 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
     return () => clearTimeout(timeoutId);
   }, [refresh, logOut]);
 
+  useEffect(() => {
+    const fetchMessage = async () => {
+      try {
+        const data = await fetchWithToken(
+          "/users/wa-message",
+          { method: "GET" },
+          logOut,
+        );
+        setWhatsappMessage(data.defaultMessage);
+      } catch (e) {
+        console.log("Error getting WA message", e);
+      }
+    };
+    fetchMessage();
+  }, [logOut]);
+
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
       <Text className="w-full font-bold text-blackBlue text-xl text-center capitalize">
@@ -497,6 +532,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
 
       {/* Appointment Details */}
       <ModalDetails
+        defaultMessage={whatsappMessage}
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
         selectedAppointment={selectedAppointment}
@@ -1168,10 +1204,12 @@ export function ModalDetails({
   modalVisible,
   setModalVisible,
   selectedAppointment,
+  defaultMessage,
 }: {
   modalVisible: boolean;
   setModalVisible: (val: boolean) => void;
   selectedAppointment: AppointmentDto;
+  defaultMessage: string;
 }) {
   return (
     <PopupModal
@@ -1328,7 +1366,10 @@ export function ModalDetails({
               selectedAppointment.requestPhoneNumber) && (
               <Pressable
                 onPress={() => {
-                  const url = `https://wa.me/591${selectedAppointment.requestPhoneNumber ?? selectedAppointment.patientPhoneNumber}`;
+                  const msg = defaultMessage
+                    ? encodeURIComponent(defaultMessage)
+                    : "";
+                  const url = `https://wa.me/591${selectedAppointment.requestPhoneNumber ?? selectedAppointment.patientPhoneNumber}?text=${msg}`;
                   Linking.openURL(url);
                 }}
                 className="flex-row justify-center items-center gap-2 bg-green-700 active:bg-green-600 px-4 py-1 rounded-md"

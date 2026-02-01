@@ -76,9 +76,15 @@ export default function PatientProfile() {
     }
   }
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     if (patient.cellphoneNumber) {
-      const url = `https://wa.me/591${patient.cellphoneNumber}`;
+      const data = await fetchWithToken(
+        "/users/wa-message",
+        { method: "GET" },
+        logOut,
+      );
+      const msg = data ? encodeURIComponent(data.defaultMessage) : "";
+      const url = `https://wa.me/591${patient.cellphoneNumber}?text=${msg}`;
       Linking.openURL(url);
     } else {
       alert("El paciente no tiene número de teléfono registrado.");

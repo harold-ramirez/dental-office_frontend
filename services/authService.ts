@@ -23,7 +23,7 @@ export const authService = {
       });
 
       if (!response.ok) {
-        throw new Error("Login failed");
+        throw new Error("El usuario y/o la contraseña son incorrectos");
       }
 
       const data: LoginResponse = await response.json();

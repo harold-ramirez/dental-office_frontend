@@ -15,12 +15,14 @@ interface PatientCardProps {
   patient: PatientDto;
   openId: number | null;
   setOpenId: (id: number | null) => void;
+  defaultMessage: string;
 }
 
 export default function PatientCard({
   patient,
   openId,
   setOpenId,
+  defaultMessage,
 }: PatientCardProps) {
   let age: number = 0;
   if (patient.birthdate) {
@@ -38,7 +40,8 @@ export default function PatientCard({
   };
   const handleWhatsApp = () => {
     if (patient.cellphoneNumber) {
-      const url = `https://wa.me/591${patient.cellphoneNumber}`;
+      const msg = defaultMessage ? encodeURIComponent(defaultMessage) : "";
+      const url = `https://wa.me/591${patient.cellphoneNumber}?text=${msg}`;
       Linking.openURL(url);
     } else {
       alert("El paciente no tiene número de teléfono registrado.");

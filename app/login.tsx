@@ -1,9 +1,5 @@
-import {
-  EyeIcon,
-  EyeSlashIcon,
-  LockIcon,
-  ProfileIconAlt,
-} from "@/components/Icons";
+import { ProfileIconAlt } from "@/components/Icons";
+import PasswordInput from "@/components/passwordInput";
 import { authService } from "@/services/authService";
 import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
@@ -22,7 +18,6 @@ import {
 } from "react-native";
 
 export default function Login() {
-  const [peekPassword, setPeekPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     user: "",
@@ -66,7 +61,7 @@ export default function Login() {
         className="absolute top-0 bottom-0 right-0 left-0"
       />
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={"padding"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
         className="absolute items-center w-full h-full"
       >
@@ -121,31 +116,14 @@ export default function Login() {
                     editable={!loading}
                   />
                 </View>
-                <View className="flex-row items-center gap-1 bg-whiteBlue rounded-lg h-14">
-                  <LockIcon color="#001B48" size={28} className="pl-2" />
-                  <TextInput
-                    className="flex-1 text-blackBlue"
-                    placeholder="Ingrese su Contraseña..."
-                    placeholderTextColor={"gray"}
-                    secureTextEntry={!peekPassword}
-                    value={formData.password}
-                    onChangeText={(text) =>
-                      setFormData({ ...formData, password: text })
-                    }
-                    editable={!loading}
-                  />
-                  <Pressable
-                    className="justify-center items-center p-1 h-full"
-                    onPress={() => setPeekPassword(!peekPassword)}
-                    disabled={loading}
-                  >
-                    {peekPassword ? (
-                      <EyeIcon color="#999999" size={16} />
-                    ) : (
-                      <EyeSlashIcon color="#999999" size={16} />
-                    )}
-                  </Pressable>
-                </View>
+                <PasswordInput
+                  value={formData.password}
+                  setValue={(text) =>
+                    setFormData({ ...formData, password: text })
+                  }
+                  disabled={loading}
+                  placeholder="Ingrese su Contraseña..."
+                />
 
                 {/* Login Button */}
                 <Pressable

@@ -1,66 +1,101 @@
-import { useEffect } from "react";
+import { fetchWithToken } from "@/services/fetchData";
+import { useEffect, useState } from "react";
 import {
   BackHandler,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   Text,
-  TextInput,
   View,
 } from "react-native";
+import PasswordInput from "../passwordInput";
 
 export default function LogInModal({
   onClose,
   onSubmit,
+  logOut,
 }: {
   onClose: () => void;
   onSubmit: () => void;
+  logOut: () => void;
 }) {
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       () => {
         onClose();
         return true;
-      }
+      },
     );
     return () => backHandler.remove();
   }, [onClose]);
 
+  const handleConfirmPassword = async () => {
+    if (password === "") {
+      alert("Ingrese su contraseña");
+      return;
+    }
+    try {
+      setLoading(true);
+      const data = await fetchWithToken(
+        "/auth/confirm-password",
+        {
+          method: "POST",
+          body: JSON.stringify({ password: password }),
+        },
+        logOut,
+      );
+      if (data.confirmed) {
+        onSubmit();
+        onClose();
+      }
+    } catch (e: any) {
+      console.log("Error confirming password:", e);
+      const errorMessage = e.message || "Error desconocido";
+      if (errorMessage.includes("403")) {
+        alert("Contraseña incorrecta");
+      } else {
+        alert("Error en la confirmación de la contraseña. Intente nuevamente");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-      className="absolute justify-center items-center bg-black/75 w-full h-full"
-    >
-      <View className="absolute justify-center items-center w-full h-full">
-        <View className="gap-2 bg-whiteBlue px-5 py-2 rounded-xl w-4/5">
+    <View className="absolute inset-0 z-50">
+      <View className="absolute inset-0 bg-black/75" />
+      <KeyboardAvoidingView
+        behavior={"padding"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+        className="flex-1 justify-center items-center"
+      >
+        <View className="gap-2 bg-lightBlue px-5 py-2 rounded-xl w-4/5">
           <Text className="font-bold text-blackBlue text-2xl text-center">
             Ingrese su Contraseña{`\n`}para editar
           </Text>
+
           <View className="flex-row items-center gap-2">
-            <Text className="font-bold text-blackBlue">Usuario:</Text>
-            <TextInput className="flex-1 p-1 border border-blackBlue rounded-lg text-center" />
-          </View>
-          <View className="flex-row items-center gap-2">
-            <Text className="font-bold text-blackBlue">Contraseña:</Text>
-            <TextInput
-              secureTextEntry={true}
-              className="flex-1 bg-whiteBlue p-1 border rounded-md text-center"
+            <PasswordInput
+              value={password}
+              setValue={(val) => setPassword(val)}
+              className="flex-row flex-1 items-center gap-1 bg-whiteBlue rounded-lg h-12"
+              placeholder="Contraseña actual"
+              disabled={loading}
             />
           </View>
 
           <Pressable
-            onPress={() => {
-              onSubmit();
-              onClose();
-            }}
+            onPress={() => handleConfirmPassword()}
             className="justify-center items-center bg-darkBlue active:bg-blackBlue mt-5 p-2 rounded-full"
           >
             <Text className="font-semibold text-whiteBlue">Confirmar</Text>
           </Pressable>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }

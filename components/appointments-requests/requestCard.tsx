@@ -19,6 +19,7 @@ interface RequestCardProps {
   request: AppointmentRequestDto;
   isRequestActive?: boolean;
   openId: number | null;
+  defaultMessage: string;
   setOpenId: (id: number | null) => void;
 }
 
@@ -58,7 +59,10 @@ export default function RequestCard({ ...props }: RequestCardProps) {
   };
   const handleWhatsApp = () => {
     if (props.request.phoneNumber) {
-      const url = `https://wa.me/591${props.request.phoneNumber}`;
+      const msg = props.defaultMessage
+        ? encodeURIComponent(props.defaultMessage)
+        : "";
+      const url = `https://wa.me/591${props.request.phoneNumber}?text=${msg}`;
       Linking.openURL(url);
     } else {
       alert("El paciente no tiene número de teléfono registrado.");

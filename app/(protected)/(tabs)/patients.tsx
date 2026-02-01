@@ -21,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function Patients() {
   const params = useLocalSearchParams();
   const { logOut } = useContext(AuthContext);
+  const [whatsappMessage, setWhatsappMessage] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [patients, setPatients] = useState<PatientDto[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<PatientDto[]>([]);
@@ -34,7 +35,7 @@ export default function Patients() {
         "/patients",
         { method: "GET" },
         logOut,
-      );;
+      );
       setPatients(endpoint);
     } catch (e) {
       console.error("Error fetching users:", e);
@@ -63,6 +64,22 @@ export default function Patients() {
   useEffect(() => {
     onRefresh();
   }, [params.refresh, onRefresh]);
+
+  useEffect(() => {
+    const fetchMessage = async () => {
+      try {
+        const data = await fetchWithToken(
+          "/users/wa-message",
+          { method: "GET" },
+          logOut,
+        );
+        setWhatsappMessage(data.defaultMessage);
+      } catch (e) {
+        console.log("Error getting WA message", e);
+      }
+    };
+    fetchMessage();
+  }, [logOut]);
 
   return (
     <>
@@ -112,6 +129,7 @@ export default function Patients() {
               keyExtractor={(patient) => patient.Id.toString()}
               renderItem={({ item }) => (
                 <PatientCard
+                  defaultMessage={whatsappMessage}
                   patient={item}
                   openId={openId}
                   setOpenId={setOpenId}

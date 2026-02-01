@@ -8,12 +8,14 @@ export default function DropdownComponent({
   search,
   value,
   setValue,
+  disabled=false,
 }: {
   className?: string;
   data: { label: string; value: string }[];
   search?: boolean;
   value: string,
   setValue: (val: string) => void;
+  disabled?: boolean
 }) {
   const [isFocus, setIsFocus] = useState(false);
 
@@ -30,6 +32,7 @@ export default function DropdownComponent({
         maxHeight={300}
         labelField="label"
         valueField="value"
+        disable={disabled}
         placeholder={!isFocus ? "Seleccionar" : "..."}
         searchPlaceholder="Buscar..."
         value={value}

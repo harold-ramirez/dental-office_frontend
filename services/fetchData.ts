@@ -21,7 +21,9 @@ export async function fetchWithToken(
       onUnauthorized?.();
       console.error("Unauthorized - token may have expired");
     }
-    throw new Error(`API error: ${response.status}`);
+    const error = new Error(`API error: ${response.status}`);
+    (error as any).status = response.status;
+    throw error;
   }
 
   return response.json();

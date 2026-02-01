@@ -33,7 +33,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await AsyncStorage.setItem(tokenStorageKey, authToken);
       setIsLoggedIn(true);
       setToken(authToken);
-      console.log("JWT:", authToken);
+      console.log("JWT: [", authToken, "]");
       router.replace("/");
     } catch (error) {
       console.log("Error storing auth state:", error);
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
             setToken(null);
           } else {
             setToken(storedToken);
-            console.log("JWT:", storedToken);
+            console.log("JWT: [", storedToken, "]");
             setIsLoggedIn(true);
           }
         }
