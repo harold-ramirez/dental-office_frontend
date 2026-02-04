@@ -1,5 +1,6 @@
 import { fetchWithToken } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
+import { ADULT_TOOTH_PIECES, CHILD_TOOTH_PIECES } from "@/utils/teethPieces";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -23,6 +24,7 @@ interface Props {
 export default function TreatmentModal(props: Props) {
   const { patientId = 0, onClose } = props;
   const { logOut } = useContext(AuthContext);
+  const [teethAge, setTeethAge] = useState<"Adulto" | "Niño">("Adulto");
   const [formData, setFormData] = useState<{
     description: string;
     totalCost: number | "";
@@ -37,7 +39,6 @@ export default function TreatmentModal(props: Props) {
   const [treatmentList, setTreatmentList] = useState<
     { label: string; value: string }[]
   >([]);
-  const [teeth, setTeeth] = useState<{ Id: number; pieceNumber: number }[]>([]);
 
   const fetchTreatmentList = useCallback(async () => {
     try {
@@ -54,17 +55,10 @@ export default function TreatmentModal(props: Props) {
         });
       });
       setTreatmentList(parsed);
-      // ***********************************
-      const teethDB = await fetchWithToken(
-        `/odontogram/${patientId}/teeth`,
-        { method: "GET" },
-        logOut,
-      );
-      setTeeth(teethDB);
     } catch (error) {
       console.log("Error fetching Treatments or Teeth:", error);
     }
-  }, [patientId, logOut]);
+  }, [logOut]);
 
   useEffect(() => {
     fetchTreatmentList();
@@ -83,7 +77,7 @@ export default function TreatmentModal(props: Props) {
             totalCost: formData.totalCost === "" ? null : formData.totalCost,
             Patient_Id: patientId,
             Treatment_Id: formData.Treatment_Id,
-            dentalPieces: formData.dentalPieces,
+            dentalPieces: formData.dentalPieces.sort((a, b) => a - b).join("-"),
           }),
         },
         logOut,
@@ -146,56 +140,77 @@ export default function TreatmentModal(props: Props) {
             />
           </View>
           {/* Dental Pieces */}
-          <Text className="font-bold text-whiteBlue">Piezas Dentales:</Text>
+          <View className="flex-row justify-between items-center">
+            <Text className="font-bold text-whiteBlue">Piezas Dentales:</Text>
+            <Pressable
+              onPress={() =>
+                setTeethAge(teethAge === "Adulto" ? "Niño" : "Adulto")
+              }
+              className="bg-darkBlue active:bg-pureBlue px-4 py-1 border border-whiteBlue rounded-full"
+            >
+              <Text className="text-whiteBlue">{teethAge}</Text>
+            </Pressable>
+          </View>
           <View className="flex-row bg-whiteBlue px-2 py-4 rounded-md w-full">
-            {teeth.length === 0 ? (
-              <Text className="text-center italic text-darkBlue">
-                Por favor, registre primero una historia clínica del paciente
-                para seleccionar las piezas dentales.
-              </Text>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="w-full"
-              >
-                <View>
-                  <ToothButton
-                    adultStartWith="1"
-                    childStartWith="5"
-                    formData={formData}
-                    teeth={[...teeth].reverse()}
-                    setFormData={setFormData}
-                  />
-                  <View className="my-2 border border-blackBlue rounded-full w-full" />
-                  <ToothButton
-                    adultStartWith="4"
-                    childStartWith="8"
-                    formData={formData}
-                    teeth={[...teeth].reverse()}
-                    setFormData={setFormData}
-                  />
-                </View>
-                <View className="border border-blackBlue rounded-full h-full" />
-                <View>
-                  <ToothButton
-                    adultStartWith="2"
-                    childStartWith="6"
-                    formData={formData}
-                    teeth={teeth}
-                    setFormData={setFormData}
-                  />
-                  <View className="my-2 border border-blackBlue rounded-full w-full" />
-                  <ToothButton
-                    adultStartWith="3"
-                    childStartWith="7"
-                    formData={formData}
-                    teeth={teeth}
-                    setFormData={setFormData}
-                  />
-                </View>
-              </ScrollView>
-            )}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="w-full"
+            >
+              <View>
+                <ToothButton
+                  adultStartWith="1"
+                  childStartWith="5"
+                  formData={formData}
+                  isUpper
+                  teeth={
+                    teethAge === "Adulto"
+                      ? [...ADULT_TOOTH_PIECES].reverse()
+                      : [...CHILD_TOOTH_PIECES].reverse()
+                  }
+                  setFormData={setFormData}
+                />
+                <View className="my-2 border border-blackBlue rounded-full w-full" />
+                <ToothButton
+                  adultStartWith="4"
+                  childStartWith="8"
+                  formData={formData}
+                  teeth={
+                    teethAge === "Adulto"
+                      ? [...ADULT_TOOTH_PIECES].reverse()
+                      : [...CHILD_TOOTH_PIECES].reverse()
+                  }
+                  setFormData={setFormData}
+                />
+              </View>
+              <View className="border border-blackBlue rounded-full h-full" />
+              <View>
+                <ToothButton
+                  adultStartWith="2"
+                  childStartWith="6"
+                  formData={formData}
+                  isUpper
+                  teeth={
+                    teethAge === "Adulto"
+                      ? ADULT_TOOTH_PIECES
+                      : CHILD_TOOTH_PIECES
+                  }
+                  setFormData={setFormData}
+                />
+                <View className="my-2 border border-blackBlue rounded-full w-full" />
+                <ToothButton
+                  adultStartWith="3"
+                  childStartWith="7"
+                  formData={formData}
+                  teeth={
+                    teethAge === "Adulto"
+                      ? ADULT_TOOTH_PIECES
+                      : CHILD_TOOTH_PIECES
+                  }
+                  setFormData={setFormData}
+                />
+              </View>
+            </ScrollView>
           </View>
           {/* Description */}
           <View>
@@ -247,52 +262,58 @@ export default function TreatmentModal(props: Props) {
 interface ToothButtonProps {
   adultStartWith: string;
   childStartWith: string;
+  teeth: number[];
+  isUpper?: boolean;
+  setFormData: (newForm: any) => void;
   formData: {
     description: string;
     totalCost: number | "";
     Treatment_Id: number;
     dentalPieces: number[];
   };
-  teeth: { Id: number; pieceNumber: number }[];
-  setFormData: (newForm: any) => void;
 }
 
 export function ToothButton(props: ToothButtonProps) {
-  const { adultStartWith, childStartWith, formData, teeth, setFormData } =
-    props;
+  const {
+    adultStartWith,
+    childStartWith,
+    formData,
+    teeth,
+    isUpper = false,
+    setFormData,
+  } = props;
 
   return (
     <View className="flex-row">
       {teeth
         .filter((tooth) =>
-          tooth.pieceNumber
+          tooth
             .toString()
             .startsWith(teeth.length > 20 ? adultStartWith : childStartWith),
         )
-        .map((tooth) => (
+        .map((tooth, i) => (
           <Pressable
-            key={tooth.Id}
+            key={i}
             onPress={() => {
               const copy = [...formData.dentalPieces];
-              if (copy.includes(tooth.Id))
-                copy.splice(copy.indexOf(tooth.Id), 1);
-              else copy.push(tooth.Id);
+              if (copy.includes(tooth)) copy.splice(copy.indexOf(tooth), 1);
+              else copy.push(tooth);
               setFormData({ ...formData, dentalPieces: copy });
             }}
-            className={`min-w-10 mx-1 aspect-square items-center justify-center rounded-xl ${
-              formData.dentalPieces.includes(tooth.Id)
+            className={`min-w-10 mx-1 aspect-square items-center justify-center ${isUpper ? "rounded-b-xl" : "rounded-t-xl"} ${
+              formData.dentalPieces.includes(tooth)
                 ? "bg-blackBlue border border-whiteBlue"
                 : "bg-whiteBlue border border-blackBlue"
             }`}
           >
             <Text
               className={
-                formData.dentalPieces.includes(tooth.Id)
+                formData.dentalPieces.includes(tooth)
                   ? "text-whiteBlue font-bold"
                   : "text-blackBlue"
               }
             >
-              {tooth.pieceNumber}
+              {tooth}
             </Text>
           </Pressable>
         ))}

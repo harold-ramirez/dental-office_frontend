@@ -27,6 +27,8 @@ interface AppointmentDto {
   patientID?: number;
   notes?: string | null;
   requestMessage?: string | null;
+  requestID?: number | null;
+  requestRegisterDate?: string | null;
   requestPhoneNumber?: string | null;
   patientPhoneNumber?: string | null;
   minutesDuration:
@@ -307,6 +309,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
       patientID: 0,
       treatment: null,
       notes: null,
+      requestID: null,
       requestMessage: null,
       requestPhoneNumber: null,
       patientPhoneNumber: null,
@@ -879,29 +882,28 @@ export function WeekAppointmentSelect({
 
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
         <View className="flex-row gap-2">
-          {/* Hours */}
-          <View className="pt-4">
-            {hours.map((hour, i) => (
-              <Text key={i} className="h-[80px] text-blackBlue">
-                {hour}
-              </Text>
-            ))}
-            <Text className="text-blackBlue">20:00</Text>
-          </View>
-
           {/* Grid */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className="flex-row pr-2">
+            <View className="flex-row px-2 gap-5">
               {DAYS.map((day) => (
-                <View key={day} className="flex-1 w-24">
+                <View key={day} className="flex-1 w-24 gap-1">
                   <Text className="w-24 font-semibold text-blackBlue text-lg text-center">
                     {DAY_LABELS[day]}
                   </Text>
                   {weekSchedule[day].map((appointment, i) => (
-                    <View key={i} className="border-blackBlue border-r">
+                    <View key={i}>
                       {appointment.Id <= 0 ? (
                         <AppointmentSelection
-                          isAvailable={true}
+                          isAvailable={
+                            new Date(appointment.dateHour) > new Date()
+                          }
+                          hour={new Date(
+                            appointment.dateHour,
+                          ).toLocaleTimeString("es-BO", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}
                           isSelected={selectedAppointment.Id === appointment.Id}
                           duration={appointment.minutesDuration}
                           onPress={() => {
@@ -912,6 +914,13 @@ export function WeekAppointmentSelect({
                       ) : (
                         <AppointmentSelection
                           isAvailable={false}
+                          hour={new Date(
+                            appointment.dateHour,
+                          ).toLocaleTimeString("es-BO", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}
                           duration={appointment.minutesDuration}
                         />
                       )}
@@ -1215,9 +1224,9 @@ export function ModalDetails({
     <PopupModal
       showModal={modalVisible}
       setShowModal={setModalVisible}
-      customDesign={true}
+      customDesign
     >
-      <View className="flex-1 items-center">
+      <View className="flex-1 items-center w-full">
         <Pressable
           onPress={() => setModalVisible(false)}
           className="flex-1 w-full"
@@ -1326,7 +1335,7 @@ export function ModalDetails({
                 <View className="flex-1 border-whiteBlue border-b border-dotted" />
               )}
               <Text
-                className={`rounded-md italic ${
+                className={`rounded-md italic border border-whiteBlue ${
                   selectedAppointment.requestMessage
                     ? `bg-darkBlue p-2 text-whiteBlue text-center`
                     : `text-whiteBlue`
@@ -1346,18 +1355,21 @@ export function ModalDetails({
               href={{
                 pathname: "/(protected)/createAppointment/[selectedDate]",
                 params: {
+                  appointmentID: selectedAppointment.Id,
                   selectedDate: selectedAppointment.dateHour,
                   patientID: selectedAppointment.patientID,
+                  requestID: selectedAppointment.requestID,
                   duration: selectedAppointment.minutesDuration.toString(),
                   notes: selectedAppointment.notes,
                   treatment: selectedAppointment.treatmentID,
+                  sentRequestDate: selectedAppointment.requestRegisterDate,
                 },
               }}
             >
-              <Pressable className="flex-row justify-center items-center gap-2 bg-blackBlue active:bg-pureBlue px-4 py-1 rounded-md">
+              <Pressable className="flex-row justify-center items-center gap-2 bg-blackBlue active:bg-pureBlue px-4 py-2 rounded-md">
                 <EditIcon color="#D6E8EE" />
                 <Text className="text-whiteBlue font-semibold">
-                  Editar Cita
+                  Reprogramar
                 </Text>
               </Pressable>
             </Link>

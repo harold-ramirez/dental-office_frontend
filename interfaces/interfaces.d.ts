@@ -105,7 +105,7 @@ export interface DiagnosedProcedureDto {
     name: string;
     description: string | null;
   };
-  totalPieces: number;
+  dentalPieces: number;
   registerDate: string;
   updateDate?: string;
 }

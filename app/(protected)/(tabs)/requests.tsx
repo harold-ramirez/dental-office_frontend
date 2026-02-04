@@ -21,6 +21,7 @@ export default function Requests() {
   const params = useLocalSearchParams();
   const { logOut } = useContext(AuthContext);
   const [refreshing, setRefreshing] = useState(false);
+  const [whatsappMessage, setWhatsappMessage] = useState("");
   const [requests, setRequests] = useState<AppointmentRequestDto[]>([]);
   const [pastRequests, setPastRequests] = useState<AppointmentRequestDto[]>([]);
   const [openId, setOpenId] = useState<number | null>(null);
@@ -76,6 +77,22 @@ export default function Requests() {
     };
   }, [onRefresh]);
 
+  useEffect(() => {
+    const fetchMessage = async () => {
+      try {
+        const data = await fetchWithToken(
+          "/users/wa-message",
+          { method: "GET" },
+          logOut,
+        );
+        setWhatsappMessage(data.defaultMessage);
+      } catch (e) {
+        console.log("Error getting WA message", e);
+      }
+    };
+    fetchMessage();
+  }, [logOut]);
+
   return (
     <>
       <LinearGradient
@@ -105,6 +122,7 @@ export default function Requests() {
             keyExtractor={(request) => request.Id.toString()}
             renderItem={({ item }) => (
               <RequestCard
+                defaultMessage={whatsappMessage}
                 request={item}
                 isRequestActive
                 openId={openId}
@@ -154,6 +172,7 @@ export default function Requests() {
                       keyExtractor={(request) => request.Id.toString()}
                       renderItem={({ item }) => (
                         <RequestCard
+                          defaultMessage={whatsappMessage}
                           request={item}
                           openId={openId}
                           setOpenId={setOpenId}

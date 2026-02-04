@@ -25,9 +25,9 @@ export default function TreatmentCard(props: TreatmentCardProps) {
               : "???"}
           </Text>
           <Text className="font-semibold text-blackBlue">
-            {procedure.totalPieces} Pieza
-            {procedure.totalPieces !== 1 ? "s" : ""} Dental
-            {procedure.totalPieces !== 1 ? "es" : ""}
+            {procedure.dentalPieces} Pieza
+            {procedure.dentalPieces !== 1 ? "s" : ""} Dental
+            {procedure.dentalPieces !== 1 ? "es" : ""}
           </Text>
         </View>
       </View>

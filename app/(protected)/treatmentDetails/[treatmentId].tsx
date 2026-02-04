@@ -19,7 +19,7 @@ export default function TreatmentDetails() {
     totalCost: number;
     treatment: string;
     registerDate: string;
-    totalPieces: number[];
+    dentalPieces: string;
     payments: { Id: number; amount: number; registerDate: string }[];
   }>({
     totalPaid: 0,
@@ -28,7 +28,7 @@ export default function TreatmentDetails() {
     totalCost: 0,
     treatment: "",
     registerDate: "",
-    totalPieces: [],
+    dentalPieces: "",
     payments: [],
   });
 
@@ -39,7 +39,12 @@ export default function TreatmentDetails() {
         { method: "GET" },
         logOut,
       );
-      setTreatmentDetails(data);
+      setTreatmentDetails({
+        ...data,
+        dentalPieces: data.dentalPieces
+          ? data.dentalPieces.replaceAll("-", " - ")
+          : null,
+      });
     } catch (error) {
       console.log("Error fetching treatment Details:", error);
     }
@@ -82,7 +87,7 @@ export default function TreatmentDetails() {
             <Text className="mb-5 text-blackBlue italic">
               {treatmentDetails.description}
             </Text>
-            <View className="flex-row justify-between items-center w-full">
+            <View className="flex-row justify-between gap-1 w-full">
               <View className="items-center">
                 <Text className="font-bold text-blackBlue">Fecha Inicio:</Text>
                 <Text>
@@ -95,7 +100,7 @@ export default function TreatmentDetails() {
                 <Text className="font-bold text-blackBlue">
                   Piezas Dentales:
                 </Text>
-                <Text>{treatmentDetails.totalPieces.join(" - ")}</Text>
+                <Text>{treatmentDetails.dentalPieces ?? "N/A"}</Text>
               </View>
               <View className="flex-row">
                 <View className="items-end">

@@ -3,10 +3,11 @@ import DropdownComponent from "@/components/dropdown";
 import { fetchWithToken } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   Text,
   TextInput,
@@ -18,23 +19,29 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function DayScheduleDetails() {
   const { logOut } = useContext(AuthContext);
   const {
+    appointmentID,
     selectedDate,
     patientID,
     duration = "15",
     notes,
     treatment,
     requestID,
-    requestDate,
+    requestName,
+    sentRequestDate,
   } = useLocalSearchParams<{
+    appointmentID?: string;
     selectedDate: string;
     patientID?: string;
     duration?: string;
     notes?: string;
     treatment?: string;
     requestID?: string;
-    requestDate?: string;
+    requestName?: string;
+    sentRequestDate?: string;
   }>();
-
+  const router = useRouter();
+  const [isRequestPatientRegistered, setIsRequestPatientRegistered] =
+    useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showWeeklySchedule, setShowWeeklySchedule] = useState(false);
   const [patientsList, setPatientsList] = useState<
@@ -45,13 +52,181 @@ export default function DayScheduleDetails() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [appointment, setAppoinment] = useState({
+    Patient_Id: patientID ? Number(patientID) : 0,
+    Treatment_Id: treatment ? Number(treatment) : 0,
+    dateHour: new Date(selectedDate),
+    minutesDuration: Number(duration),
+    AppointmentRequest_Id: requestID ? Number(requestID) : null,
+    notes: notes ?? "",
+  });
+  const originalAppointment = {
     dateHour: new Date(selectedDate),
     AppointmentRequest_Id: null,
     Treatment_Id: Number(treatment) ?? 0,
     Patient_Id: Number(patientID) ?? 0,
     minutesDuration: Number(duration),
     notes: notes ?? "",
-  });
+  };
+
+  const handlePostAppointment = async () => {
+    if (!requestID && appointment.Patient_Id === 0) {
+      alert("Por favor, seleccione un paciente");
+      return;
+    }
+    if (appointment.dateHour === null) {
+      alert("Por favor, seleccione una fecha para la cita");
+      return;
+    }
+    Alert.alert(
+      "Confirmar Cita",
+      `Se registrará una cita a nombre de ${
+        patientsList.find(
+          (patient) => patient.value === appointment.Patient_Id.toString(),
+        )?.label ?? requestName
+      } para el día ${appointment.dateHour.toLocaleDateString("es-BO", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })}`,
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Registrar Cita",
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await fetchWithToken(
+                "/appointments",
+                {
+                  method: "POST",
+                  body: JSON.stringify({
+                    ...appointment,
+                    Treatment_Id:
+                      appointment.Treatment_Id === 0
+                        ? null
+                        : appointment.Treatment_Id,
+                    Patient_Id:
+                      appointment.Patient_Id === 0
+                        ? null
+                        : appointment.Patient_Id,
+                    notes: appointment.notes === "" ? null : appointment.notes,
+                  }),
+                },
+                logOut,
+              );
+              alert("La cita se registró correctamente");
+              router.back();
+            } catch (error: any) {
+              console.log("Error", error);
+              alert("Ocurrió un error al registrar la cita");
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: false },
+    );
+  };
+
+  const handleUpdateAppointment = async () => {
+    if (appointment.dateHour === originalAppointment.dateHour) {
+      alert(
+        "Por favor, seleccione un horario diferente para reprogramar la cita",
+      );
+      return;
+    }
+    Alert.alert(
+      "Reprogramar Cita",
+      `La cita se reprogramará para el día ${appointment.dateHour.toLocaleDateString(
+        "es-BO",
+        {
+          weekday: "long",
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        },
+      )}`,
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Reprogramar Cita",
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await fetchWithToken(
+                `/appointments/${appointmentID}`,
+                {
+                  method: "PATCH",
+                  body: JSON.stringify({
+                    ...appointment,
+                    notes: appointment.notes === "" ? null : appointment.notes,
+                  }),
+                },
+                logOut,
+              );
+              alert("La cita se reprogramó exitosamente");
+              router.back();
+            } catch (error: any) {
+              console.log("Error", error);
+              alert("Ocurrió un error al reprogramar la cita");
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: false },
+    );
+  };
+
+  const handleDeleteAppointment = async () => {
+    Alert.alert(
+      "Eliminar Cita",
+      "Está seguro que desea cancelar esta cita?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        {
+          text: "Sí, Eliminar",
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await fetchWithToken(
+                `/appointments/${appointmentID}`,
+                { method: "DELETE" },
+                logOut,
+              );
+              alert("La cita fué cancelada");
+              router.back();
+            } catch (error: any) {
+              console.log("Error", error);
+              alert("Ocurrió un error al cancelar la cita");
+            } finally {
+              setLoading(false);
+            }
+          },
+          style: "destructive",
+        },
+      ],
+      { cancelable: true },
+    );
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,7 +237,7 @@ export default function DayScheduleDetails() {
           fetchWithToken("/treatments", { method: "GET" }, logOut),
         ]);
 
-        const patients = patientsData.map(
+        const patients: [] = patientsData.map(
           (item: { id: number; fullName: string }) => ({
             label: item.fullName,
             value: item.id.toString(),
@@ -75,7 +250,6 @@ export default function DayScheduleDetails() {
             value: item.Id.toString(),
           }),
         );
-
         setPatientsList(patients);
         setTreatmentsList(treatments);
       } catch (error) {
@@ -99,7 +273,7 @@ export default function DayScheduleDetails() {
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
           <ActivityIndicator size="large" color="#D6E8EE" />
-          <Text className="text-whiteBlue mt-4">Cargando datos...</Text>
+          <Text className="mt-4 text-whiteBlue">Cargando datos...</Text>
         </SafeAreaView>
       </>
     );
@@ -132,19 +306,37 @@ export default function DayScheduleDetails() {
         />
         <View className="flex-1 gap-2 w-full">
           {/* Patient */}
-          <View className="flex-row justify-evenly items-center w-full h-14">
-            <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
-              Paciente:
-            </Text>
-            <DropdownComponent
-              className="flex-1"
-              data={patientsList}
-              value={appointment.Patient_Id.toString()}
-              setValue={(val) => {
-                setAppoinment({ ...appointment, Patient_Id: +val });
-              }}
-            />
-          </View>
+          {requestID && !isRequestPatientRegistered && (
+            <View className="flex-row justify-between items-center">
+              <Text className="font-semibold text-whiteBlue text-center w-1/2 text-lg">
+                Ya tiene registrado al paciente?
+              </Text>
+              <Pressable
+                onPress={() => setIsRequestPatientRegistered(true)}
+                className="bg-darkBlue justify-center active:bg-pureBlue px-4 py-1 border border-whiteBlue rounded-full"
+              >
+                <Text className="font-semibold text-whiteBlue">
+                  {!isRequestPatientRegistered && "Si, Seleccionar paciente"}
+                </Text>
+              </Pressable>
+            </View>
+          )}
+          {((requestID && isRequestPatientRegistered) || !requestID) && (
+            <View className="flex-row justify-evenly items-center w-full h-14">
+              <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
+                Paciente:
+              </Text>
+              <DropdownComponent
+                className="flex-1"
+                disabled={patientID ? true : false}
+                data={patientsList}
+                value={appointment.Patient_Id.toString()}
+                setValue={(val) => {
+                  setAppoinment({ ...appointment, Patient_Id: +val });
+                }}
+              />
+            </View>
+          )}
           {/* Treatment */}
           <View className="flex-row justify-evenly items-center w-full h-14">
             <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
@@ -152,6 +344,7 @@ export default function DayScheduleDetails() {
             </Text>
             <DropdownComponent
               className="flex-1"
+              disabled={patientID ? true : false}
               data={treatmentsList}
               value={appointment.Treatment_Id.toString()}
               setValue={(val) => {
@@ -233,12 +426,21 @@ export default function DayScheduleDetails() {
           {/* Request */}
           {requestID && (
             <View className="flex-row items-center">
-              <Text className="font-bold w-1/3 text-whiteBlue text-lg text-center">
+              <Text className="w-1/3 font-bold text-whiteBlue text-lg text-center">
                 Solicitado el:
               </Text>
               <View className="flex-1 items-center">
-                <Text className="bg-blackBlue border border-whiteBlue text-whiteBlue rounded-full px-5 py-1">
-                  {requestDate}
+                <Text className="bg-blackBlue px-5 py-1 border border-whiteBlue rounded-full text-whiteBlue">
+                  {sentRequestDate &&
+                    new Date(sentRequestDate).toLocaleDateString("es-BO", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "2-digit",
+                      year: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })}
                 </Text>
               </View>
             </View>
@@ -267,19 +469,28 @@ export default function DayScheduleDetails() {
         {/* Buttons */}
         {patientID ? (
           <View className="flex-row gap-5">
-            <Pressable className="flex-1 items-center bg-red-600 active:bg-red-800 my-2 py-2 border border-whiteBlue rounded-full">
+            <Pressable
+              onPress={handleDeleteAppointment}
+              className="flex-1 items-center bg-red-600 active:bg-red-800 my-2 py-2 border border-whiteBlue rounded-full"
+            >
               <Text className="font-semibold text-whiteBlue text-lg">
                 Cancelar Cita
               </Text>
             </Pressable>
-            <Pressable className="flex-1 items-center bg-whiteBlue active:bg-lightBlue my-2 py-2 border border-blackBlue rounded-full">
+            <Pressable
+              onPress={handleUpdateAppointment}
+              className="flex-1 items-center bg-whiteBlue active:bg-lightBlue my-2 py-2 border border-blackBlue rounded-full"
+            >
               <Text className="font-semibold text-blackBlue text-lg">
-                Actualizar
+                Reprogramar
               </Text>
             </Pressable>
           </View>
         ) : (
-          <Pressable className="items-center bg-darkBlue active:bg-pureBlue my-2 py-2 border border-whiteBlue rounded-full w-3/4">
+          <Pressable
+            onPress={handlePostAppointment}
+            className="items-center bg-darkBlue active:bg-pureBlue my-2 py-2 border border-whiteBlue rounded-full w-3/4"
+          >
             <Text className="font-semibold text-whiteBlue text-lg">
               Agendar
             </Text>

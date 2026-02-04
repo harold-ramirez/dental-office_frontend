@@ -1,13 +1,11 @@
 import { AppointmentRequestDto } from "@/interfaces/interfaces";
 import { AuthContext } from "@/utils/authContext";
-import { RelativePathString } from "expo-router";
-import { useContext, useState } from "react";
+import { Link, RelativePathString } from "expo-router";
+import { useContext } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
-import DatePicker from "react-native-date-picker";
 import {
   CalendarCheckIcon,
   CalendarClockIcon,
-  EditIcon,
   PhoneIcon,
   UserCircleIcon,
   WhatsappIcon,
@@ -26,7 +24,6 @@ interface RequestCardProps {
 export default function RequestCard({ ...props }: RequestCardProps) {
   const showButtons = props.openId === props.request.Id;
   const { logOut } = useContext(AuthContext);
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const toggleButtons = () => {
     props.setOpenId(showButtons ? null : props.request.Id);
@@ -111,7 +108,7 @@ export default function RequestCard({ ...props }: RequestCardProps) {
             &quot;{props.request.message}&quot;
           </Text>
 
-          <Text className="italic text-right text-blackBlue/80 text-sm">
+          <Text className="text-blackBlue/80 text-sm text-right italic">
             Enviado el{" "}
             {new Date(props.request.registerDate).toLocaleDateString("es-BO", {
               day: "2-digit",
@@ -138,7 +135,7 @@ export default function RequestCard({ ...props }: RequestCardProps) {
                   "Descartar",
                   `/appointment-requests/${props.request.Id}/1`,
                   "No se pudo descartar la solicitud. Inténtelo de nuevo.",
-                  "PATCH",
+                  "DELETE",
                   "/(tabs)/requests" as RelativePathString,
                   logOut,
                 );
@@ -153,17 +150,6 @@ export default function RequestCard({ ...props }: RequestCardProps) {
           </View>
 
           <View className="flex-row flex-1 justify-end gap-3 p-2">
-            {/* Re-schedule Button */}
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              className="justify-center items-center active:bg-lightBlue px-2 py-1 border-2 border-darkBlue rounded-lg"
-            >
-              <EditIcon color="#02457A" size={30} className="flex-1" />
-              <Text className="font-semibold text-darkBlue text-xs text-center">
-                Reprogramar
-              </Text>
-            </Pressable>
-
             {/* Send-to-Whatsapp Button */}
             {props.request.phoneNumber && (
               <Pressable
@@ -177,31 +163,33 @@ export default function RequestCard({ ...props }: RequestCardProps) {
               </Pressable>
             )}
 
-            {/* Confirm Button */}
-            <Pressable className="justify-center items-center bg-darkBlue active:bg-pureBlue px-2 py-1 rounded-lg">
-              <CalendarCheckIcon color="#D6E8EE" size={32} className="flex-1" />
-              <Text className="font-semibold text-whiteBlue text-xs text-center">
-                Confirmar
-              </Text>
-            </Pressable>
+            {/* Re-schedule Button */}
+            <Link
+              asChild
+              href={{
+                pathname: "/(protected)/createAppointment/[selectedDate]",
+                params: {
+                  selectedDate: props.request.dateHourRequest,
+                  requestID: props.request.Id,
+                  requestName: props.request.patientFullName,
+                  sentRequestDate: props.request.registerDate,
+                },
+              }}
+            >
+              <Pressable className="justify-center items-center bg-darkBlue active:bg-pureBlue px-2 py-1 border-2 border-darkBlue rounded-lg">
+                <CalendarCheckIcon
+                  color="#D6E8EE"
+                  size={32}
+                  className="flex-1"
+                />
+                <Text className="font-semibold text-whiteBlue text-xs text-center">
+                  Programar
+                </Text>
+              </Pressable>
+            </Link>
           </View>
         </View>
       )}
-
-      {/* Date Picker */}
-      <DatePicker
-        modal
-        mode="datetime"
-        open={showDatePicker}
-        date={new Date(props.request.dateHourRequest)}
-        onConfirm={(date) => {
-          // TO DO: create a new appointment with new date hour
-          setShowDatePicker(false);
-        }}
-        onCancel={() => {
-          setShowDatePicker(false);
-        }}
-      />
     </View>
   );
 }

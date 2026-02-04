@@ -1,17 +1,11 @@
 import { Link } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-import { CheckCircleIcon, PlusIcon } from "../Icons";
+import { PlusIcon } from "../Icons";
 
 interface appointmentProps {
   patient?: string;
   treatment?: string;
   dateHour?: string;
-  duration?: 15 | 30 | 45 | 60 | 75 | 90 | 105 | 120 | 135 | 150 | 165 | 180;
-  onPress?: () => void;
-}
-interface appointmentSelectionProps {
-  isAvailable?: boolean;
-  isSelected?: boolean;
   duration?: 15 | 30 | 45 | 60 | 75 | 90 | 105 | 120 | 135 | 150 | 165 | 180;
   onPress?: () => void;
 }
@@ -116,29 +110,42 @@ export function MonthAppointment({
   );
 }
 
+interface appointmentSelectionProps {
+  isAvailable?: boolean;
+  isSelected?: boolean;
+  hour?: string;
+  duration?: 15 | 30 | 45 | 60 | 75 | 90 | 105 | 120 | 135 | 150 | 165 | 180;
+  onPress?: () => void;
+}
+
 export function AppointmentSelection({
   isAvailable,
   isSelected,
+  hour,
   duration = 30,
   onPress,
 }: appointmentSelectionProps) {
-  const heightPx = (duration / 15) * 40;
+  const heightPx = (duration / 15) * 20 + (duration / 15 - 1) * 4;
 
   return (
-    <View
-      style={{ height: heightPx }}
-      className={`w-full border-blackBlue ${duration !== 15 || !isAvailable ? `border-t` : ``}`}
-    >
+    <View style={{ height: heightPx }} className={"w-full"}>
       {!isAvailable ? (
-        <View className="bg-darkBlue h-full" />
+        <View className="justify-center items-center bg-gray-500/50 h-full">
+          <Text className="font-semibold text-whiteBlue">{hour}</Text>
+        </View>
       ) : (
         <Pressable
           onPress={onPress}
-          className={`active:bg-lightBlue h-full items-center justify-center ${
-            isSelected ? `border-4 border-dashed border-darkBlue` : ``
+          disabled={isSelected}
+          className={`active:bg-pureBlue h-full items-center justify-center ${
+            isSelected ? `bg-darkBlue` : `bg-lightBlue`
           }`}
         >
-          {isSelected && <CheckCircleIcon color={`#02457A`} size={32} />}
+          <Text
+            className={`font-semibold ${isSelected ? "text-whiteBlue" : "text-blackBlue"}`}
+          >
+            {hour}
+          </Text>
         </Pressable>
       )}
     </View>

@@ -1,4 +1,3 @@
-import { DeleteAlertMessage } from "@/components/alertMessage";
 import GlassyBackground from "@/components/glassyBackground";
 import { PlusIcon } from "@/components/Icons";
 import Loading from "@/components/loading";
@@ -8,12 +7,7 @@ import { MedicalHistoryDto } from "@/interfaces/interfaces";
 import { fetchWithToken } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  RelativePathString,
-  router,
-  Stack,
-  useLocalSearchParams,
-} from "expo-router";
+import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -1059,6 +1053,31 @@ export default function MedicalHistory() {
                 </View>
               </GlassyBackground>
 
+              {/* Go to Odontogram */}
+              <View>
+                <Link
+                  asChild
+                  href={{
+                    pathname: "/(protected)/odontogram/[patientId]",
+                    params: {
+                      patientId: patientId.toString(),
+                    },
+                  }}
+                >
+                  <Pressable className="justify-center overflow-hidden items-center px-4 py-2 rounded-md">
+                    <LinearGradient
+                      colors={["#02457A", "#018ABE"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      className="absolute top-0 bottom-0 right-0 left-0"
+                    />
+                    <Text className="font-semibold text-whiteBlue">
+                      Ver Odontograma
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
+
               {/* SAVE-DELETE BUTTONS */}
               <View className="items-center">
                 {!formData.Id ? (
@@ -1080,26 +1099,27 @@ export default function MedicalHistory() {
                     )}
                   </Pressable>
                 ) : (
-                  <Pressable
-                    className="items-center bg-red-700 active:bg-red-600 px-2 py-1 border border-whiteBlue rounded-full w-2/3"
-                    onPress={() => {
-                      DeleteAlertMessage(
-                        "Confirmar Eliminación",
-                        `¿Está seguro de eliminar el registro?`,
-                        "Eliminar",
-                        `/medical-history/${formData.Id}`,
-                        "No se pudo eliminar la historia clínica. Inténtalo de nuevo.",
-                        "DELETE",
-                        `/(protected)/patientProfile/[id]` as RelativePathString,
-                        logOut,
-                        { id: patientId.toString() },
-                      );
-                    }}
-                  >
-                    <Text className="font-semibold text-whiteBlue text-lg">
-                      Eliminar Historia Clínica
-                    </Text>
-                  </Pressable>
+                  <></>
+                  // <Pressable
+                  //   className="items-center bg-red-700 active:bg-red-600 px-2 py-1 border border-whiteBlue rounded-full w-2/3"
+                  //   onPress={() => {
+                  //     DeleteAlertMessage(
+                  //       "Confirmar Eliminación",
+                  //       `¿Está seguro de eliminar el registro?`,
+                  //       "Eliminar",
+                  //       `/medical-history/${formData.Id}`,
+                  //       "No se pudo eliminar la historia clínica. Inténtalo de nuevo.",
+                  //       "DELETE",
+                  //       `/(protected)/patientProfile/[id]` as RelativePathString,
+                  //       logOut,
+                  //       { id: patientId.toString() },
+                  //     );
+                  //   }}
+                  // >
+                  //   <Text className="font-semibold text-whiteBlue text-lg">
+                  //     Eliminar Historia Clínica
+                  //   </Text>
+                  // </Pressable>
                 )}
               </View>
             </View>
