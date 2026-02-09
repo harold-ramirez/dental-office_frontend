@@ -1054,29 +1054,31 @@ export default function MedicalHistory() {
               </GlassyBackground>
 
               {/* Go to Odontogram */}
-              <View>
-                <Link
-                  asChild
-                  href={{
-                    pathname: "/(protected)/odontogram/[patientId]",
-                    params: {
-                      patientId: patientId.toString(),
-                    },
-                  }}
-                >
-                  <Pressable className="justify-center overflow-hidden items-center px-4 py-2 rounded-md">
-                    <LinearGradient
-                      colors={["#02457A", "#018ABE"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      className="absolute top-0 bottom-0 right-0 left-0"
-                    />
-                    <Text className="font-semibold text-whiteBlue">
-                      Ver Odontograma
-                    </Text>
-                  </Pressable>
-                </Link>
-              </View>
+              {formData.Id && (
+                <View>
+                  <Link
+                    asChild
+                    href={{
+                      pathname: "/(protected)/odontogram/[patientId]",
+                      params: {
+                        patientId: patientId.toString(),
+                      },
+                    }}
+                  >
+                    <Pressable className="justify-center overflow-hidden items-center px-4 py-2 rounded-md">
+                      <LinearGradient
+                        colors={["#02457A", "#018ABE"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        className="absolute top-0 bottom-0 right-0 left-0"
+                      />
+                      <Text className="font-semibold text-whiteBlue">
+                        Ver Odontograma
+                      </Text>
+                    </Pressable>
+                  </Link>
+                </View>
+              )}
 
               {/* SAVE-DELETE BUTTONS */}
               <View className="items-center">

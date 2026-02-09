@@ -187,3 +187,7 @@ export const CigarIcon = (props: any) => (
 export const SickIcon = (props: any) => (
   <MaterialCommunityIcons name="emoticon-sick-outline" size={24} color="black" {...props} />
 );
+
+export const TeethIcon = (props: any) => (
+  <FontAwesome6 name="teeth" size={24} color="black" {...props} />
+);

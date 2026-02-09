@@ -11,6 +11,7 @@ import {
   PhoneIcon,
   ProfileIconAlt,
   RightArrowIcon,
+  TeethIcon,
   WhatsappIcon,
 } from "@/components/Icons";
 import { UpdatePatientModal } from "@/components/patients/patientModal";
@@ -132,6 +133,7 @@ export default function PatientProfile() {
   //sections api calls
   const [images, setImages] = useState<MedicalImageDto[]>([]);
   const [treatments, setTreatments] = useState<any[]>([]);
+  const [odontograms, setOdontograms] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<
     { dateHour: string; treatment: string | null }[]
   >([]);
@@ -148,6 +150,19 @@ export default function PatientProfile() {
       setImages(endpoint);
     } catch (e) {
       console.error("Error fetching images:", e);
+    }
+  }, [id, logOut]);
+
+  const fetchOdontograms = useCallback(async () => {
+    try {
+      const data = await fetchWithToken(
+        `/odontograms/preview/${id}`,
+        { method: "GET" },
+        logOut,
+      );
+      setOdontograms(data);
+    } catch (e) {
+      console.error("Error fetching Odontograms:", e);
     }
   }, [id, logOut]);
 
@@ -197,6 +212,7 @@ export default function PatientProfile() {
     await fetchMedicalHistories();
     await fetchTreatments();
     await fetchAppointments();
+    await fetchOdontograms();
     setRefreshing(false);
   }, [
     fetchPatient,
@@ -204,6 +220,7 @@ export default function PatientProfile() {
     fetchMedicalHistories,
     fetchTreatments,
     fetchAppointments,
+    fetchOdontograms,
   ]);
   useEffect(() => {
     onRefresh();
@@ -434,7 +451,58 @@ export default function PatientProfile() {
                 <RightArrowIcon color="#001B48" />
               </View>
             </Link>
-            <View className="bg-whiteBlue mb-3 rounded-md w-full h-32"></View>
+            <View
+              className={`flex-row justify-center items-center gap-2 bg-whiteBlue mb-3 rounded-md w-full h-32 ${odontograms.length === 0 ? `justify-center` : ``}`}
+            >
+              {odontograms.length === 0 ? (
+                <Text className="w-full text-blackBlue/75 text-center italic">
+                  No se tiene registrado ningún odontograma del paciente
+                </Text>
+              ) : (
+                odontograms.slice(0, 3).map((odontogram, i) => {
+                  if (i === 2 && odontograms.length > 2) {
+                    return (
+                      <Link
+                        key={i}
+                        href={{
+                          pathname: "/odontogram/[patientId]",
+                          params: { patientId: id.toString() },
+                        }}
+                      >
+                        <View className="w-[100px] h-[100px]">
+                          <View className="justify-center items-center p-1 border border-blackBlue rounded-md w-[100px] h-[100px]">
+                            <TeethIcon color="#001B48" size={32} />
+                            <Text className="text-blackBlue">
+                              {new Date(
+                                odontogram.registerDate,
+                              ).toLocaleDateString("es-BO")}
+                            </Text>
+                          </View>
+                          <View className="absolute justify-center items-center bg-blackBlue/75 w-[100px] h-[100px]">
+                            <Text className="font-semibold text-whiteBlue text-3xl">
+                              +{odontograms.length - 2}
+                            </Text>
+                          </View>
+                        </View>
+                      </Link>
+                    );
+                  }
+                  return (
+                    <View
+                      key={i}
+                      className="justify-center items-center p-1 border border-blackBlue rounded-md w-[100px] h-[100px]"
+                    >
+                      <TeethIcon color="#001B48" size={32} />
+                      <Text className="text-blackBlue">
+                        {new Date(odontogram.registerDate).toLocaleDateString(
+                          "es-BO",
+                        )}
+                      </Text>
+                    </View>
+                  );
+                })
+              )}
+            </View>
 
             {/* Treatments */}
             <Link
