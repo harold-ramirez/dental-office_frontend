@@ -34,7 +34,7 @@ export default function PopupModal(props: PopupModalProps) {
         className="flex-1 justify-center items-center bg-blackBlue/50"
       >
         <ScrollView
-          className="px-5 w-full"
+          className="px-1 w-full"
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
             flexGrow: 1,

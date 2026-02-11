@@ -35,7 +35,7 @@ export default function PaymentModal(props: Props) {
   const handlePostPayment = async () => {
     if (newPayment.amount === "") return;
     try {
-      const res = await fetchWithToken(
+      await fetchWithToken(
         "/payments",
         {
           method: "POST",
@@ -47,10 +47,8 @@ export default function PaymentModal(props: Props) {
         },
         logOut,
       );
-      if (res.ok) {
-        onRefresh();
-        onClose();
-      }
+      onRefresh();
+      onClose();
     } catch (error) {
       console.log("Error posting Payment:", error);
     }

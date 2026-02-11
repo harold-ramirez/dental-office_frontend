@@ -1,22 +1,31 @@
+/* eslint-disable react/no-unknown-property */
+import { getStatusColor } from "@/utils/statusColors";
 import { useGLTF } from "@react-three/drei/native";
 import { useFrame } from "@react-three/fiber/native";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { MathUtils, Mesh, MeshStandardMaterial, Object3D } from "three";
 
 export default function Model({
   uri,
   isOpen,
   showRoots,
+  odontogram,
   onToothSelect,
+  selectedToothName,
   ...props
 }: {
   uri: string;
   isOpen: boolean;
   showRoots: boolean;
+  odontogram?: any;
   onToothSelect?: (toothName: string | null) => void;
+  selectedToothName?: string | null;
   [key: string]: any;
 }) {
   const gltf = useGLTF(uri);
+  // Clonamos la escena para evitar bugs cuando se navega y regresa
+  const scene = useMemo(() => gltf.scene.clone(true), [gltf.scene]);
+
   const lowerJawRef = useRef<Object3D>(null); // <--- Cambiado a Object3D o any
   const upperJawRef = useRef<Object3D>(null); // <--- Cambiado a Object3D o any
   // Ref para rastrear el diente (Grupo) seleccionado
@@ -28,9 +37,18 @@ export default function Model({
     lower: 0,
   });
 
+  // 1. Setup inicial de materiales y referencias
   useEffect(() => {
-    gltf.scene.traverse((child) => {
+    scene.traverse((child) => {
       // Nota: child puede ser Mesh o Group ahora
+
+      if ((child as Mesh).isMesh) {
+        const mesh = child as Mesh;
+        // Guardar material original del GLTF si no existe
+        if (!mesh.userData.gltfMaterial) {
+          mesh.userData.gltfMaterial = mesh.material;
+        }
+      }
 
       // 1. Detectar Mandíbulas por sus NUEVOS nombres
       if (child.name === "Lower_Jaw") {
@@ -46,13 +64,138 @@ export default function Model({
       if (child.name.toLowerCase().includes("jaw")) {
         const mesh = child as Mesh;
         // Clonamos el material para no afectar otros objetos y asignamos color rosa
-        mesh.material = (mesh.material as MeshStandardMaterial).clone();
-        (mesh.material as MeshStandardMaterial).color.set("#AA565C"); // Color rosa encía realista
-        (mesh.material as MeshStandardMaterial).roughness = 0.4; // Un poco húmedo/brillante
-        (mesh.material as MeshStandardMaterial).metalness = 0.0; // Elimina el efecto metálico
+        const pinkMaterial = (mesh.material as MeshStandardMaterial).clone();
+        pinkMaterial.color.set("#AA565C"); // Color rosa encía realista
+        pinkMaterial.roughness = 0.4; // Un poco húmedo/brillante
+        pinkMaterial.metalness = 0.0; // Elimina el efecto metálico
+
+        mesh.material = pinkMaterial;
+        // IMPORTANT: Actualizar el material base en userData para que el siguiente efecto lo respete
+        mesh.userData.gltfMaterial = pinkMaterial;
       }
     });
-  }, [gltf]);
+  }, [scene]);
+
+  // Efecto para aplicar colores según el Odontograma
+  useEffect(() => {
+    if (!odontogram) return;
+
+    // Crear mapa de estados: nombre_mesh -> status
+    const statusMap = new Map<string, string>();
+    if (odontogram.tooth) {
+      odontogram.tooth.forEach((t: any) => {
+        if (t.toothsection) {
+          t.toothsection.forEach((s: any) => {
+            // Asignamos el estado al nombre de la sección (ej: "11_Distal")
+            statusMap.set(s.name, s.localStatus);
+          });
+        }
+      });
+    }
+
+    scene.traverse((child) => {
+      if ((child as Mesh).isMesh) {
+        const mesh = child as Mesh;
+        const status = statusMap.get(mesh.name);
+        const colorHex = getStatusColor(status);
+
+        let targetMaterial = mesh.userData.gltfMaterial;
+
+        // Si hay color personalizado (distinto de white/null), creamos material coloreado
+        if (colorHex) {
+          // Chequear si ya tenemos un material cacheado para e este color en este mesh para no crear mil clones
+          if (!mesh.userData.colorMaterials) mesh.userData.colorMaterials = {};
+
+          if (!mesh.userData.colorMaterials[colorHex]) {
+            const baseMat = (
+              mesh.userData.gltfMaterial as MeshStandardMaterial
+            ).clone();
+            baseMat.color.set(colorHex);
+            mesh.userData.colorMaterials[colorHex] = baseMat;
+          }
+          targetMaterial = mesh.userData.colorMaterials[colorHex];
+        }
+
+        // Aplicamos el material
+        // LÓGICA DE INTERACCIÓN CON SELECCIÓN:
+        // Si el padre (Diente) está seleccionado, el mesh está dorado actualmente.
+        // No debemos quitar el dorado, sino actualizar el 'originalMaterial' que se restaurará.
+
+        const parent = mesh.parent;
+        const isSelected = parent && parent.userData.isSelected;
+
+        mesh.userData.originalMaterial = targetMaterial; // Actualizamos siempre el "backing" material
+
+        if (!isSelected) {
+          mesh.material = targetMaterial;
+        }
+      }
+    });
+  }, [odontogram, scene]);
+
+  // Nuevo efecto para manejar selección externa (por props)
+  useEffect(() => {
+    // 1. Limpiar selección anterior si es diferente
+    if (selectedToothRef.current) {
+      if (
+        selectedToothName &&
+        selectedToothRef.current.name === selectedToothName
+      )
+        return;
+
+      // Restaurar material anterior
+      selectedToothRef.current.traverse((child) => {
+        if ((child as Mesh).isMesh) {
+          const mesh = child as Mesh;
+          if (mesh.userData.originalMaterial) {
+            mesh.material = mesh.userData.originalMaterial;
+          }
+        }
+      });
+      selectedToothRef.current.userData.isSelected = false;
+      selectedToothRef.current = null;
+    }
+
+    if (!selectedToothName) return;
+
+    // 2. Buscar el nuevo objeto seleccionado utilizando recursividad
+    let foundObject: Object3D | undefined;
+
+    const findObject = (obj: Object3D): Object3D | undefined => {
+      if (obj.name === selectedToothName) return obj;
+      for (const child of obj.children) {
+        const found = findObject(child);
+        if (found) return found;
+      }
+      return undefined;
+    };
+
+    foundObject = findObject(scene);
+
+    // 3. Aplicar selección si se encontró
+    if (foundObject) {
+      foundObject.userData.isSelected = true;
+      selectedToothRef.current = foundObject;
+
+      foundObject.traverse((child) => {
+        if ((child as Mesh).isMesh) {
+          const mesh = child as Mesh;
+          if (!mesh.userData.originalMaterial) {
+            mesh.userData.originalMaterial =
+              mesh.userData.gltfMaterial || mesh.material;
+          }
+          const mat = mesh.userData.originalMaterial;
+          if (mat && typeof mat.clone === "function") {
+            const clonedMat = mat.clone();
+            if (clonedMat.color) {
+              clonedMat.color.set("#FFD700");
+            }
+            mesh.material = clonedMat;
+          }
+        }
+      });
+    }
+  }, [selectedToothName, scene]);
 
   // Efecto para ocultar/mostrar las encías (no todo el objeto) según showRoots
   useEffect(() => {
@@ -77,7 +220,7 @@ export default function Model({
 
     setJawVisibility(lowerJawRef.current, !showRoots);
     setJawVisibility(upperJawRef.current, !showRoots);
-  }, [showRoots, gltf]);
+  }, [showRoots, scene]);
 
   // Animación suave frame a frame
   useFrame((state, delta) => {
@@ -185,11 +328,15 @@ export default function Model({
             if (!mesh.userData.originalMaterial) {
               mesh.userData.originalMaterial = mesh.material;
             }
-            // Clonar y pintar
-            mesh.material = (
-              mesh.userData.originalMaterial as MeshStandardMaterial
-            ).clone();
-            (mesh.material as MeshStandardMaterial).color.set("#FFD700"); // Dorado
+
+            const mat = mesh.userData.originalMaterial;
+            if (mat && typeof mat.clone === "function") {
+              const clonedMat = mat.clone();
+              if (clonedMat.color) {
+                clonedMat.color.set("#FFD700");
+              }
+              mesh.material = clonedMat;
+            }
           } else {
             // --- DESACTIVAR SELECCIÓN ---
             if (mesh.userData.originalMaterial) {
@@ -210,7 +357,5 @@ export default function Model({
     }
   };
 
-  return (
-    <primitive {...props} object={gltf.scene} onClick={handleToothClick} />
-  );
+  return <primitive {...props} object={scene} onClick={handleToothClick} />;
 }

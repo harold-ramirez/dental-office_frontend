@@ -6,13 +6,14 @@ import SingleToothModel from "@/components/SingleToothModel"; // Import SingleTo
 import { fetchWithToken } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
 import { translateFace } from "@/utils/faceDictionary"; // Import face translator
+import { getStatusColor, getStatusDescription } from "@/utils/statusColors"; // Import status descriptions
 import { TOOTH_ASSETS } from "@/utils/toothAssets"; // Import TOOTH_ASSETS
 import { Center, Environment, OrbitControls } from "@react-three/drei/native";
 import { Canvas } from "@react-three/fiber/native";
 import { Asset } from "expo-asset";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { Suspense, useContext, useEffect, useState } from "react";
+import { Suspense, useContext, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -35,6 +36,8 @@ export default function Odontogram() {
   const [selectedTooth, setSelectedTooth] = useState<string | null>(null);
   const [singleToothUri, setSingleToothUri] = useState<string | null>(null);
   const [selectedFace, setSelectedFace] = useState<string | null>(null);
+  const [availableFaces, setAvailableFaces] = useState<string[]>([]); // Caras disponibles del diente seleccionado
+  const [changes, setChanges] = useState<Record<string, string>>({}); // Cambios locales
   const { logOut } = useContext(AuthContext);
 
   const [odontograms, setOdontograms] = useState<
@@ -82,8 +85,240 @@ export default function Odontogram() {
   const [isOpen, setIsOpen] = useState(false);
   const [showRoots, setShowRoots] = useState(false);
 
+  // Reset changes whenever current odontogram changes
+  useEffect(() => {
+    setChanges({});
+  }, [currentOdontogram.Id]);
+
+  // Determine if editable (most recent)
+  const isEditable = useMemo(() => {
+    if (odontograms.length === 0) return true; // Si es el único, es editable
+    // El array viene ordenado del más reciente al más antiguo (index 0 es el último)
+    const newestOdontogram = odontograms[0];
+    return currentOdontogram.Id === newestOdontogram.Id;
+  }, [odontograms, currentOdontogram.Id]);
+
+  // Compute Merged Odontogram for Display
+  const mergedOdontogram = useMemo(() => {
+    if (Object.keys(changes).length === 0) return currentOdontogram;
+
+    // Deep clone to avoid mutating state directly
+    const cloned = JSON.parse(JSON.stringify(currentOdontogram));
+
+    // Apply changes
+    // Change Key format: `${pieceNumber}_${faceName}`
+    cloned.tooth.forEach((t: any) => {
+      t.toothsection.forEach((s: any) => {
+        const key = `${t.pieceNumber}_${s.name}`;
+        if (changes[key] !== undefined) {
+          s.localStatus = changes[key];
+        }
+      });
+    });
+    return cloned;
+  }, [currentOdontogram, changes]);
+
+  const handleStatusChange = (status: string) => {
+    if (!isEditable || !selectedTooth) return;
+
+    const toothNumStr = selectedTooth.split("_")[1];
+    const tooth = currentOdontogram.tooth.find(
+      (t) => t.pieceNumber.toString() === toothNumStr,
+    );
+    if (!tooth) return;
+
+    const newChanges = { ...changes };
+
+    if (status === "black") {
+      // Diente Ausente: Aplica a TODO el diente
+
+      // Verificamos si ya está todo marcado como Ausente (en changes) para hacer Toggle Off
+      const allSectionsBlack = tooth.toothsection.every(
+        (s) => newChanges[`${toothNumStr}_${s.name}`] === "black",
+      );
+
+      tooth.toothsection.forEach((section) => {
+        const key = `${toothNumStr}_${section.name}`;
+        if (allSectionsBlack) {
+          // Revertir (quitar cambios)
+          delete newChanges[key];
+        } else {
+          // Aplicar Black (solo si es diferente del original, sino borra cambio)
+          if (section.localStatus === "black") {
+            delete newChanges[key];
+          } else {
+            newChanges[key] = "black";
+          }
+        }
+      });
+    } else {
+      // Caries (red), Implante (blue), Prótesis (green), Sano (white)
+      // Solo aplica a la cara seleccionada
+      if (!selectedFace) {
+        // Obtenemos description para el alert
+        const desc = getStatusDescription(status) || "el estado";
+        alert(`Por favor seleccione una cara específica para marcar ${desc}.`);
+        return;
+      }
+
+      // Validar caso "Recuperar de Ausente":
+      // Si alguna OTRA cara está en estado "black" (Ausente), debemos pasarla a "white" (Sano)
+      // para que el diente deje de verse "ausente" y se vea el implante/prótesis/caries.
+      tooth.toothsection.forEach((s) => {
+        const key = `${toothNumStr}_${s.name}`;
+        const currentStatusInChanges = newChanges[key];
+        // Nota: usamos newChanges para ver estado acumulado o s.localStatus.
+        // Mejor miramos mergedOdontogram pero ya tenemos 'newChanges' copia.
+        // Simplificación: Si el change actual es 'black' o el original es 'black' y no hay change...
+        const activeStatus =
+          currentStatusInChanges !== undefined
+            ? currentStatusInChanges
+            : s.localStatus;
+
+        if (s.name !== selectedFace) {
+          if (activeStatus === "black") {
+            // Forzamos a white para "aparecer" el diente
+            if (s.localStatus === "white") {
+              delete newChanges[key];
+            } else {
+              newChanges[key] = "white";
+            }
+          }
+        }
+      });
+
+      // Ahora aplicamos el estado a la cara seleccionada
+      const key = `${toothNumStr}_${selectedFace}`;
+      const section = tooth.toothsection.find((s) => s.name === selectedFace);
+      const originalStatus = section?.localStatus; // safe access
+
+      // Toggle logic
+      const currentChange = newChanges[key];
+      if (currentChange === status) {
+        // Si ya estaba marcado así en changes -> Quitar (revertir a original)
+        delete newChanges[key];
+      } else {
+        // Aplicar nuevo estado
+        // Si el nuevo estado es igual al original -> Quitar entry de changes
+        if (originalStatus === status) {
+          delete newChanges[key];
+        } else {
+          newChanges[key] = status;
+        }
+      }
+    }
+
+    setChanges(newChanges);
+  };
+
   const { height } = useWindowDimensions();
   const ODONTOGRAM_HEIGHT = height - 200;
+
+  // Helpers para clasificar dientes
+  const { upper, lower } = useMemo(() => {
+    if (!mergedOdontogram || !mergedOdontogram.tooth)
+      return { upper: [], lower: [] };
+
+    const teeth = [...mergedOdontogram.tooth];
+
+    const upperRight = teeth.filter((t) => {
+      const q = Math.floor(t.pieceNumber / 10);
+      return q === 1 || q === 5;
+    });
+    const upperLeft = teeth.filter((t) => {
+      const q = Math.floor(t.pieceNumber / 10);
+      return q === 2 || q === 6;
+    });
+
+    const lowerRight = teeth.filter((t) => {
+      const q = Math.floor(t.pieceNumber / 10);
+      return q === 4 || q === 8;
+    });
+    const lowerLeft = teeth.filter((t) => {
+      const q = Math.floor(t.pieceNumber / 10);
+      return q === 3 || q === 7;
+    });
+
+    upperRight.sort((a, b) => b.pieceNumber - a.pieceNumber);
+    upperLeft.sort((a, b) => a.pieceNumber - b.pieceNumber);
+    lowerRight.sort((a, b) => b.pieceNumber - a.pieceNumber);
+    lowerLeft.sort((a, b) => a.pieceNumber - b.pieceNumber);
+
+    return {
+      upper: [...upperRight, ...upperLeft],
+      lower: [...lowerRight, ...lowerLeft],
+    };
+  }, [mergedOdontogram]);
+
+  const handleToothButtonSelect = (pieceNumber: number) => {
+    // Si tienes el prefijo del modelo en selectedTooth, lo construimos
+    // Asumimos que el prefijo se puede deducir o es constante si solo hay un modelo activo a la vez
+    // En el código actual, selectedTooth es un string que llega de 'onToothSelect' del Model.
+    // El model usa los nombres del GLTF. Ej: "Adult_Tooth_11" or "Tooth_11" ?
+    // En 'SingleToothModel', haces selectedTooth.split("_")[1].
+    // REVISAR: Model.tsx emite `toothGroup.name`.
+
+    // Necesitamos saber el nombre exacto del nodo en el GLTF para seleccionarlo.
+    // Una opción robusta es buscar en el array de dientes el que coincida con el pieceNumber y usar un formato estimado
+    // O si el Model ya maneja la selección por nombre, solo pasamos el nombre correcto.
+
+    // Hack: Asumimos formato "Tooth_<Num>" o "Adult_Tooth_<Num>" según lo que hayamos visto.
+    // PERO, si el usuario hace clic en el 3D, el nombre viene del GLTF.
+    // Si hacemos clic en botón, tenemos que simular ese nombre.
+    // De 'SingleToothModel', uri selection, vemos que usa TOOTH_ASSETS[selectedTooth].
+    // TOOTH_ASSETS usa keys tipo "Adult_11" (según lo que infiero de previos logs).
+    // PERO 'Model.tsx' emite el nombre del Grupo GLTF.
+
+    // La mejor estrategia:
+    // El diente seleccionado en el estado es 'selectedTooth'.
+    // Si el usuario toca el botón '11', debemos setear 'selectedTooth' al nombre correspondiente.
+    // ¿Cuál es el nombre?
+    // Si es adulto: `Adult_Tooth_${pieceNumber}` ??
+    // Vamos a probar con un mapeo simple basado en el modelo actual.
+
+    const prefix = isAdultModel ? "Adult_Tooth_" : "Child_Tooth_";
+    // Nota: Es posible que los nombres en el GLTF sean ligeramente distintos, ej "Tooth_11".
+    // Si falla, el componente Model no lo encontrará y no se iluminará, pero la lógica de SingleTooth podría fallar si depende del nombre exacto.
+    // SIN EMBARGO, el SingleTooth usa selectedTooth para buscar en TOOTH_ASSETS.
+    // TOOTH_ASSETS keys: Probablemente "Adult_11".
+    // Si el Model devuelve "Tooth_11", tu split('_')[1] funciona.
+
+    // Vamos a buscar en el odontograma el diente y usar un formato que coincida con lo que 'Model' espera o emite.
+    // En Model.tsx, dice: if (toothGroup.name.toLowerCase().includes("tooth")) ...
+    // Lo más seguro es que los nodos se llaman "Tooth_11" etc.
+    // Y el `selectedTooth` state almacena ese nombre.
+
+    // Ajuste: En la data del GLTF original, los dientes suelen llamarse "Tooth_11".
+    // Voy a usar ese formato estándar.
+
+    const toothName = `Tooth_${pieceNumber}`;
+    // OJO: Si hay prefijo de modelo en el GLTF (ej. "Adult_Tooth_11"), esto debe coincidir.
+    // Dado que no puedo ver el GLTF tree, probaré "Tooth_" primero, que es estándar.
+
+    setSelectedTooth(toothName);
+  };
+
+  // Render Item para la lista de botones
+  const renderToothButton = (t: any) => {
+    const isSelected = selectedTooth?.includes(t.pieceNumber.toString());
+    let buttonColorClass = "bg-white border-gray-300";
+    let textColorClass = "text-gray-700";
+    if (isSelected) {
+      buttonColorClass = "bg-blue-600 border-blue-800";
+      textColorClass = "text-white font-bold";
+    }
+
+    return (
+      <Pressable
+        key={t.Id}
+        onPress={() => handleToothButtonSelect(t.pieceNumber)}
+        className={`mx-1 w-10 h-10 justify-center items-center rounded-full border ${buttonColorClass}`}
+      >
+        <Text className={`${textColorClass}`}>{t.pieceNumber}</Text>
+      </Pressable>
+    );
+  };
+
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollOffset = useScrollOffset(scrollRef);
   const odontogramAnimationStyle = useAnimatedStyle(() => {
@@ -160,6 +395,7 @@ export default function Odontogram() {
           await asset.downloadAsync();
           setSingleToothUri(asset.uri);
           setSelectedFace(null); // Reset selected face when tooth changes
+          setAvailableFaces([]);
         } catch (e) {
           console.error("Failed loading single tooth", e);
           setSingleToothUri(null);
@@ -179,6 +415,18 @@ export default function Odontogram() {
     );
   }
 
+  const getFaceValues = (faceName: string | null) => {
+    if (!faceName || !mergedOdontogram || !selectedTooth) return null;
+    const toothNumStr = selectedTooth.split("_")[1];
+    const tooth = mergedOdontogram.tooth?.find(
+      (t: any) => t.pieceNumber.toString() === toothNumStr,
+    );
+    if (!tooth) return null;
+    const section = tooth.toothsection?.find((s: any) => s.name === faceName);
+
+    return section ? getStatusDescription(section.localStatus) : "";
+  };
+
   return (
     <>
       <LinearGradient
@@ -193,12 +441,24 @@ export default function Odontogram() {
             headerStyle: { backgroundColor: "#001B48" },
             headerTintColor: "#D6E8EE",
             headerTitle: "Odontograma",
-            headerRight: () => <></>,
+            headerRight: () =>
+              Object.keys(changes).length > 0 && isEditable ? (
+                <Pressable
+                  onPress={() => {
+                    // Acción de guardar a implementar
+                    console.log("Guardando cambios:", changes);
+                    alert("Cambios listos para guardar");
+                  }}
+                  className="bg-white/20 px-3 py-1 rounded mr-2 active:bg-white/30"
+                >
+                  <Text className="text-white font-bold">Guardar</Text>
+                </Pressable>
+              ) : null,
           }}
         />
         <Animated.ScrollView ref={scrollRef} className="w-full">
           <View className="flex-1 w-full">
-            {/* 3D Odontogram */}
+            {/* 3D Space */}
             <Animated.View
               style={[{ height: ODONTOGRAM_HEIGHT }, odontogramAnimationStyle]}
               className="w-full"
@@ -216,6 +476,7 @@ export default function Odontogram() {
                 </View>
               ) : (
                 <>
+                  {/* Rendering Space */}
                   <Canvas camera={{ position: [0, 0, 10], fov: 50 }}>
                     <color attach="background" args={["#076082"]} />
                     {/* Usamos Environment para materiales metálicos y ambientLight para relleno */}
@@ -229,17 +490,18 @@ export default function Odontogram() {
                             scale={4}
                             isOpen={isOpen}
                             showRoots={showRoots}
+                            odontogram={mergedOdontogram} // Pasamos el odontograma completo
                             onToothSelect={setSelectedTooth}
+                            selectedToothName={selectedTooth} // Pasamos la selección para sincronización Bidireccional
                           />
                         </Center>
                       </group>
                     </Suspense>
                     <OrbitControls makeDefault />
-                    {/* <gridHelper args={[10, 10]} /> */}
-                    {/* <axesHelper args={[2]} /> */}
                   </Canvas>
+
                   {/* Model Text */}
-                  <View className="top-0 absolute self-center gap-2 bg-blackBlue/75 p-2 w-full">
+                  <View className="top-0 absolute bg-blackBlue/75 self-center w-full">
                     <ScrollView
                       horizontal
                       showsHorizontalScrollIndicator={false}
@@ -252,7 +514,7 @@ export default function Odontogram() {
                             className={`px-4 py-1 rounded-t-lg ${currentOdontogram.Id === odontogram.Id ? `bg-whiteBlue` : `bg-darkBlue`}`}
                           >
                             <Text
-                              className={`${currentOdontogram.Id === odontogram.Id ? `text-darkBlue` : `text-whiteBlue`}`}
+                              className={`${currentOdontogram.Id === odontogram.Id ? `text-darkBlue font-bold` : `text-whiteBlue`}`}
                             >
                               {new Date(
                                 odontogram.registerDate,
@@ -266,28 +528,57 @@ export default function Odontogram() {
                         ))}
                       </View>
                     </ScrollView>
-                    <Text className="font-bold text-whiteBlue text-center">
+                    <Text className="font-bold text-whiteBlue py-2 text-center">
                       Modelo: {isAdultModel ? "Adulto" : "Niño"}
                     </Text>
+                    {/* ScrollView Dientes Superiores (Arcada Superior) */}
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{
+                        paddingHorizontal: 10,
+                        alignItems: "center",
+                      }}
+                    >
+                      <View className="flex-row h-14 w-full">
+                        {upper.map(renderToothButton)}
+                      </View>
+                    </ScrollView>
                   </View>
+
                   {/* Botón flotante para abrir/cerrar boca */}
-                  <View className="bottom-5 absolute flex-row self-center gap-1 bg-darkBlue/75 p-1 rounded-xl">
-                    <Pressable
-                      onPress={() => setIsOpen(!isOpen)}
-                      className="bg-lightBlue px-4 py-2 rounded-l-lg active:bg-whiteBlue"
+                  <View className="bottom-0 absolute items-center self-center gap-2">
+                    <View className="flex-row gap-1 bg-darkBlue/75 p-1 rounded-xl">
+                      <Pressable
+                        onPress={() => setIsOpen(!isOpen)}
+                        className="bg-lightBlue px-4 py-2 rounded-l-lg active:bg-whiteBlue"
+                      >
+                        <Text className="text-blackBlue">
+                          {isOpen ? "Cerrar Boca" : "Abrir Boca"}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => setShowRoots(!showRoots)}
+                        className="bg-lightBlue px-4 py-2 rounded-r-lg active:bg-whiteBlue"
+                      >
+                        <Text className="text-blackBlue">
+                          {showRoots ? "Ocultar Raíces" : "Ver Raíces"}
+                        </Text>
+                      </Pressable>
+                    </View>
+                    {/* ScrollView Dientes Inferiores (Arcada Inferior) */}
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{
+                        paddingHorizontal: 10,
+                        alignItems: "center",
+                      }}
                     >
-                      <Text className="text-blackBlue">
-                        {isOpen ? "Cerrar Boca" : "Abrir Boca"}
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => setShowRoots(!showRoots)}
-                      className="bg-lightBlue px-4 py-2 rounded-r-lg active:bg-whiteBlue"
-                    >
-                      <Text className="text-blackBlue">
-                        {showRoots ? "Ocultar Raíces" : "Ver Raíces"}
-                      </Text>
-                    </Pressable>
+                      <View className="h-14 flex-row w-full">
+                        {lower.map(renderToothButton)}
+                      </View>
+                    </ScrollView>
                   </View>
                 </>
               )}
@@ -296,6 +587,7 @@ export default function Odontogram() {
             {/* Content */}
             <View className="items-center bg-whiteBlue px-1 py-3 rounded-t-2xl w-full min-h-24">
               <View className="mb-3 border-2 border-stone-400 rounded-full w-1/5" />
+
               {/* Dental Piece Number */}
               <Text className="font-bold text-xl">
                 {selectedTooth
@@ -305,75 +597,191 @@ export default function Odontogram() {
 
               {/* Single Tooth View */}
               {selectedTooth && singleToothUri && (
-                <View className="items-center bg-gray-200 my-4 rounded-lg w-full h-52 overflow-hidden">
-                  <Canvas
-                    camera={{ position: [0, 0, 5], fov: 50 }}
-                    style={{ flex: 1, width: "100%" }}
-                  >
-                    <color attach="background" args={["#076082"]} />
-                    <ambientLight intensity={0.7} />
-                    <directionalLight position={[5, 10, 5]} intensity={0.5} />
-                    <directionalLight position={[-5, 10, -5]} intensity={0.5} />
-                    <Environment preset="city" />
-                    <Suspense fallback={null}>
-                      <Center>
-                        <SingleToothModel
-                          uri={singleToothUri}
-                          scale={9}
-                          onFaceSelect={setSelectedFace}
-                        />
-                      </Center>
-                    </Suspense>
-                    <OrbitControls makeDefault />
-                  </Canvas>
+                <View className="flex-row items-center justify-between my-4 w-full h-52">
+                  {/* ScrollView de Botones de selección de cara */}
+                  <View className="w-1/3 h-full bg-slate-100 rounded-l-lg p-1 border border-r-0 border-gray-300">
+                    <ScrollView
+                      nestedScrollEnabled
+                      showsVerticalScrollIndicator
+                    >
+                      {availableFaces.length > 0 ? (
+                        availableFaces.map((faceName) => {
+                          const toothData = mergedOdontogram?.tooth?.find(
+                            (t: any) =>
+                              t.pieceNumber.toString() ===
+                              selectedTooth.split("_")[1],
+                          );
+                          const section = toothData?.toothsection?.find(
+                            (s: any) => s.name === faceName,
+                          );
+                          const faceColor = section
+                            ? getStatusColor(section.localStatus)
+                            : null;
+
+                          return (
+                            <Pressable
+                              key={faceName}
+                              style={
+                                faceColor
+                                  ? {
+                                      borderLeftColor: faceColor,
+                                      borderLeftWidth: 6,
+                                    }
+                                  : {
+                                      borderLeftWidth: 6,
+                                      borderLeftColor: "#e5e7eb",
+                                    }
+                              }
+                              onPress={() =>
+                                setSelectedFace(
+                                  selectedFace === faceName ? null : faceName,
+                                )
+                              }
+                              className={`mb-2 py-2 px-1 rounded-r border-y border-r ${
+                                selectedFace === faceName
+                                  ? "bg-blue-600 border-blue-800"
+                                  : "bg-white border-gray-300 active:bg-gray-100"
+                              }`}
+                            >
+                              <Text
+                                className={`text-xs text-center flex-wrap ${
+                                  selectedFace === faceName
+                                    ? "text-white font-bold"
+                                    : "text-gray-700"
+                                }`}
+                              >
+                                {translateFace(faceName).replace("Cara ", "") ||
+                                  faceName}
+                              </Text>
+                            </Pressable>
+                          );
+                        })
+                      ) : (
+                        <View className="mt-4 items-center">
+                          <ActivityIndicator size="small" color="#000" />
+                          <Text className="text-[10px] text-gray-500 mt-1 text-center">
+                            Cargando partes...
+                          </Text>
+                        </View>
+                      )}
+                    </ScrollView>
+                  </View>
+
+                  {/* Visor 3D */}
+                  <View className="flex-1 h-full bg-gray-200 rounded-r-lg overflow-hidden border border-gray-300">
+                    <Canvas
+                      camera={{ position: [0, 0, 5], fov: 50 }}
+                      style={{ flex: 1, width: "100%" }}
+                    >
+                      <color attach="background" args={["#076082"]} />
+                      <ambientLight intensity={0.7} />
+                      <directionalLight position={[5, 10, 5]} intensity={0.5} />
+                      <directionalLight
+                        position={[-5, 10, -5]}
+                        intensity={0.5}
+                      />
+                      <Environment preset="city" />
+                      <Suspense fallback={null}>
+                        <Center>
+                          <SingleToothModel
+                            uri={singleToothUri}
+                            scale={9}
+                            // Encontramos la data específica de este diente en el odontograma actual
+                            toothData={mergedOdontogram?.tooth?.find(
+                              (t: any) =>
+                                t.pieceNumber.toString() ===
+                                selectedTooth.split("_")[1],
+                            )}
+                            onFaceSelect={setSelectedFace}
+                            selectedFaceName={selectedFace}
+                            onLoadedFaces={setAvailableFaces}
+                          />
+                        </Center>
+                      </Suspense>
+                      <OrbitControls makeDefault />
+                    </Canvas>
+                  </View>
                 </View>
               )}
 
               {/* Selected Tooth Face */}
               {selectedTooth && singleToothUri && (
-                <View className="bg-blackBlue/75 mb-2 px-3 py-1 rounded-lg">
-                  <Text className={`font-bold text-whiteBlue ${!selectedFace ? `italic`:``}`}>
+                <View className="bg-blackBlue/75 mb-2 px-3 py-1 rounded-lg items-center">
+                  <Text
+                    className={`font-bold text-whiteBlue ${!selectedFace ? `italic` : ``}`}
+                  >
                     {selectedFace
                       ? translateFace(selectedFace)
                       : "Seleccione una cara del diente"}
                   </Text>
+                  {selectedFace && getFaceValues(selectedFace) !== "" && (
+                    <Text className="text-whiteBlue text-sm opacity-80 mt-1">
+                      {getFaceValues(selectedFace)}
+                    </Text>
+                  )}
                 </View>
               )}
 
               {/* Markup Legend */}
               {selectedTooth && singleToothUri && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <View className="flex-row gap-2 mb-2 p-2 rounded-lg">
+                <View className="gap-2 mb-2 w-full">
+                  <Text className="font-bold text-lg text-blackBlue">
+                    Marcar Cara/Pieza dental
+                  </Text>
+                  <View className="flex-row gap-2">
                     <Pressable
-                      onPress={() => {}}
-                      className="bg-green-700 active:bg-green-600 px-4 py-2 rounded-md"
+                      onPress={() => handleStatusChange("green")}
+                      disabled={!isEditable || selectedFace === null}
+                      className={`${
+                        !isEditable || selectedFace === null ? "opacity-50" : ""
+                      } bg-green-700 flex-1 items-center active:bg-green-600 px-4 py-2 rounded-md`}
                     >
                       <Text className="text-whiteBlue">
                         Prótesis Maladaptada
                       </Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => {}}
-                      className="bg-gray-700 active:bg-gray-600 px-4 py-2 rounded-md"
+                      onPress={() => handleStatusChange("black")}
+                      disabled={!isEditable}
+                      className={`${
+                        !isEditable ? "opacity-50" : ""
+                      } bg-gray-700 items-center active:bg-gray-600 flex-1 px-4 py-2 rounded-md`}
                     >
                       <Text className="text-whiteBlue">Diente Ausente</Text>
                     </Pressable>
+                  </View>
+                  <View className="flex-row gap-2">
                     <Pressable
-                      onPress={() => {}}
-                      disabled={selectedFace === null}
-                      className="bg-red-700 active:bg-red-600 px-4 py-2 rounded-md"
+                      onPress={() => handleStatusChange("red")}
+                      disabled={!isEditable || selectedFace === null}
+                      className={`${
+                        !isEditable || selectedFace === null ? "opacity-50" : ""
+                      } bg-red-700 items-center active:bg-red-600 flex-1 px-4 py-2 rounded-md`}
                     >
                       <Text className="text-whiteBlue">Cáries / LC</Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => {}}
-                      className="bg-blue-700 active:bg-blue-600 px-4 py-2 rounded-md"
+                      onPress={() => handleStatusChange("blue")}
+                      disabled={!isEditable || selectedFace === null}
+                      className={`${
+                        !isEditable || selectedFace === null ? "opacity-50" : ""
+                      } bg-blue-700 items-center active:bg-blue-600 flex-1 px-4 py-2 rounded-md`}
                     >
                       <Text className="text-whiteBlue">Implante</Text>
                     </Pressable>
                   </View>
-                </ScrollView>
+                  <Pressable
+                    onPress={() => handleStatusChange("white")}
+                    disabled={!isEditable || selectedFace === null}
+                    className={`${
+                      !isEditable || selectedFace === null ? "opacity-50" : ""
+                    } bg-stone-100 items-center active:bg-stone-200 flex-1 border border-stone-300 px-4 py-2 rounded-md`}
+                  >
+                    <Text className="text-black font-semibold">Sano</Text>
+                  </Pressable>
+                </View>
               )}
+
               {/* Update Date */}
               {currentOdontogram.updateDate && (
                 <Text>

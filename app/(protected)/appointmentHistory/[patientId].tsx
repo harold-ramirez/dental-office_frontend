@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function MedicalHistory() {
+export default function AppointmentHistory() {
   const { logOut } = useContext(AuthContext);
   const { patientId, patientName } = useLocalSearchParams();
   const [modalVisible, setModalVisible] = useState(false);
@@ -321,12 +321,12 @@ export default function MedicalHistory() {
           <PopupModal
             showModal={modalVisible}
             setShowModal={setModalVisible}
-            customDesign={true}
+            customDesign
           >
-            <View className="flex-1 items-center">
+            <View className="flex-1 w-full items-center">
               <Pressable
                 onPress={() => setModalVisible(false)}
-                className="flex-1 bg-black/50 w-full"
+                className="flex-1 w-full"
               />
               <View className="bg-pureBlue px-4 py-4 rounded-t-2xl w-full">
                 {/* Date */}
