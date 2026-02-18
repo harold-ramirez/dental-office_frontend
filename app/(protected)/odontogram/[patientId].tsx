@@ -16,6 +16,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { Suspense, useContext, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert, // Import Alert
   Pressable,
   ScrollView,
   Text,
@@ -285,7 +286,7 @@ export default function Odontogram() {
 
     // Vamos a buscar en el odontograma el diente y usar un formato que coincida con lo que 'Model' espera o emite.
     // En Model.tsx, dice: if (toothGroup.name.toLowerCase().includes("tooth")) ...
-    // Lo más seguro es que los nodos se llaman "Tooth_11" etc.
+    // Lo más seguro es que los nodos se llamen "Tooth_11" etc.
     // Y el `selectedTooth` state almacena ese nombre.
 
     // Ajuste: En la data del GLTF original, los dientes suelen llamarse "Tooth_11".
@@ -341,6 +342,32 @@ export default function Odontogram() {
       ],
     };
   });
+
+  const handleupdateOdontogram = async (apiPayload: any[]) => {
+    try {
+      await fetchWithToken(
+        `/odontograms/${currentOdontogram.Id}`,
+        { method: "PATCH", body: JSON.stringify(apiPayload, null, 2) },
+        logOut,
+      );
+      alert("Los cambios se guardaron exitosamente");
+      setChanges({});
+      const response = await fetchWithToken(
+        `/odontograms/${patientId}`,
+        { method: "GET" },
+        logOut,
+      );
+      setOdontograms(response);
+      setCurrentOdontogram(response[0]);
+      setIsAdultModel(response[0].model === "adult");
+    } catch (e) {
+      Alert.alert(
+        "Error",
+        "Hubo un error al actualizar el odontograma, inténtelo de nuevo",
+      );
+      console.log("Error updating odontogram", e);
+    }
+  };
 
   useEffect(() => {
     const fetchOdontograms = async () => {
@@ -445,13 +472,51 @@ export default function Odontogram() {
               Object.keys(changes).length > 0 && isEditable ? (
                 <Pressable
                   onPress={() => {
-                    // Acción de guardar a implementar
-                    console.log("Guardando cambios:", changes);
-                    alert("Cambios listos para guardar");
+                    Alert.alert(
+                      "Confirmar cambios",
+                      "¿Está seguro de que desea guardar los cambios en el odontograma?",
+                      [
+                        {
+                          text: "Cancelar",
+                          style: "cancel",
+                        },
+                        {
+                          text: "Guardar",
+                          onPress: () => {
+                            // Start of change: Transform 'changes' to API payload
+                            const payload = Object.entries(changes)
+                              .map(([key, newStatus]) => {
+                                const [pieceNumStr, ...rest] = key.split("_");
+                                // Re-join the rest in case the face name contains underscores, though simple split is usually enough
+                                const faceName = rest.join("_");
+
+                                const tooth = currentOdontogram.tooth.find(
+                                  (t) =>
+                                    t.pieceNumber.toString() === pieceNumStr,
+                                );
+                                const section = tooth?.toothsection.find(
+                                  (s) => s.name === faceName,
+                                );
+
+                                if (section) {
+                                  return {
+                                    toothSectionId: section.Id,
+                                    localStatus: newStatus,
+                                  };
+                                }
+                                return null;
+                              })
+                              .filter(Boolean); // Filter out any nulls if lookup failed
+
+                            handleupdateOdontogram(payload);
+                          },
+                        },
+                      ],
+                    );
                   }}
-                  className="bg-white/20 px-3 py-1 rounded mr-2 active:bg-white/30"
+                  className="bg-white/20 active:bg-white/30 mr-2 px-3 py-1 rounded"
                 >
-                  <Text className="text-white font-bold">Guardar</Text>
+                  <Text className="font-bold text-white">Guardar</Text>
                 </Pressable>
               ) : null,
           }}
@@ -501,7 +566,7 @@ export default function Odontogram() {
                   </Canvas>
 
                   {/* Model Text */}
-                  <View className="top-0 absolute bg-blackBlue/75 self-center w-full">
+                  <View className="top-0 absolute self-center bg-blackBlue/75 w-full">
                     <ScrollView
                       horizontal
                       showsHorizontalScrollIndicator={false}
@@ -528,7 +593,7 @@ export default function Odontogram() {
                         ))}
                       </View>
                     </ScrollView>
-                    <Text className="font-bold text-whiteBlue py-2 text-center">
+                    <Text className="py-2 font-bold text-whiteBlue text-center">
                       Modelo: {isAdultModel ? "Adulto" : "Niño"}
                     </Text>
                     {/* ScrollView Dientes Superiores (Arcada Superior) */}
@@ -540,7 +605,7 @@ export default function Odontogram() {
                         alignItems: "center",
                       }}
                     >
-                      <View className="flex-row h-14 w-full">
+                      <View className="flex-row w-full h-14">
                         {upper.map(renderToothButton)}
                       </View>
                     </ScrollView>
@@ -551,7 +616,7 @@ export default function Odontogram() {
                     <View className="flex-row gap-1 bg-darkBlue/75 p-1 rounded-xl">
                       <Pressable
                         onPress={() => setIsOpen(!isOpen)}
-                        className="bg-lightBlue px-4 py-2 rounded-l-lg active:bg-whiteBlue"
+                        className="bg-lightBlue active:bg-whiteBlue px-4 py-2 rounded-l-lg"
                       >
                         <Text className="text-blackBlue">
                           {isOpen ? "Cerrar Boca" : "Abrir Boca"}
@@ -559,7 +624,7 @@ export default function Odontogram() {
                       </Pressable>
                       <Pressable
                         onPress={() => setShowRoots(!showRoots)}
-                        className="bg-lightBlue px-4 py-2 rounded-r-lg active:bg-whiteBlue"
+                        className="bg-lightBlue active:bg-whiteBlue px-4 py-2 rounded-r-lg"
                       >
                         <Text className="text-blackBlue">
                           {showRoots ? "Ocultar Raíces" : "Ver Raíces"}
@@ -575,7 +640,7 @@ export default function Odontogram() {
                         alignItems: "center",
                       }}
                     >
-                      <View className="h-14 flex-row w-full">
+                      <View className="flex-row w-full h-14">
                         {lower.map(renderToothButton)}
                       </View>
                     </ScrollView>
@@ -597,9 +662,9 @@ export default function Odontogram() {
 
               {/* Single Tooth View */}
               {selectedTooth && singleToothUri && (
-                <View className="flex-row items-center justify-between my-4 w-full h-52">
+                <View className="flex-row justify-between items-center my-4 w-full h-52">
                   {/* ScrollView de Botones de selección de cara */}
-                  <View className="w-1/3 h-full bg-slate-100 rounded-l-lg p-1 border border-r-0 border-gray-300">
+                  <View className="bg-slate-100 p-1 border border-gray-300 border-r-0 rounded-l-lg w-1/3 h-full">
                     <ScrollView
                       nestedScrollEnabled
                       showsVerticalScrollIndicator
@@ -657,9 +722,9 @@ export default function Odontogram() {
                           );
                         })
                       ) : (
-                        <View className="mt-4 items-center">
+                        <View className="items-center mt-4">
                           <ActivityIndicator size="small" color="#000" />
-                          <Text className="text-[10px] text-gray-500 mt-1 text-center">
+                          <Text className="mt-1 text-[10px] text-gray-500 text-center">
                             Cargando partes...
                           </Text>
                         </View>
@@ -668,7 +733,7 @@ export default function Odontogram() {
                   </View>
 
                   {/* Visor 3D */}
-                  <View className="flex-1 h-full bg-gray-200 rounded-r-lg overflow-hidden border border-gray-300">
+                  <View className="flex-1 bg-gray-200 border border-gray-300 rounded-r-lg h-full overflow-hidden">
                     <Canvas
                       camera={{ position: [0, 0, 5], fov: 50 }}
                       style={{ flex: 1, width: "100%" }}
@@ -706,7 +771,7 @@ export default function Odontogram() {
 
               {/* Selected Tooth Face */}
               {selectedTooth && singleToothUri && (
-                <View className="bg-blackBlue/75 mb-2 px-3 py-1 rounded-lg items-center">
+                <View className="items-center bg-blackBlue/75 mb-2 px-3 py-1 rounded-lg">
                   <Text
                     className={`font-bold text-whiteBlue ${!selectedFace ? `italic` : ``}`}
                   >
@@ -715,7 +780,7 @@ export default function Odontogram() {
                       : "Seleccione una cara del diente"}
                   </Text>
                   {selectedFace && getFaceValues(selectedFace) !== "" && (
-                    <Text className="text-whiteBlue text-sm opacity-80 mt-1">
+                    <Text className="opacity-80 mt-1 text-whiteBlue text-sm">
                       {getFaceValues(selectedFace)}
                     </Text>
                   )}
@@ -725,7 +790,7 @@ export default function Odontogram() {
               {/* Markup Legend */}
               {selectedTooth && singleToothUri && (
                 <View className="gap-2 mb-2 w-full">
-                  <Text className="font-bold text-lg text-blackBlue">
+                  <Text className="font-bold text-blackBlue text-lg">
                     Marcar Cara/Pieza dental
                   </Text>
                   <View className="flex-row gap-2">
@@ -777,20 +842,34 @@ export default function Odontogram() {
                       !isEditable || selectedFace === null ? "opacity-50" : ""
                     } bg-stone-100 items-center active:bg-stone-200 flex-1 border border-stone-300 px-4 py-2 rounded-md`}
                   >
-                    <Text className="text-black font-semibold">Sano</Text>
+                    <Text className="font-semibold text-black">Sano</Text>
                   </Pressable>
                 </View>
               )}
 
+              {/* Register Date */}
+              {currentOdontogram.registerDate && (
+                <Text className="mt-5 w-full text-blackBlue/75 text-right italic">
+                  Creado el{" "}
+                  {new Date(currentOdontogram.registerDate).toLocaleDateString(
+                    "es-BO",
+                    {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    },
+                  )}
+                </Text>
+              )}
               {/* Update Date */}
               {currentOdontogram.updateDate && (
-                <Text>
+                <Text className="w-full text-blackBlue/75 text-right italic">
                   Actualizado el{" "}
                   {new Date(currentOdontogram.updateDate).toLocaleDateString(
                     "es-BO",
                     {
                       day: "2-digit",
-                      month: "short",
+                      month: "long",
                       year: "numeric",
                     },
                   )}

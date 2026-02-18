@@ -98,18 +98,6 @@ export function WeekAppointment(props: appointmentProps) {
   );
 }
 
-export function MonthAppointment({
-  dayAppointments,
-}: {
-  dayAppointments: number;
-}) {
-  return (
-    <Text className="bg-pureBlue py-1 font-bold text-whiteBlue text-xs text-center">
-      {dayAppointments} registros
-    </Text>
-  );
-}
-
 interface appointmentSelectionProps {
   isAvailable?: boolean;
   isSelected?: boolean;

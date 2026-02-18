@@ -108,6 +108,7 @@ export interface DiagnosedProcedureDto {
   dentalPieces: number;
   registerDate: string;
   updateDate?: string;
+  isPaid: boolean;
 }
 
 export interface AppUserDto {

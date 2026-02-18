@@ -316,7 +316,7 @@ export default function Index() {
             {/* Pending Payments */}
             <View className="gap-1 w-full">
               <Text className="font-bold text-blackBlue">
-                Tratamientos con Saldo Pendiente:
+                Tratamientos Recientes con Saldo Pendiente:
               </Text>
               <ScrollView
                 nestedScrollEnabled={true}
@@ -333,12 +333,12 @@ export default function Index() {
                   ) : (
                     pendingPayments.map((pending, i) => (
                       <View key={i} className="flex-row items-end gap-1">
-                        <Text className="text-blackBlue">
+                        <Text className="text-red-800">
                           {i + 1 + ") "}
                           {splitNameIntoLines(pending.patientName)}
                         </Text>
-                        <View className="flex-1 border-blackBlue border-t border-dashed" />
-                        <Text className="text-blackBlue text-right">
+                        <View className="flex-1 border-red-800 border-t border-dashed" />
+                        <Text className="text-red-800 text-right">
                           {"(" + pending.pendingAmount + " Bs.)"}
                           {`\n`}
                           {pending.treatment}

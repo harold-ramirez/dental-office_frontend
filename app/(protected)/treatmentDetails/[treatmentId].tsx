@@ -95,23 +95,51 @@ export default function TreatmentDetails() {
                     "es-BO",
                   )}
                 </Text>
+                {treatmentDetails.payments.length > 0 && (
+                  <>
+                    <Text className="font-bold text-blackBlue">
+                      Último Pago:
+                    </Text>
+                    <Text>
+                      {new Date(
+                        treatmentDetails.payments[
+                          treatmentDetails.payments.length - 1
+                        ].registerDate,
+                      ).toLocaleDateString("es-BO")}
+                    </Text>
+                  </>
+                )}
               </View>
               <View className="flex-1 items-center">
                 <Text className="font-bold text-blackBlue">
                   Piezas Dentales:
                 </Text>
-                <Text>{treatmentDetails.dentalPieces ?? "N/A"}</Text>
+                <Text className="text-center">
+                  {treatmentDetails.dentalPieces ?? "N/A"}
+                </Text>
               </View>
               <View className="flex-row">
                 <View className="items-end">
                   <Text className="font-bold text-blackBlue">Total: </Text>
                   <Text className="font-bold text-blackBlue">Pagado: </Text>
-                  <Text className="font-bold text-blackBlue">A Cuenta: </Text>
+                  <Text
+                    className={`font-bold ${treatmentDetails.totalDue === 0 ? "text-blackBlue" : "text-red-500"}`}
+                  >
+                    A Cuenta:{" "}
+                  </Text>
                 </View>
                 <View className="items-end">
                   <Text>{treatmentDetails.totalCost}Bs.</Text>
                   <Text>{treatmentDetails.totalPaid}Bs.</Text>
-                  <Text>{treatmentDetails.totalDue}Bs.</Text>
+                  <Text
+                    className={
+                      treatmentDetails.totalDue === 0
+                        ? "text-blackBlue"
+                        : "text-red-500"
+                    }
+                  >
+                    {treatmentDetails.totalDue}Bs.
+                  </Text>
                 </View>
               </View>
             </View>
@@ -155,14 +183,15 @@ export default function TreatmentDetails() {
               )}
             </View>
           </ScrollView>
-          {treatmentDetails.totalDue > 0 && (
-            <Pressable
-              onPress={() => setOpenModal(true)}
-              className="right-4 bottom-4 absolute flex-row justify-center items-center bg-blackBlue rounded-2xl size-16"
-            >
-              <PlusIcon color="#D6E8EE" size={35} />
-            </Pressable>
-          )}
+          {treatmentDetails.totalDue > 0 &&
+            treatmentDetails.payments !== undefined && (
+              <Pressable
+                onPress={() => setOpenModal(true)}
+                className="right-4 bottom-4 absolute flex-row justify-center items-center bg-blackBlue rounded-2xl size-16"
+              >
+                <PlusIcon color="#D6E8EE" size={35} />
+              </Pressable>
+            )}
         </View>
       </SafeAreaView>
       {openModal && (

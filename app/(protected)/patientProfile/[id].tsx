@@ -529,11 +529,21 @@ export default function PatientProfile() {
               ) : (
                 treatments.map((treatment) => (
                   <View key={treatment.Id} className="flex-row">
-                    <Text className="text-blackBlue">
+                    <Text
+                      className={
+                        !treatment.isPaid ? `text-red-500` : `text-blackBlue`
+                      }
+                    >
                       {treatment.treatment.name}
                     </Text>
-                    <View className="flex-1 mx-2 mb-1 border-blackBlue border-b border-dotted" />
-                    <Text className="text-blackBlue">
+                    <View
+                      className={`flex-1 mx-2 mb-1 border-b border-dotted ${!treatment.isPaid ? `border-red-500` : `border-blackBlue`}`}
+                    />
+                    <Text
+                      className={
+                        !treatment.isPaid ? `text-red-500` : `text-blackBlue`
+                      }
+                    >
                       {new Date(treatment.registerDate).toLocaleDateString(
                         "es-BO",
                       )}
@@ -698,11 +708,11 @@ export default function PatientProfile() {
             {/* Whatsapp Button */}
             <Pressable
               onPress={handleWhatsApp}
-              className="flex-row justify-center items-center gap-2 bg-green-700 active:bg-green-800 mt-5 py-2 rounded-full"
+              className="justify-center items-center self-center active:bg-green-800/25 mt-5 px-4 border-green-800/75 border-x-2 active:rounded-lg"
             >
-              <WhatsappIcon color="#D6E8EE" />
-              <Text className="font-semibold text-whiteBlue">
-                Enviar mensaje por Whatsapp
+              <WhatsappIcon color="#16653499" size={48} />
+              <Text className="font-semibold text-green-800/75 text-sm text-center">
+                Enviar mensaje
               </Text>
             </Pressable>
           </View>

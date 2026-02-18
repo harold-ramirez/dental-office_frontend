@@ -290,7 +290,7 @@ export default function DayScheduleDetails() {
         style={{
           flex: 1,
           paddingHorizontal: 12,
-          paddingTop: 8,
+          paddingTop: 12,
           alignItems: "center",
         }}
       >
@@ -298,7 +298,7 @@ export default function DayScheduleDetails() {
           options={{
             headerShown: true,
             headerTitleAlign: "center",
-            headerStyle: { backgroundColor: "#001B48" },
+            headerStyle: {backgroundColor: "#001B48"},
             headerTintColor: "#D6E8EE",
             headerTitle: "Agendar Cita",
             headerRight: () => <></>,

@@ -11,7 +11,9 @@ export default function TreatmentCard(props: TreatmentCardProps) {
   const { procedure } = props;
 
   return (
-    <View className="flex-row bg-lightBlue rounded-lg">
+    <View
+      className={`flex-row bg-lightBlue rounded-lg ${!procedure.isPaid ? `border-2 border-red-500` : ``}`}
+    >
       <View className="flex-row flex-1 items-center gap-1 p-1 my-2">
         <ToothIcon size={64} color="#02457A" />
         <View className="flex-1">

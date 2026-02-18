@@ -14,7 +14,6 @@ import PopupModal from "../popupModal";
 import {
   AppointmentSelection,
   DayAppointment,
-  MonthAppointment,
   WeekAppointment,
 } from "./appointmentModes";
 
@@ -575,10 +574,16 @@ export function MonthSchedule({ refresh }: { refresh: string }) {
   >([]);
 
   const appointmentMap = new Map(
-    monthAppointments.map((item) => [
-      new Date(item.day).toDateString(),
-      item.count,
-    ]),
+    monthAppointments.map((item) => {
+      // Parsear la fecha correctamente como fecha local, no UTC
+      const dateParts = item.day.split("T")[0].split("-");
+      const localDate = new Date(
+        parseInt(dateParts[0]),
+        parseInt(dateParts[1]) - 1,
+        parseInt(dateParts[2]),
+      );
+      return [localDate.toDateString(), item.count];
+    }),
   );
 
   useEffect(() => {
@@ -667,9 +672,9 @@ export function MonthSchedule({ refresh }: { refresh: string }) {
                             {dayNumber}
                           </Text>
                           {appointmentCount > 0 && (
-                            <MonthAppointment
-                              dayAppointments={appointmentCount}
-                            />
+                            <Text className="bg-pureBlue py-1 font-bold text-whiteBlue text-xs text-center">
+                              {appointmentCount} registros
+                            </Text>
                           )}
                         </>
                       )}
