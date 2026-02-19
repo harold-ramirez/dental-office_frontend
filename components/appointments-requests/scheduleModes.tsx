@@ -92,12 +92,12 @@ const hours = [
   "19:00",
   "19:30",
 ];
-const currentWeek = () => {
+const getWeekRange = (isNextWeek: boolean = false) => {
   const today = new Date();
   const weekDay = today.getDay();
   const offsetLunes = weekDay === 0 ? -6 : 1 - weekDay;
   const monday = new Date(today);
-  monday.setDate(today.getDate() + offsetLunes);
+  monday.setDate(today.getDate() + offsetLunes + (isNextWeek ? 7 : 0));
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
@@ -260,26 +260,34 @@ export function DaySchedule({
 
           {/*  */}
           <View className="flex-1 mt-3">
-            {todaySchedule.map((appointment, i) => (
-              <View key={i}>
-                {appointment.Id === 0 ? (
-                  <DayAppointment
-                    dateHour={appointment.dateHour}
-                    duration={appointment.minutesDuration}
-                  />
-                ) : (
-                  <DayAppointment
-                    patient={appointment.patient}
-                    duration={appointment.minutesDuration}
-                    treatment={appointment.treatment ?? "-"}
-                    onPress={() => {
-                      setSelectedAppointment(appointment);
-                      setModalVisible(true);
-                    }}
-                  />
-                )}
-              </View>
-            ))}
+            {todaySchedule.map((appointment, i) => {
+              // Calcular si la fecha es pasada
+              const appointmentDate = new Date(appointment.dateHour);
+              const today = new Date();
+              const isDayPassed = appointmentDate < today;
+
+              return (
+                <View key={i}>
+                  {appointment.Id === 0 ? (
+                    <DayAppointment
+                      dateHour={appointment.dateHour}
+                      duration={appointment.minutesDuration}
+                      isDisabled={isDayPassed}
+                    />
+                  ) : (
+                    <DayAppointment
+                      patient={appointment.patient}
+                      duration={appointment.minutesDuration}
+                      treatment={appointment.treatment ?? "-"}
+                      onPress={() => {
+                        setSelectedAppointment(appointment);
+                        setModalVisible(true);
+                      }}
+                    />
+                  )}
+                </View>
+              );
+            })}
             <View className="border-blackBlue border-t" />
           </View>
         </View>
@@ -298,6 +306,9 @@ export function DaySchedule({
 export function WeekSchedule({ refresh }: { refresh: string }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [whatsappMessage, setWhatsappMessage] = useState("");
+  const [currentWeekView, setCurrentWeekView] = useState<"current" | "next">(
+    "current",
+  );
   const { logOut } = useContext(AuthContext);
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentDto>({
@@ -313,36 +324,64 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
       requestPhoneNumber: null,
       patientPhoneNumber: null,
     });
-  const [weekSchedule, setWeekSchedule] = useState<{
-    monday: AppointmentDto[];
-    tuesday: AppointmentDto[];
-    wednesday: AppointmentDto[];
-    thursday: AppointmentDto[];
-    friday: AppointmentDto[];
-    saturday: AppointmentDto[];
-    sunday: AppointmentDto[];
+  const [allWeeksSchedule, setAllWeeksSchedule] = useState<{
+    currentWeek: {
+      monday: AppointmentDto[];
+      tuesday: AppointmentDto[];
+      wednesday: AppointmentDto[];
+      thursday: AppointmentDto[];
+      friday: AppointmentDto[];
+      saturday: AppointmentDto[];
+      sunday: AppointmentDto[];
+    };
+    nextWeek: {
+      monday: AppointmentDto[];
+      tuesday: AppointmentDto[];
+      wednesday: AppointmentDto[];
+      thursday: AppointmentDto[];
+      friday: AppointmentDto[];
+      saturday: AppointmentDto[];
+      sunday: AppointmentDto[];
+    };
   }>({
-    monday: [],
-    tuesday: [],
-    wednesday: [],
-    thursday: [],
-    friday: [],
-    saturday: [],
-    sunday: [],
+    currentWeek: {
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: [],
+    },
+    nextWeek: {
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: [],
+    },
   });
+
+  const weekSchedule =
+    currentWeekView === "current"
+      ? allWeeksSchedule.currentWeek
+      : allWeeksSchedule.nextWeek;
 
   useEffect(() => {
     const makeSchedule = (
       appointments: AppointmentDto[],
       day: string,
       dayIndex: number,
+      isNextWeek: boolean = false,
     ) => {
       const result: AppointmentDto[] = [];
       const today = new Date();
       const weekDay = today.getDay();
       const offsetLunes = weekDay === 0 ? -6 : 1 - weekDay;
       const monday = new Date(today);
-      monday.setDate(today.getDate() + offsetLunes);
+      monday.setDate(today.getDate() + offsetLunes + (isNextWeek ? 7 : 0));
       const dayDate = new Date(monday);
       dayDate.setDate(monday.getDate() + dayIndex);
       const iHour = new Date(dayDate);
@@ -353,7 +392,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
         0,
       );
 
-      let fillerId = 0 - dayIndex * 100;
+      let fillerId = 0 - dayIndex * 100 - (isNextWeek ? 1000 : 0);
       while (
         iHour.getHours() <= Number(hours[hours.length - 1].split(":")[0])
       ) {
@@ -395,50 +434,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
 
         iHour.setMinutes(iHour.getMinutes() + step);
       }
-      switch (day) {
-        case "monday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            monday: result,
-          }));
-          break;
-        case "tuesday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            tuesday: result,
-          }));
-          break;
-        case "wednesday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            wednesday: result,
-          }));
-          break;
-        case "thursday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            thursday: result,
-          }));
-          break;
-        case "friday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            friday: result,
-          }));
-          break;
-        case "saturday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            saturday: result,
-          }));
-          break;
-        case "sunday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            sunday: result,
-          }));
-          break;
-      }
+      return result;
     };
 
     const fetchAppointments = async () => {
@@ -448,13 +444,52 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
           { method: "GET" },
           logOut,
         );
-        makeSchedule(data.monday, "monday", 0);
-        makeSchedule(data.tuesday, "tuesday", 1);
-        makeSchedule(data.wednesday, "wednesday", 2);
-        makeSchedule(data.thursday, "thursday", 3);
-        makeSchedule(data.friday, "friday", 4);
-        makeSchedule(data.saturday, "saturday", 5);
-        makeSchedule(data.sunday, "sunday", 6);
+
+        setAllWeeksSchedule({
+          currentWeek: {
+            monday: makeSchedule(data.currentWeek.monday, "monday", 0, false),
+            tuesday: makeSchedule(
+              data.currentWeek.tuesday,
+              "tuesday",
+              1,
+              false,
+            ),
+            wednesday: makeSchedule(
+              data.currentWeek.wednesday,
+              "wednesday",
+              2,
+              false,
+            ),
+            thursday: makeSchedule(
+              data.currentWeek.thursday,
+              "thursday",
+              3,
+              false,
+            ),
+            friday: makeSchedule(data.currentWeek.friday, "friday", 4, false),
+            saturday: makeSchedule(
+              data.currentWeek.saturday,
+              "saturday",
+              5,
+              false,
+            ),
+            sunday: makeSchedule(data.currentWeek.sunday, "sunday", 6, false),
+          },
+          nextWeek: {
+            monday: makeSchedule(data.nextWeek.monday, "monday", 0, true),
+            tuesday: makeSchedule(data.nextWeek.tuesday, "tuesday", 1, true),
+            wednesday: makeSchedule(
+              data.nextWeek.wednesday,
+              "wednesday",
+              2,
+              true,
+            ),
+            thursday: makeSchedule(data.nextWeek.thursday, "thursday", 3, true),
+            friday: makeSchedule(data.nextWeek.friday, "friday", 4, true),
+            saturday: makeSchedule(data.nextWeek.saturday, "saturday", 5, true),
+            sunday: makeSchedule(data.nextWeek.sunday, "sunday", 6, true),
+          },
+        });
       } catch (error) {
         console.log("Error fetching week appointments:", error);
       }
@@ -482,9 +517,29 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
 
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
-      <Text className="w-full font-bold text-blackBlue text-xl text-center capitalize">
-        {currentWeek()}
-      </Text>
+      {/* Header */}
+      <View className="flex-row justify-center items-center mb-2">
+        {/* Go to previous week */}
+        <Pressable
+          onPress={() => setCurrentWeekView("current")}
+          disabled={currentWeekView === "current"}
+          className={`justify-center items-center p-1 ${currentWeekView === "current" ? "opacity-30" : "active:bg-lightBlue"}`}
+        >
+          <LeftArrowIcon color="#02457A" size={32} />
+        </Pressable>
+        {/* Week Text */}
+        <Text className="flex-1 font-bold text-blackBlue text-xl text-center capitalize">
+          {getWeekRange(currentWeekView === "next")}
+        </Text>
+        {/* Go to next week */}
+        <Pressable
+          onPress={() => setCurrentWeekView("next")}
+          disabled={currentWeekView === "next"}
+          className={`justify-center items-center p-1 ${currentWeekView === "next" ? "opacity-30" : "active:bg-lightBlue"}`}
+        >
+          <RightArrowIcon color="#02457A" size={32} />
+        </Pressable>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
         <View className="flex-row gap-2">
@@ -506,25 +561,33 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
                   <Text className="w-24 font-semibold text-blackBlue text-lg text-center">
                     {DAY_LABELS[day]}
                   </Text>
-                  {weekSchedule[day].map((appointment, i) => (
-                    <View key={i} className="border-blackBlue border-r">
-                      {appointment.Id <= 0 ? (
-                        <WeekAppointment
-                          duration={appointment.minutesDuration}
-                          dateHour={appointment.dateHour}
-                        />
-                      ) : (
-                        <WeekAppointment
-                          duration={appointment.minutesDuration}
-                          patient={appointment.patient}
-                          onPress={() => {
-                            setSelectedAppointment(appointment);
-                            setModalVisible(true);
-                          }}
-                        />
-                      )}
-                    </View>
-                  ))}
+                  {weekSchedule[day].map((appointment, i) => {
+                    // Calcular si la fecha es pasada
+                    const appointmentDate = new Date(appointment.dateHour);
+                    const today = new Date();
+                    const isDayPassed = appointmentDate < today;
+
+                    return (
+                      <View key={i} className="border-blackBlue border-r">
+                        {appointment.Id <= 0 ? (
+                          <WeekAppointment
+                            duration={appointment.minutesDuration}
+                            dateHour={appointment.dateHour}
+                            isDisabled={isDayPassed}
+                          />
+                        ) : (
+                          <WeekAppointment
+                            duration={appointment.minutesDuration}
+                            patient={appointment.patient}
+                            onPress={() => {
+                              setSelectedAppointment(appointment);
+                              setModalVisible(true);
+                            }}
+                          />
+                        )}
+                      </View>
+                    );
+                  })}
                 </View>
               ))}
             </View>
@@ -545,9 +608,21 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
 
 export function MonthSchedule({ refresh }: { refresh: string }) {
   const { logOut } = useContext(AuthContext);
+  const [currentMonthView, setCurrentMonthView] = useState<"current" | "next">(
+    "current",
+  );
   const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
+
+  // Calculate month based on view
+  const monthOffset = currentMonthView === "next" ? 1 : 0;
+  const targetDate = new Date(
+    today.getFullYear(),
+    today.getMonth() + monthOffset,
+    1,
+  );
+  const currentMonth = targetDate.getMonth();
+  const currentYear = targetDate.getFullYear();
+
   const firstDay = new Date(currentYear, currentMonth, 1);
   const startingDayOfWeek = firstDay.getDay();
   const adjustedStartDay = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
@@ -569,9 +644,18 @@ export function MonthSchedule({ refresh }: { refresh: string }) {
   );
   const allDays = [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
 
-  const [monthAppointments, setMonthAppointments] = useState<
-    { day: string; count: number }[]
-  >([]);
+  const [allMonthsAppointments, setAllMonthsAppointments] = useState<{
+    currentMonth: { day: string; count: number }[];
+    nextMonth: { day: string; count: number }[];
+  }>({
+    currentMonth: [],
+    nextMonth: [],
+  });
+
+  const monthAppointments =
+    currentMonthView === "current"
+      ? allMonthsAppointments.currentMonth
+      : allMonthsAppointments.nextMonth;
 
   const appointmentMap = new Map(
     monthAppointments.map((item) => {
@@ -594,7 +678,10 @@ export function MonthSchedule({ refresh }: { refresh: string }) {
           { method: "GET" },
           logOut,
         );
-        setMonthAppointments(data);
+        setAllMonthsAppointments({
+          currentMonth: data.currentMonth,
+          nextMonth: data.nextMonth,
+        });
       } catch (error) {
         console.log("Error fetching month appointments:", error);
       }
@@ -607,13 +694,32 @@ export function MonthSchedule({ refresh }: { refresh: string }) {
   return (
     <View className="flex-1 justify-center items-center bg-whiteBlue p-2 rounded-xl w-full">
       {/* Month Title */}
-      <Text className="self-center mb-2 font-bold text-blackBlue text-xl text-center uppercase">
-        {today.toLocaleDateString("es-BO", {
-          month: "long",
-        })}
-        {" - "}
-        {today.getFullYear()}
-      </Text>
+      <View className="flex-row justify-center items-center mb-2 w-full">
+        {/* Go to previous month */}
+        <Pressable
+          onPress={() => setCurrentMonthView("current")}
+          disabled={currentMonthView === "current"}
+          className={`justify-center items-center p-1 ${currentMonthView === "current" ? "opacity-30" : "active:bg-lightBlue"}`}
+        >
+          <LeftArrowIcon color="#02457A" size={32} />
+        </Pressable>
+        {/* Month Text */}
+        <Text className="flex-1 font-bold text-blackBlue text-xl text-center uppercase">
+          {targetDate.toLocaleDateString("es-BO", {
+            month: "long",
+          })}
+          {" - "}
+          {targetDate.getFullYear()}
+        </Text>
+        {/* Go to next month */}
+        <Pressable
+          onPress={() => setCurrentMonthView("next")}
+          disabled={currentMonthView === "next"}
+          className={`justify-center items-center p-1 ${currentMonthView === "next" ? "opacity-30" : "active:bg-lightBlue"}`}
+        >
+          <RightArrowIcon color="#02457A" size={32} />
+        </Pressable>
+      </View>
 
       <View className="flex-1 self-start">
         {/* Days */}
@@ -696,6 +802,9 @@ export function WeekAppointmentSelect({
   setSelectesDate: (val: Date) => void;
 }) {
   const { logOut } = useContext(AuthContext);
+  const [currentWeekView, setCurrentWeekView] = useState<"current" | "next">(
+    "current",
+  );
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentDto>({
       Id: 0,
@@ -709,36 +818,64 @@ export function WeekAppointmentSelect({
       requestPhoneNumber: null,
       patientPhoneNumber: null,
     });
-  const [weekSchedule, setWeekSchedule] = useState<{
-    monday: AppointmentDto[];
-    tuesday: AppointmentDto[];
-    wednesday: AppointmentDto[];
-    thursday: AppointmentDto[];
-    friday: AppointmentDto[];
-    saturday: AppointmentDto[];
-    sunday: AppointmentDto[];
+  const [allWeeksSchedule, setAllWeeksSchedule] = useState<{
+    currentWeek: {
+      monday: AppointmentDto[];
+      tuesday: AppointmentDto[];
+      wednesday: AppointmentDto[];
+      thursday: AppointmentDto[];
+      friday: AppointmentDto[];
+      saturday: AppointmentDto[];
+      sunday: AppointmentDto[];
+    };
+    nextWeek: {
+      monday: AppointmentDto[];
+      tuesday: AppointmentDto[];
+      wednesday: AppointmentDto[];
+      thursday: AppointmentDto[];
+      friday: AppointmentDto[];
+      saturday: AppointmentDto[];
+      sunday: AppointmentDto[];
+    };
   }>({
-    monday: [],
-    tuesday: [],
-    wednesday: [],
-    thursday: [],
-    friday: [],
-    saturday: [],
-    sunday: [],
+    currentWeek: {
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: [],
+    },
+    nextWeek: {
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: [],
+    },
   });
+
+  const weekSchedule =
+    currentWeekView === "current"
+      ? allWeeksSchedule.currentWeek
+      : allWeeksSchedule.nextWeek;
 
   useEffect(() => {
     const makeSchedule = (
       appointments: AppointmentDto[],
       day: string,
       dayIndex: number,
+      isNextWeek: boolean = false,
     ) => {
       const result: AppointmentDto[] = [];
       const today = new Date();
       const weekDay = today.getDay();
       const offsetLunes = weekDay === 0 ? -6 : 1 - weekDay;
       const monday = new Date(today);
-      monday.setDate(today.getDate() + offsetLunes);
+      monday.setDate(today.getDate() + offsetLunes + (isNextWeek ? 7 : 0));
       const dayDate = new Date(monday);
       dayDate.setDate(monday.getDate() + dayIndex);
       const iHour = new Date(dayDate);
@@ -749,7 +886,7 @@ export function WeekAppointmentSelect({
         0,
       );
 
-      let fillerId = 0 - dayIndex * 100;
+      let fillerId = 0 - dayIndex * 100 - (isNextWeek ? 1000 : 0);
       while (
         iHour.getHours() <= Number(hours[hours.length - 1].split(":")[0])
       ) {
@@ -791,50 +928,7 @@ export function WeekAppointmentSelect({
 
         iHour.setMinutes(iHour.getMinutes() + step);
       }
-      switch (day) {
-        case "monday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            monday: result,
-          }));
-          break;
-        case "tuesday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            tuesday: result,
-          }));
-          break;
-        case "wednesday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            wednesday: result,
-          }));
-          break;
-        case "thursday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            thursday: result,
-          }));
-          break;
-        case "friday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            friday: result,
-          }));
-          break;
-        case "saturday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            saturday: result,
-          }));
-          break;
-        case "sunday":
-          setWeekSchedule((prev) => ({
-            ...prev,
-            sunday: result,
-          }));
-          break;
-      }
+      return result;
     };
 
     const fetchAppointments = async () => {
@@ -844,13 +938,52 @@ export function WeekAppointmentSelect({
           { method: "GET" },
           logOut,
         );
-        makeSchedule(data.monday, "monday", 0);
-        makeSchedule(data.tuesday, "tuesday", 1);
-        makeSchedule(data.wednesday, "wednesday", 2);
-        makeSchedule(data.thursday, "thursday", 3);
-        makeSchedule(data.friday, "friday", 4);
-        makeSchedule(data.saturday, "saturday", 5);
-        makeSchedule(data.sunday, "sunday", 6);
+
+        setAllWeeksSchedule({
+          currentWeek: {
+            monday: makeSchedule(data.currentWeek.monday, "monday", 0, false),
+            tuesday: makeSchedule(
+              data.currentWeek.tuesday,
+              "tuesday",
+              1,
+              false,
+            ),
+            wednesday: makeSchedule(
+              data.currentWeek.wednesday,
+              "wednesday",
+              2,
+              false,
+            ),
+            thursday: makeSchedule(
+              data.currentWeek.thursday,
+              "thursday",
+              3,
+              false,
+            ),
+            friday: makeSchedule(data.currentWeek.friday, "friday", 4, false),
+            saturday: makeSchedule(
+              data.currentWeek.saturday,
+              "saturday",
+              5,
+              false,
+            ),
+            sunday: makeSchedule(data.currentWeek.sunday, "sunday", 6, false),
+          },
+          nextWeek: {
+            monday: makeSchedule(data.nextWeek.monday, "monday", 0, true),
+            tuesday: makeSchedule(data.nextWeek.tuesday, "tuesday", 1, true),
+            wednesday: makeSchedule(
+              data.nextWeek.wednesday,
+              "wednesday",
+              2,
+              true,
+            ),
+            thursday: makeSchedule(data.nextWeek.thursday, "thursday", 3, true),
+            friday: makeSchedule(data.nextWeek.friday, "friday", 4, true),
+            saturday: makeSchedule(data.nextWeek.saturday, "saturday", 5, true),
+            sunday: makeSchedule(data.nextWeek.sunday, "sunday", 6, true),
+          },
+        });
       } catch (error) {
         console.log("Error fetching week appointments:", error);
       }
@@ -864,22 +997,23 @@ export function WeekAppointmentSelect({
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
       {/* Header */}
       <View className="flex-row justify-center items-center">
-        {/* Go last week */}
+        {/* Go to previous week */}
         <Pressable
-          onPress={() => {}}
-          disabled={true}
-          className="justify-center items-center active:bg-lightBlue p-1"
+          onPress={() => setCurrentWeekView("current")}
+          disabled={currentWeekView === "current"}
+          className={`justify-center items-center p-1 ${currentWeekView === "current" ? "opacity-30" : "active:bg-lightBlue"}`}
         >
           <LeftArrowIcon color="#02457A" size={32} />
         </Pressable>
         {/* Week Text */}
         <Text className="flex-1 font-bold text-blackBlue text-xl text-center capitalize">
-          {currentWeek()}
+          {getWeekRange(currentWeekView === "next")}
         </Text>
-        {/* Go next week */}
+        {/* Go to next week */}
         <Pressable
-          onPress={() => {}}
-          className="justify-center items-center active:bg-lightBlue p-1"
+          onPress={() => setCurrentWeekView("next")}
+          disabled={currentWeekView === "next"}
+          className={`justify-center items-center p-1 ${currentWeekView === "next" ? "opacity-30" : "active:bg-lightBlue"}`}
         >
           <RightArrowIcon color="#02457A" size={32} />
         </Pressable>

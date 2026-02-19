@@ -28,17 +28,24 @@ export default function Patients() {
   const [openId, setOpenId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showNewPatient, setShowNewPatient] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const fetchAllPatients = useCallback(async () => {
     try {
+      setHasError(false);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+
       const endpoint = await fetchWithToken(
         "/patients",
         { method: "GET" },
         logOut,
       );
+      clearTimeout(timeoutId);
       setPatients(endpoint);
     } catch (e) {
       console.error("Error fetching users:", e);
+      setHasError(true);
     }
   }, [logOut]);
 
@@ -122,6 +129,19 @@ export default function Patients() {
               color={"#fff"}
               size={50}
             />
+          ) : hasError ? (
+            <View className="flex-1 justify-center items-center gap-4">
+              <SadIcon color="#9ca3af" size={100} />
+              <Text className="font-bold text-gray-400 text-lg text-center">
+                Error al cargar los pacientes
+              </Text>
+              <Pressable
+                onPress={onRefresh}
+                className="bg-blackBlue active:bg-pureBlue px-6 py-3 rounded-lg"
+              >
+                <Text className="text-white font-semibold">Reintentar</Text>
+              </Pressable>
+            </View>
           ) : (
             <FlatList
               className="flex-1 w-full"

@@ -8,6 +8,7 @@ interface appointmentProps {
   dateHour?: string;
   duration?: 15 | 30 | 45 | 60 | 75 | 90 | 105 | 120 | 135 | 150 | 165 | 180;
   onPress?: () => void;
+  isDisabled?: boolean;
 }
 
 export function DayAppointment(props: appointmentProps) {
@@ -17,6 +18,7 @@ export function DayAppointment(props: appointmentProps) {
     onPress,
     dateHour = new Date().toISOString(),
     duration = 30,
+    isDisabled = false,
   } = props;
   const heightPx = (duration / 15) * 40;
 
@@ -37,6 +39,8 @@ export function DayAppointment(props: appointmentProps) {
             {treatment}
           </Text>
         </Pressable>
+      ) : isDisabled ? (
+        <View className="h-full" />
       ) : (
         <Link
           asChild
@@ -62,6 +66,7 @@ export function WeekAppointment(props: appointmentProps) {
     patient,
     onPress,
     dateHour = new Date().toISOString(),
+    isDisabled = false,
   } = props;
   const heightPx = (duration / 15) * 40;
 
@@ -79,6 +84,8 @@ export function WeekAppointment(props: appointmentProps) {
             {patient}
           </Text>
         </Pressable>
+      ) : isDisabled ? (
+        <View className="h-full" />
       ) : (
         <Link
           asChild
