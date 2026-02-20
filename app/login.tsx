@@ -51,7 +51,6 @@ export default function Login() {
         placement: "top",
         duration: 3000,
       });
-      console.error(error);
     } finally {
       setLoading(false);
     }

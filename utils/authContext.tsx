@@ -1,5 +1,5 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SplashScreen, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
 
 SplashScreen.preventAutoHideAsync();
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const logIn = async (authToken: string) => {
     try {
-      await AsyncStorage.setItem(tokenStorageKey, authToken);
+      await SecureStore.setItemAsync(tokenStorageKey, authToken);
       setIsLoggedIn(true);
       setToken(authToken);
       console.log("JWT: [", authToken, "]");
@@ -42,8 +42,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const logOut = async () => {
     try {
-      await AsyncStorage.removeItem(tokenStorageKey);
-
+      await SecureStore.deleteItemAsync(tokenStorageKey);
       setIsLoggedIn(false);
       setToken(null);
       router.replace("/login");
@@ -55,7 +54,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const getAuthFromStorage = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem(tokenStorageKey);
+        const storedToken = await SecureStore.getItemAsync(tokenStorageKey);
         if (storedToken) {
           const res = await fetch(
             `${process.env.EXPO_PUBLIC_API_URL}/auth/validate`,
@@ -65,7 +64,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           );
 
           if (!res.ok) {
-            await AsyncStorage.removeItem(tokenStorageKey);
+            await SecureStore.deleteItemAsync(tokenStorageKey);
             setIsLoggedIn(false);
             setToken(null);
           } else {
