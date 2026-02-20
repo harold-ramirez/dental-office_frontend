@@ -7,6 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import {
+  FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -87,6 +88,7 @@ export default function AppointmentHistory() {
       console.error("Error fetching appointments history:", e);
     }
   }, [patientId, logOut]);
+
   useEffect(() => {
     fetchAppointmentsHistory();
   }, [fetchAppointmentsHistory]);
@@ -158,20 +160,21 @@ export default function AppointmentHistory() {
                       Tratamiento
                     </Text>
                   </View>
-                  <View className="gap-2">
-                    {appointmentHistory.last10Appointments.map(
-                      (appointment, i) => (
-                        <AppointmentRecord
-                          key={i}
-                          appointment={appointment}
-                          onPress={() => {
-                            setSelectedAppointment(appointment);
-                            setModalVisible(true);
-                          }}
-                        />
-                      ),
+                  <FlatList
+                    data={appointmentHistory.last10Appointments}
+                    keyExtractor={(_, index) => index.toString()}
+                    renderItem={({ item }) => (
+                      <AppointmentRecord
+                        appointment={item}
+                        onPress={() => {
+                          setSelectedAppointment(item);
+                          setModalVisible(true);
+                        }}
+                      />
                     )}
-                  </View>
+                    scrollEnabled={false}
+                    contentContainerStyle={{ gap: 8 }}
+                  />
                 </>
               ))}
 
@@ -204,20 +207,21 @@ export default function AppointmentHistory() {
                       Tratamiento
                     </Text>
                   </View>
-                  <View className="gap-2">
-                    {appointmentHistory.currentMonthAppointments.map(
-                      (appointment, i) => (
-                        <AppointmentRecord
-                          key={i}
-                          appointment={appointment}
-                          onPress={() => {
-                            setSelectedAppointment(appointment);
-                            setModalVisible(true);
-                          }}
-                        />
-                      ),
+                  <FlatList
+                    data={appointmentHistory.currentMonthAppointments}
+                    keyExtractor={(_, index) => index.toString()}
+                    renderItem={({ item }) => (
+                      <AppointmentRecord
+                        appointment={item}
+                        onPress={() => {
+                          setSelectedAppointment(item);
+                          setModalVisible(true);
+                        }}
+                      />
                     )}
-                  </View>
+                    scrollEnabled={false}
+                    contentContainerStyle={{ gap: 8 }}
+                  />
                 </>
               ))}
 
@@ -250,20 +254,21 @@ export default function AppointmentHistory() {
                       Tratamiento
                     </Text>
                   </View>
-                  <View className="gap-2">
-                    {appointmentHistory.lastMonthAppointments.map(
-                      (appointment, i) => (
-                        <AppointmentRecord
-                          key={i}
-                          appointment={appointment}
-                          onPress={() => {
-                            setSelectedAppointment(appointment);
-                            setModalVisible(true);
-                          }}
-                        />
-                      ),
+                  <FlatList
+                    data={appointmentHistory.lastMonthAppointments}
+                    keyExtractor={(_, index) => index.toString()}
+                    renderItem={({ item }) => (
+                      <AppointmentRecord
+                        appointment={item}
+                        onPress={() => {
+                          setSelectedAppointment(item);
+                          setModalVisible(true);
+                        }}
+                      />
                     )}
-                  </View>
+                    scrollEnabled={false}
+                    contentContainerStyle={{ gap: 8 }}
+                  />
                 </>
               ))}
 
@@ -299,20 +304,21 @@ export default function AppointmentHistory() {
                       Tratamiento
                     </Text>
                   </View>
-                  <View className="gap-2">
-                    {appointmentHistory.allAppointments.map(
-                      (appointment, i) => (
-                        <AppointmentRecord
-                          key={i}
-                          appointment={appointment}
-                          onPress={() => {
-                            setSelectedAppointment(appointment);
-                            setModalVisible(true);
-                          }}
-                        />
-                      ),
+                  <FlatList
+                    data={appointmentHistory.allAppointments}
+                    keyExtractor={(_, index) => index.toString()}
+                    renderItem={({ item }) => (
+                      <AppointmentRecord
+                        appointment={item}
+                        onPress={() => {
+                          setSelectedAppointment(item);
+                          setModalVisible(true);
+                        }}
+                      />
                     )}
-                  </View>
+                    scrollEnabled={false}
+                    contentContainerStyle={{ gap: 8 }}
+                  />
                 </>
               ))}
           </ScrollView>

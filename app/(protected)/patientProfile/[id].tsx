@@ -39,6 +39,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -47,6 +48,7 @@ export default function PatientProfile() {
   const { logOut, token } = useContext(AuthContext);
   const router = useRouter();
   const navigation = useNavigation();
+  const toast = useToast();
   const isNavigatingBack = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -88,7 +90,11 @@ export default function PatientProfile() {
       const url = `https://wa.me/591${patient.cellphoneNumber}?text=${msg}`;
       Linking.openURL(url);
     } else {
-      alert("El paciente no tiene número de teléfono registrado.");
+      toast.show("El paciente no tiene número de teléfono registrado.", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
   };
 

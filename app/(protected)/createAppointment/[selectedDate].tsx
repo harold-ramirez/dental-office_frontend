@@ -15,8 +15,10 @@ import {
 } from "react-native";
 import DatePicker from "react-native-date-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function DayScheduleDetails() {
+  const toast = useToast();
   const { logOut } = useContext(AuthContext);
   const {
     appointmentID,
@@ -70,11 +72,19 @@ export default function DayScheduleDetails() {
 
   const handlePostAppointment = async () => {
     if (!requestID && appointment.Patient_Id === 0) {
-      alert("Por favor, seleccione un paciente");
+      toast.show("Por favor, seleccione un paciente", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     if (appointment.dateHour === null) {
-      alert("Por favor, seleccione una fecha para la cita");
+      toast.show("Por favor, seleccione una fecha para la cita", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     Alert.alert(
@@ -121,11 +131,19 @@ export default function DayScheduleDetails() {
                 },
                 logOut,
               );
-              alert("La cita se registró correctamente");
+              toast.show("La cita se registró correctamente", {
+                type: "success",
+                placement: "top",
+                duration: 3000,
+              });
               router.back();
             } catch (error: any) {
               console.log("Error", error);
-              alert("Ocurrió un error al registrar la cita");
+              toast.show("Ocurrió un error al registrar la cita", {
+                type: "danger",
+                placement: "top",
+                duration: 3000,
+              });
             } finally {
               setLoading(false);
             }
@@ -138,8 +156,13 @@ export default function DayScheduleDetails() {
 
   const handleUpdateAppointment = async () => {
     if (appointment.dateHour === originalAppointment.dateHour) {
-      alert(
+      toast.show(
         "Por favor, seleccione un horario diferente para reprogramar la cita",
+        {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        },
       );
       return;
     }
@@ -178,11 +201,19 @@ export default function DayScheduleDetails() {
                 },
                 logOut,
               );
-              alert("La cita se reprogramó exitosamente");
+              toast.show("La cita se reprogramó exitosamente", {
+                type: "success",
+                placement: "top",
+                duration: 3000,
+              });
               router.back();
             } catch (error: any) {
               console.log("Error", error);
-              alert("Ocurrió un error al reprogramar la cita");
+              toast.show("Ocurrió un error al reprogramar la cita", {
+                type: "danger",
+                placement: "top",
+                duration: 3000,
+              });
             } finally {
               setLoading(false);
             }
@@ -212,11 +243,19 @@ export default function DayScheduleDetails() {
                 { method: "DELETE" },
                 logOut,
               );
-              alert("La cita fué cancelada");
+              toast.show("La cita fué cancelada", {
+                type: "success",
+                placement: "top",
+                duration: 3000,
+              });
               router.back();
             } catch (error: any) {
               console.log("Error", error);
-              alert("Ocurrió un error al cancelar la cita");
+              toast.show("Ocurrió un error al cancelar la cita", {
+                type: "danger",
+                placement: "top",
+                duration: 3000,
+              });
             } finally {
               setLoading(false);
             }
@@ -298,7 +337,7 @@ export default function DayScheduleDetails() {
           options={{
             headerShown: true,
             headerTitleAlign: "center",
-            headerStyle: {backgroundColor: "#001B48"},
+            headerStyle: { backgroundColor: "#001B48" },
             headerTintColor: "#D6E8EE",
             headerTitle: "Agendar Cita",
             headerRight: () => <></>,
@@ -501,7 +540,7 @@ export default function DayScheduleDetails() {
       <DatePicker
         modal
         mode="datetime"
-        minuteInterval={30}
+        minuteInterval={15}
         open={showDatePicker}
         date={appointment.dateHour}
         minimumDate={new Date()}

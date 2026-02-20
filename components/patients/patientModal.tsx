@@ -5,7 +5,6 @@ import { useRouter } from "expo-router";
 import { useContext, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,6 +13,7 @@ import {
   View,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
+import { useToast } from "react-native-toast-notifications";
 import GlassyBackground from "../glassyBackground";
 import { EditIcon, SaveIcon, XIcon } from "../Icons";
 import { GenderRadio } from "../radioButton";
@@ -29,6 +29,7 @@ interface UpdatePatientProps {
 
 export function CreatePatientModal({ onClose }: CreatePatientProps) {
   const router = useRouter();
+  const toast = useToast();
   const { logOut } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -59,12 +60,11 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
           logOut,
         );
         router.replace("/patients?refresh=1");
-        Alert.alert(
-          "Paciente Registrado",
-          "El paciente ha sido registrado exitosamente",
-          [{ text: "OK" }],
-          { cancelable: true },
-        );
+        toast.show("El paciente ha sido registrado exitosamente", {
+          type: "success",
+          placement: "top",
+          duration: 3000,
+        });
         setNewPatient({
           name: "",
           paternalSurname: "",
@@ -79,19 +79,24 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
         });
       } catch (error) {
         console.error("Error creating new patient:", error);
-        Alert.alert(
-          "Error",
+        toast.show(
           "Hubo un error al registrar el paciente. Por favor, intenta nuevamente.",
-          [{ text: "OK" }],
+          {
+            type: "danger",
+            placement: "top",
+            duration: 3000,
+          },
         );
       } finally {
         setIsLoading(false);
         onClose();
       }
     } else {
-      Alert.alert("Error", "Por favor, completa los campos obligatorios (*).", [
-        { text: "OK" },
-      ]);
+      toast.show("Por favor, completa los campos obligatorios (*).", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
   };
 
@@ -236,6 +241,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               <DatePicker
                 modal
                 mode="date"
+                maximumDate={new Date()}
                 open={showDatePicker}
                 date={
                   newPatient.birthdate
@@ -344,6 +350,7 @@ export function UpdatePatientModal({
   onClose,
   patient: initialPatient,
 }: UpdatePatientProps) {
+  const toast = useToast();
   const { logOut } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -362,27 +369,31 @@ export function UpdatePatientModal({
           },
           logOut,
         );
-        Alert.alert(
-          "Datos Actualizado",
-          "Los datos del paciente se han actualizado exitosamente.",
-          [{ text: "OK" }],
-          { cancelable: true },
-        );
+        toast.show("Los datos del paciente se han actualizado exitosamente.", {
+          type: "success",
+          placement: "top",
+          duration: 3000,
+        });
       } catch (error) {
         console.error("Error updating patient:", error);
-        Alert.alert(
-          "Error",
+        toast.show(
           "Hubo un error al actualizar los datos del paciente. Por favor, intenta nuevamente.",
-          [{ text: "OK" }],
+          {
+            type: "danger",
+            placement: "top",
+            duration: 3000,
+          },
         );
       } finally {
         setIsLoading(false);
         onClose(endpoint?.ok);
       }
     } else {
-      Alert.alert("Error", "Por favor, completa los campos obligatorios (*).", [
-        { text: "OK" },
-      ]);
+      toast.show("Por favor, completa los campos obligatorios (*).", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
   };
 
@@ -507,6 +518,7 @@ export function UpdatePatientModal({
                 modal
                 mode="date"
                 open={showDatePicker}
+                maximumDate={new Date()}
                 date={
                   patient.birthdate
                     ? new Date(patient.birthdate)

@@ -30,6 +30,7 @@ import Animated, {
   useScrollOffset,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function Odontogram() {
   const { patientId } = useLocalSearchParams();
@@ -40,6 +41,7 @@ export default function Odontogram() {
   const [availableFaces, setAvailableFaces] = useState<string[]>([]); // Caras disponibles del diente seleccionado
   const [changes, setChanges] = useState<Record<string, string>>({}); // Cambios locales
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
 
   const [odontograms, setOdontograms] = useState<
     {
@@ -158,7 +160,14 @@ export default function Odontogram() {
       if (!selectedFace) {
         // Obtenemos description para el alert
         const desc = getStatusDescription(status) || "el estado";
-        alert(`Por favor seleccione una cara específica para marcar ${desc}.`);
+        toast.show(
+          `Por favor seleccione una cara específica para marcar ${desc}.`,
+          {
+            type: "danger",
+            placement: "top",
+            duration: 3000,
+          },
+        );
         return;
       }
 
@@ -350,7 +359,11 @@ export default function Odontogram() {
         { method: "PATCH", body: JSON.stringify(apiPayload, null, 2) },
         logOut,
       );
-      alert("Los cambios se guardaron exitosamente");
+      toast.show("Los cambios se guardaron exitosamente", {
+        type: "success",
+        placement: "top",
+        duration: 3000,
+      });
       setChanges({});
       const response = await fetchWithToken(
         `/odontograms/${patientId}`,
@@ -361,9 +374,13 @@ export default function Odontogram() {
       setCurrentOdontogram(response[0]);
       setIsAdultModel(response[0].model === "adult");
     } catch (e) {
-      Alert.alert(
-        "Error",
+      toast.show(
         "Hubo un error al actualizar el odontograma, inténtelo de nuevo",
+        {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        },
       );
       console.log("Error updating odontogram", e);
     }

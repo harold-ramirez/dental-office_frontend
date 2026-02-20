@@ -29,6 +29,10 @@ export default function Patients() {
   const [refreshing, setRefreshing] = useState(false);
   const [showNewPatient, setShowNewPatient] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10); // Cantidad de pacientes por página
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreData, setHasMoreData] = useState(true);
 
   const fetchAllPatients = useCallback(async () => {
     try {
@@ -37,36 +41,80 @@ export default function Patients() {
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
 
       const endpoint = await fetchWithToken(
-        "/patients",
+        `/patients?page=1&pageSize=${pageSize}`,
         { method: "GET" },
         logOut,
       );
       clearTimeout(timeoutId);
       setPatients(endpoint);
+      setPage(1);
+      setHasMoreData(endpoint.length === pageSize);
     } catch (e) {
       console.error("Error fetching users:", e);
       setHasError(true);
     }
-  }, [logOut]);
+  }, [logOut, pageSize]);
+
+  const fetchMorePatients = useCallback(async () => {
+    if (isLoadingMore || !hasMoreData || searchValue.trim() !== "") return;
+
+    try {
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const endpoint = await fetchWithToken(
+        `/patients?page=${nextPage}&pageSize=${pageSize}`,
+        { method: "GET" },
+        logOut,
+      );
+      clearTimeout(timeoutId);
+
+      if (endpoint.length > 0) {
+        setPatients((prev) => [...prev, ...endpoint]);
+        setPage(nextPage);
+        setHasMoreData(endpoint.length === pageSize);
+      } else {
+        setHasMoreData(false);
+      }
+    } catch (e) {
+      console.error("Error fetching more patients:", e);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [page, pageSize, isLoadingMore, hasMoreData, searchValue, logOut]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setPage(1);
+    setHasMoreData(true);
     await fetchAllPatients();
     setSearchValue("");
     setRefreshing(false);
   }, [fetchAllPatients]);
 
   useEffect(() => {
-    const handleSearch = setTimeout(() => {
-      const filter = patients.filter((p) =>
-        `${p.name} ${p.paternalSurname ?? ""} ${p.maternalSurname ?? ""}`
-          .toLowerCase()
-          .includes(searchValue.trim().toLowerCase()),
-      );
-      setFilteredPatients(filter);
+    const handleSearch = setTimeout(async () => {
+      if (searchValue.trim() === "") {
+        setFilteredPatients(patients);
+        return;
+      }
+
+      try {
+        const results = await fetchWithToken(
+          `/patients/search/${searchValue}`,
+          { method: "GET" },
+          logOut,
+        );
+        setFilteredPatients(results);
+      } catch (e) {
+        console.error("Error searching patients:", e);
+        setFilteredPatients([]);
+      }
     }, 500);
     return () => clearTimeout(handleSearch);
-  }, [searchValue, patients]);
+  }, [searchValue, patients, logOut]);
 
   useEffect(() => {
     onRefresh();
@@ -159,11 +207,22 @@ export default function Patients() {
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
               contentContainerStyle={{ gap: 12, flexGrow: 1 }}
+              onEndReached={() => fetchMorePatients()}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={
+                isLoadingMore ? (
+                  <View className="py-4 items-center">
+                    <ActivityIndicator color="#fff" size={30} />
+                  </View>
+                ) : null
+              }
               ListEmptyComponent={
                 <View className="flex-1 justify-center items-center">
                   <SadIcon color="#9ca3af" size={100} />
                   <Text className="font-bold text-gray-400 text-xl italic">
-                    No hay resultados para &quot;{searchValue}&quot;
+                    {searchValue.trim() !== ""
+                      ? "No se encontraron resultados"
+                      : "No hay pacientes registrados"}
                   </Text>
                 </View>
               }

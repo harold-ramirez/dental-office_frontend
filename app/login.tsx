@@ -5,7 +5,6 @@ import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { useContext, useState } from "react";
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -16,8 +15,10 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useToast } from "react-native-toast-notifications";
 
 export default function Login() {
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     user: "",
@@ -28,7 +29,11 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!formData.user || !formData.password) {
-      Alert.alert("Error", "Por favor completa todos los campos");
+      toast.show("Por favor completa todos los campos", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
 
@@ -41,10 +46,11 @@ export default function Login() {
 
       authContext.logIn(response.token);
     } catch (error: any) {
-      Alert.alert(
-        "Error de inicio de sesión",
-        error.message || "Usuario o contraseña incorrectos",
-      );
+      toast.show(error.message || "Usuario o contraseña incorrectos", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       console.error(error);
     } finally {
       setLoading(false);

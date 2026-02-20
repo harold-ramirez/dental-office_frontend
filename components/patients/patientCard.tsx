@@ -1,6 +1,7 @@
 import { PatientDto } from "@/interfaces/interfaces";
 import { Link } from "expo-router";
 import { Linking, Pressable, Text, View } from "react-native";
+import { useToast } from "react-native-toast-notifications";
 import {
   CakeIcon,
   FemaleIcon,
@@ -24,6 +25,7 @@ export default function PatientCard({
   setOpenId,
   defaultMessage,
 }: PatientCardProps) {
+  const toast = useToast();
   let age: number = 0;
   if (patient.birthdate) {
     const birth = new Date(patient.birthdate);
@@ -44,7 +46,11 @@ export default function PatientCard({
       const url = `https://wa.me/591${patient.cellphoneNumber}?text=${msg}`;
       Linking.openURL(url);
     } else {
-      alert("El paciente no tiene número de teléfono registrado.");
+      toast.show("El paciente no tiene número de teléfono registrado.", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
   };
 

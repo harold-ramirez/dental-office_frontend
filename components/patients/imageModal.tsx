@@ -17,6 +17,7 @@ import {
   View,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
+import { useToast } from "react-native-toast-notifications";
 import {
   DeleteOutlineIcon,
   ImagePlusIcon,
@@ -38,6 +39,7 @@ export default function ImageModal(props: ImageModalProps) {
   const { onClose, image, patientId } = props;
   const { logOut } = useContext(AuthContext);
   const router = useRouter();
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPhoto, setNewPhoto] = useState({
@@ -63,8 +65,13 @@ export default function ImageModal(props: ImageModalProps) {
       if (!result.canceled) {
         const asset = result.assets[0];
         if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
-          alert(
+          toast.show(
             "La imagen es demasiado pesada. Elige una de menos de 5 MB o recorta la imagen",
+            {
+              type: "danger",
+              placement: "top",
+              duration: 3000,
+            },
           );
           return;
         }
@@ -239,6 +246,7 @@ export default function ImageModal(props: ImageModalProps) {
                 <DatePicker
                   modal
                   mode="date"
+                  maximumDate={new Date()}
                   open={showDatePicker}
                   date={newPhoto.captureDate}
                   onConfirm={(date) => {
@@ -314,6 +322,7 @@ export default function ImageModal(props: ImageModalProps) {
                           "DELETE",
                           "/medicalImages/[patientId]" as RelativePathString,
                           logOut,
+                          toast,
                           { patientId: patientId.toString() },
                         );
                       }}

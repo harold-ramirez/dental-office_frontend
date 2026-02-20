@@ -26,35 +26,109 @@ export default function Requests() {
   const [pastRequests, setPastRequests] = useState<AppointmentRequestDto[]>([]);
   const [openId, setOpenId] = useState<number | null>(null);
   const [displayPastRequest, setDisplayPastRequest] = useState(false);
+  const [pageSize] = useState(10);
+  const [requestPage, setRequestPage] = useState(1);
+  const [isLoadingMoreRequests, setIsLoadingMoreRequests] = useState(false);
+  const [hasMoreRequests, setHasMoreRequests] = useState(true);
+  const [pastRequestPage, setPastRequestPage] = useState(1);
+  const [isLoadingMorePastRequests, setIsLoadingMorePastRequests] =
+    useState(false);
+  const [hasMorePastRequests, setHasMorePastRequests] = useState(true);
 
   const fetchAllRequests = useCallback(async () => {
     try {
       const endpoint = await fetchWithToken(
-        "/appointment-requests",
+        `/appointment-requests?page=1&pageSize=${pageSize}`,
         { method: "GET" },
         logOut,
       );
       setRequests(endpoint);
+      setRequestPage(1);
+      setHasMoreRequests(endpoint.length === pageSize);
     } catch (e) {
       console.error("Error fetching requests:", e);
     }
-  }, [logOut]);
+  }, [logOut, pageSize]);
+
+  const fetchMoreRequests = useCallback(async () => {
+    if (isLoadingMoreRequests || !hasMoreRequests) return;
+
+    try {
+      setIsLoadingMoreRequests(true);
+      const nextPage = requestPage + 1;
+      const endpoint = await fetchWithToken(
+        `/appointment-requests?page=${nextPage}&pageSize=${pageSize}`,
+        { method: "GET" },
+        logOut,
+      );
+
+      if (endpoint.length > 0) {
+        setRequests((prev) => [...prev, ...endpoint]);
+        setRequestPage(nextPage);
+        setHasMoreRequests(endpoint.length === pageSize);
+      } else {
+        setHasMoreRequests(false);
+      }
+    } catch (e) {
+      console.error("Error fetching more requests:", e);
+    } finally {
+      setIsLoadingMoreRequests(false);
+    }
+  }, [requestPage, pageSize, isLoadingMoreRequests, hasMoreRequests, logOut]);
 
   const fetchAllPastRequests = useCallback(async () => {
     try {
       const endpoint = await fetchWithToken(
-        "/appointment-requests/pastRequests",
+        `/appointment-requests/pastRequests?page=1&pageSize=${pageSize}`,
         { method: "GET" },
         logOut,
       );
       setPastRequests(endpoint);
+      setPastRequestPage(1);
+      setHasMorePastRequests(endpoint.length === pageSize);
     } catch (e) {
       console.error("Error fetching requests:", e);
     }
-  }, [logOut]);
+  }, [logOut, pageSize]);
+
+  const fetchMorePastRequests = useCallback(async () => {
+    if (isLoadingMorePastRequests || !hasMorePastRequests) return;
+
+    try {
+      setIsLoadingMorePastRequests(true);
+      const nextPage = pastRequestPage + 1;
+      const endpoint = await fetchWithToken(
+        `/appointment-requests/pastRequests?page=${nextPage}&pageSize=${pageSize}`,
+        { method: "GET" },
+        logOut,
+      );
+
+      if (endpoint.length > 0) {
+        setPastRequests((prev) => [...prev, ...endpoint]);
+        setPastRequestPage(nextPage);
+        setHasMorePastRequests(endpoint.length === pageSize);
+      } else {
+        setHasMorePastRequests(false);
+      }
+    } catch (e) {
+      console.error("Error fetching more past requests:", e);
+    } finally {
+      setIsLoadingMorePastRequests(false);
+    }
+  }, [
+    pastRequestPage,
+    pageSize,
+    isLoadingMorePastRequests,
+    hasMorePastRequests,
+    logOut,
+  ]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setRequestPage(1);
+    setHasMoreRequests(true);
+    setPastRequestPage(1);
+    setHasMorePastRequests(true);
     await fetchAllRequests();
     await fetchAllPastRequests();
     setRefreshing(false);
@@ -133,6 +207,8 @@ export default function Requests() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
             contentContainerStyle={{ gap: 12, flexGrow: 1 }}
+            onEndReached={() => fetchMoreRequests()}
+            onEndReachedThreshold={0.5}
             ListEmptyComponent={
               <View className="flex-1 justify-center items-center">
                 <SadIcon color="#9ca3af" size={100} />
@@ -143,6 +219,11 @@ export default function Requests() {
             }
             ListFooterComponent={
               <>
+                {isLoadingMoreRequests ? (
+                  <View className="py-4 items-center">
+                    <ActivityIndicator color="#fff" size={30} />
+                  </View>
+                ) : null}
                 <Pressable
                   onPress={() => setDisplayPastRequest(!displayPastRequest)}
                   android_ripple={{ color: "#02457A" }}
@@ -180,6 +261,15 @@ export default function Requests() {
                       )}
                       scrollEnabled={false}
                       contentContainerStyle={{ gap: 12 }}
+                      onEndReached={() => fetchMorePastRequests()}
+                      onEndReachedThreshold={0.5}
+                      ListFooterComponent={
+                        isLoadingMorePastRequests ? (
+                          <View className="py-4 items-center">
+                            <ActivityIndicator color="#fff" size={30} />
+                          </View>
+                        ) : null
+                      }
                       ListEmptyComponent={
                         <View className="flex-1 justify-center items-center">
                           <SadIcon color="#9ca3af" size={100} />

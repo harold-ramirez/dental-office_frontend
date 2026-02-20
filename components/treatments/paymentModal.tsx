@@ -96,6 +96,7 @@ export default function PaymentModal(props: Props) {
               modal
               mode="date"
               open={showDatePicker}
+              maximumDate={new Date()}
               date={
                 newPayment.registerDate
                   ? new Date(newPayment.registerDate)

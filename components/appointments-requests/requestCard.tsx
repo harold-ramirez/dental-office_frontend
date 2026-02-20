@@ -3,6 +3,7 @@ import { AuthContext } from "@/utils/authContext";
 import { Link, RelativePathString } from "expo-router";
 import { useContext } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
+import { useToast } from "react-native-toast-notifications";
 import {
   CalendarCheckIcon,
   CalendarClockIcon,
@@ -24,6 +25,7 @@ interface RequestCardProps {
 export default function RequestCard({ ...props }: RequestCardProps) {
   const showButtons = props.openId === props.request.Id;
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
 
   const toggleButtons = () => {
     props.setOpenId(showButtons ? null : props.request.Id);
@@ -62,7 +64,11 @@ export default function RequestCard({ ...props }: RequestCardProps) {
       const url = `https://wa.me/591${props.request.phoneNumber}?text=${msg}`;
       Linking.openURL(url);
     } else {
-      alert("El paciente no tiene número de teléfono registrado.");
+      toast.show("El paciente no tiene número de teléfono registrado.", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
   };
 
@@ -139,6 +145,7 @@ export default function RequestCard({ ...props }: RequestCardProps) {
                   "DELETE",
                   "/(tabs)/requests" as RelativePathString,
                   logOut,
+                  toast,
                 );
               }}
               className="justify-center items-center active:bg-red-100 px-2 py-1 border border-red-500 rounded-lg"

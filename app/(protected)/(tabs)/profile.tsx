@@ -17,9 +17,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function Profile() {
   const authContext = useContext(AuthContext);
+  const toast = useToast();
   const { logOut } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -75,11 +77,19 @@ export default function Profile() {
 
   const handleUpdateUserData = async () => {
     if (userData.username === "") {
-      alert("El nombre de usuario no puede ser vacío");
+      toast.show("El nombre de usuario no puede ser vacío", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     if (userData.phoneNumber === "") {
-      alert("Es necesario proporcionar un número de Whatsapp");
+      toast.show("Es necesario proporcionar un número de Whatsapp", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     const newData: any = {};
@@ -98,7 +108,11 @@ export default function Profile() {
     )
       newData.sessionDurationMinutes = userData.sessionDurationMinutes;
     if (Object.keys(newData).length === 0) {
-      alert("No hay cambios para guardar");
+      toast.show("No hay cambios para guardar", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     try {
@@ -111,11 +125,18 @@ export default function Profile() {
         },
         logOut,
       );
-      alert("Los datos se actualizaron correctamente");
+      toast.show("Los datos se actualizaron correctamente", {
+        type: "success",
+        placement: "top",
+        duration: 3000,
+      });
       setOriginalUserData(userData);
       setEditMode(false);
     } catch (e) {
-      console.log("Error updating user data:", e);
+      toast.show("Error al actualizar los datos", {
+        type: "danger",
+        placement: "top",
+      });
     } finally {
       setLoading(false);
     }
@@ -127,21 +148,38 @@ export default function Profile() {
       newPassword.newPassword === "" ||
       newPassword.confirmPassword === ""
     ) {
-      alert("Ingrese los campos requeridos");
+      toast.show("Ingrese los campos requeridos", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     if (newPassword.newPassword !== newPassword.confirmPassword) {
-      alert("Las contraseñas nuevas no coinciden");
+      toast.show("Las contraseñas nuevas no coinciden", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     if (newPassword.newPassword === newPassword.oldPassword) {
-      alert("La nueva contraseña no puede ser igual a la anterior");
+      toast.show("La nueva contraseña no puede ser igual a la anterior", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     const validation = validatePassword(newPassword.newPassword);
     if (!validation.isValid) {
-      alert(
+      toast.show(
         "La contraseña debe cumplir con:\n" + validation.errors.join("\n• "),
+        {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        },
       );
       return;
     }
@@ -159,7 +197,14 @@ export default function Profile() {
         },
         logOut,
       );
-      alert("Contraseña cambiada con éxito. Por favor vuelva a iniciar sesión");
+      toast.show(
+        "Contraseña cambiada con éxito. Por favor vuelva a iniciar sesión",
+        {
+          type: "success",
+          placement: "top",
+          duration: 3000,
+        },
+      );
       setChangePasswordMode(false);
       setNewPassword({ oldPassword: "", newPassword: "", confirmPassword: "" });
       authContext.logOut();
@@ -167,9 +212,15 @@ export default function Profile() {
       console.log("Error changing password:", e);
       const errorMessage = e.message || "Error desconocido";
       if (errorMessage.includes("403")) {
-        alert("Contraseña actual incorrecta");
+        toast.show("Contraseña actual incorrecta", {
+          type: "danger",
+          placement: "top",
+        });
       } else {
-        alert("Error al cambiar la contraseña. Intente nuevamente");
+        toast.show("Error al cambiar la contraseña. Intente nuevamente", {
+          type: "danger",
+          placement: "top",
+        });
       }
     } finally {
       setLoading(false);

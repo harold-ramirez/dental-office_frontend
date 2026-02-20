@@ -1,6 +1,7 @@
 import { fetchWithToken } from "@/services/fetchData";
 import { RelativePathString, router } from "expo-router";
 import { Alert } from "react-native";
+import { Toast } from "react-native-toast-notifications";
 
 export const DeleteAlertMessage = (
   title: string,
@@ -11,6 +12,7 @@ export const DeleteAlertMessage = (
   httpMethod: string,
   refreshPath: RelativePathString,
   logOut: () => void,
+  toast: typeof Toast,
   param?: { [key: string]: string },
 ) => {
   Alert.alert(
@@ -32,7 +34,11 @@ export const DeleteAlertMessage = (
             });
           } catch (error) {
             console.log(error);
-            Alert.alert("Error", errorMessage);
+            toast.show(errorMessage, {
+              type: "danger",
+              placement: "top",
+              duration: 3000,
+            });
           }
         },
         style: "destructive",

@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useToast } from "react-native-toast-notifications";
 import PasswordInput from "../passwordInput";
 
 export default function LogInModal({
@@ -21,6 +22,7 @@ export default function LogInModal({
 }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -35,7 +37,11 @@ export default function LogInModal({
 
   const handleConfirmPassword = async () => {
     if (password === "") {
-      alert("Ingrese su contraseña");
+      toast.show("Ingrese su contraseña", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     try {
@@ -56,9 +62,20 @@ export default function LogInModal({
       console.log("Error confirming password:", e);
       const errorMessage = e.message || "Error desconocido";
       if (errorMessage.includes("403")) {
-        alert("Contraseña incorrecta");
+        toast.show("Contraseña incorrecta", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
       } else {
-        alert("Error en la confirmación de la contraseña. Intente nuevamente");
+        toast.show(
+          "Error en la confirmación de la contraseña. Intente nuevamente",
+          {
+            type: "danger",
+            placement: "top",
+            duration: 3000,
+          },
+        );
       }
     } finally {
       setLoading(false);
