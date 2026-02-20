@@ -64,7 +64,7 @@ export default function Login() {
         colors={["#02457A", "#018ABE"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        className="absolute top-0 bottom-0 right-0 left-0"
+        className="top-0 right-0 bottom-0 left-0 absolute"
       />
       <KeyboardAvoidingView
         behavior={"padding"}
@@ -72,10 +72,10 @@ export default function Login() {
         className="absolute items-center w-full h-full"
       >
         <ScrollView
-          className="w-full h-full flex-1"
+          className="flex-1 w-full h-full"
           showsVerticalScrollIndicator={false}
         >
-          <View className="w-full h-full flex-1 items-center justify-center">
+          <View className="flex-1 justify-center items-center w-full h-full">
             {/* Image Banner */}
             <View
               className="items-center bg-whiteBlue p-5"
@@ -94,14 +94,19 @@ export default function Login() {
             </View>
 
             <View className="gap-10 pt-16">
-              <Text className="font-bold text-whiteBlue text-4xl">
-                Mi Consultorio Dental
-              </Text>
+              <View>
+                <Text className="font-bold text-whiteBlue text-3xl text-center">
+                  Odontología Especializada
+                </Text>
+                <Text className="font-semibold text-whiteBlue text-2xl text-center">
+                  Dr. Alexander Ojalvo
+                </Text>
+              </View>
               <LinearGradient
                 colors={["#FFFFFF1A", "#FFFFFF4D"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="items-center gap-5 blur-xl p-5 border border-whiteBlue/30 rounded-xl w-4/5"
+                className="items-center self-center gap-5 blur-xl p-5 border border-whiteBlue/30 rounded-xl w-4/5"
                 style={{
                   borderRadius: 12,
                 }}

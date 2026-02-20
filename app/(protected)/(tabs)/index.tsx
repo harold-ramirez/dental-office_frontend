@@ -224,7 +224,7 @@ export default function Index() {
         style={{ flex: 1, paddingHorizontal: 8, paddingTop: 8 }}
       >
         <Text className="my-2 font-bold text-white text-3xl">
-          Mi Consultorio Dental
+          Odontología Especializada
         </Text>
         {/* Banner */}
         <View style={{ height: BANNER_HEIGHT, zIndex: 0 }}>
