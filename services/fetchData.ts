@@ -2,7 +2,6 @@ import Constants from "expo-constants";
 import { authService } from "./authService";
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
-// const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export async function fetchWithToken(
   url: string,

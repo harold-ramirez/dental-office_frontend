@@ -274,9 +274,6 @@ export default function Model({
     e.stopPropagation();
     const clickedPart = e.object;
 
-    // --- ALGORITMO: BUSCAR EL PADRE "DIENTE" ---
-    // Subimos por la jerarquía desde la parte clickeada (ej: 38_Distal)
-    // hasta encontrar el objeto contenedor (ej: Tooth_38)
     let toothGroup = clickedPart;
 
     // Buscamos hacia arriba mientras exista padre y no sea la escena
@@ -321,8 +318,6 @@ export default function Model({
           const mesh = child as Mesh;
 
           if (!isSelected) {
-            // --- ACTIVAR SELECCIÓN ---
-            // Guardar material original de CADA parte
             if (!mesh.userData.originalMaterial) {
               mesh.userData.originalMaterial = mesh.material;
             }
@@ -336,7 +331,6 @@ export default function Model({
               mesh.material = clonedMat;
             }
           } else {
-            // --- DESACTIVAR SELECCIÓN ---
             if (mesh.userData.originalMaterial) {
               mesh.material = mesh.userData.originalMaterial;
             }

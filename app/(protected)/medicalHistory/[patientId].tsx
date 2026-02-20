@@ -40,7 +40,6 @@ export default function MedicalHistory() {
     { Id: number; name: string }[]
   >([]);
 
-  // UI EVENTS ************************************
   const newMedicalHistory = () => {
     setShowNewFormBtn(false);
     const copy = [...histories];
@@ -108,7 +107,6 @@ export default function MedicalHistory() {
     });
   };
 
-  // API CALLINGS ******************************
   const handlePostPathology = async () => {
     if (newPathologyHabit.newPathology === "") return;
     try {
@@ -271,7 +269,6 @@ export default function MedicalHistory() {
     }
   };
 
-  // REACT HOOKS **************************************************
   const fetchAllMedicalHistories = useCallback(async () => {
     try {
       const data = await fetchWithToken(
@@ -289,9 +286,7 @@ export default function MedicalHistory() {
       );
       setHabits(habits);
       setPersonalPathologies(personalPathologies);
-    } catch {
-      // Silent fail - will show empty form
-    }
+    } catch {}
   }, [patientId, logOut]);
   useEffect(() => {
     fetchAllMedicalHistories();
@@ -1116,26 +1111,6 @@ export default function MedicalHistory() {
                   </Pressable>
                 ) : (
                   <></>
-                  // <Pressable
-                  //   className="items-center bg-red-700 active:bg-red-600 px-2 py-1 border border-whiteBlue rounded-full w-2/3"
-                  //   onPress={() => {
-                  //     DeleteAlertMessage(
-                  //       "Confirmar Eliminación",
-                  //       `¿Está seguro de eliminar el registro?`,
-                  //       "Eliminar",
-                  //       `/medical-history/${formData.Id}`,
-                  //       "No se pudo eliminar la historia clínica. Inténtalo de nuevo.",
-                  //       "DELETE",
-                  //       `/(protected)/patientProfile/[id]` as RelativePathString,
-                  //       logOut,
-                  //       { id: patientId.toString() },
-                  //     );
-                  //   }}
-                  // >
-                  //   <Text className="font-semibold text-whiteBlue text-lg">
-                  //     Eliminar Historia Clínica
-                  //   </Text>
-                  // </Pressable>
                 )}
               </View>
             </View>

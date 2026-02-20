@@ -76,7 +76,6 @@ export default function Requests() {
         setHasMoreRequests(false);
       }
     } catch {
-      // Silent fail for pagination - already have data
     } finally {
       setIsLoadingMoreRequests(false);
     }
@@ -92,9 +91,7 @@ export default function Requests() {
       setPastRequests(endpoint);
       setPastRequestPage(1);
       setHasMorePastRequests(endpoint.length === pageSize);
-    } catch {
-      // Silent fail - past requests are secondary feature
-    }
+    } catch {}
   }, [logOut, pageSize]);
 
   const fetchMorePastRequests = useCallback(async () => {
@@ -117,7 +114,6 @@ export default function Requests() {
         setHasMorePastRequests(false);
       }
     } catch {
-      // Silent fail for pagination - already have data
     } finally {
       setIsLoadingMorePastRequests(false);
     }
@@ -166,9 +162,7 @@ export default function Requests() {
           logOut,
         );
         setWhatsappMessage(data.defaultMessage);
-      } catch {
-        // Silent fail - WhatsApp message is optional
-      }
+      } catch {}
     };
     fetchMessage();
   }, [logOut]);

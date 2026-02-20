@@ -40,7 +40,7 @@ export default function AnimatedArc(props: ArcProps) {
       withTiming(1, {
         duration: props.duration ? props.duration : 1500,
         easing: Easing.out(Easing.ease),
-      })
+      }),
     );
   }, []);
 
@@ -54,7 +54,6 @@ export default function AnimatedArc(props: ArcProps) {
           strokeWidth={props.borderWidth ? props.borderWidth : "25"}
           fill="transparent"
           strokeLinecap="round"
-          // animatedProps={animatedProps}
         />
 
         {/* Fill Arc */}

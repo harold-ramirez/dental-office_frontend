@@ -36,9 +36,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setIsLoggedIn(true);
       setToken(authToken);
       router.replace("/");
-    } catch {
-      // Silent fail - login already shows user-facing errors
-    }
+    } catch {}
   };
 
   const logOut = async () => {
@@ -47,9 +45,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setIsLoggedIn(false);
       setToken(null);
       router.replace("/login");
-    } catch {
-      // Silent fail - logout will proceed anyway
-    }
+    } catch {}
   };
 
   useEffect(() => {
@@ -57,13 +53,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       try {
         const storedToken = await SecureStore.getItemAsync(tokenStorageKey);
         if (storedToken) {
-          const res = await fetch(
-            // `${process.env.EXPO_PUBLIC_API_URL}/auth/validate`,
-            `${API_URL}/auth/validate`,
-            {
-              headers: { Authorization: `Bearer ${storedToken}` },
-            },
-          );
+          const res = await fetch(`${API_URL}/auth/validate`, {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
 
           if (!res.ok) {
             await SecureStore.deleteItemAsync(tokenStorageKey);
@@ -74,9 +66,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
             setIsLoggedIn(true);
           }
         }
-      } catch {
-        // Silent fail - app will show login screen
-      }
+      } catch {}
       setIsReady(true);
     };
     getAuthFromStorage();

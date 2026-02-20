@@ -67,7 +67,6 @@ export default function Treatments() {
         setHasMoreData(false);
       }
     } catch {
-      // Silent fail for pagination - already have data showing
     } finally {
       setIsLoadingMore(false);
     }

@@ -289,7 +289,6 @@ export default function DayScheduleDetails() {
         setPatientsList(patients);
         setTreatmentsList(treatments);
       } catch {
-        // Silent fail - form will show empty dropdowns
       } finally {
         setLoading(false);
       }

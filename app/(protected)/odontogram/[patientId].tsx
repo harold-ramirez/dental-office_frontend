@@ -7,7 +7,7 @@ import { fetchWithToken } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
 import { translateFace } from "@/utils/faceDictionary"; // Import face translator
 import { getStatusColor, getStatusDescription } from "@/utils/statusColors"; // Import status descriptions
-import { TOOTH_ASSETS } from "@/utils/toothAssets"; // Import TOOTH_ASSETS
+import { TOOTH_ASSETS } from "@/utils/toothAssets";
 import { Center, Environment, OrbitControls } from "@react-three/drei/native";
 import { Canvas } from "@react-three/fiber/native";
 import { Asset } from "expo-asset";
@@ -16,7 +16,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { Suspense, useContext, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert, // Import Alert
+  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -261,48 +261,7 @@ export default function Odontogram() {
   }, [mergedOdontogram]);
 
   const handleToothButtonSelect = (pieceNumber: number) => {
-    // Si tienes el prefijo del modelo en selectedTooth, lo construimos
-    // Asumimos que el prefijo se puede deducir o es constante si solo hay un modelo activo a la vez
-    // En el código actual, selectedTooth es un string que llega de 'onToothSelect' del Model.
-    // El model usa los nombres del GLTF. Ej: "Adult_Tooth_11" or "Tooth_11" ?
-    // En 'SingleToothModel', haces selectedTooth.split("_")[1].
-    // REVISAR: Model.tsx emite `toothGroup.name`.
-
-    // Necesitamos saber el nombre exacto del nodo en el GLTF para seleccionarlo.
-    // Una opción robusta es buscar en el array de dientes el que coincida con el pieceNumber y usar un formato estimado
-    // O si el Model ya maneja la selección por nombre, solo pasamos el nombre correcto.
-
-    // Hack: Asumimos formato "Tooth_<Num>" o "Adult_Tooth_<Num>" según lo que hayamos visto.
-    // PERO, si el usuario hace clic en el 3D, el nombre viene del GLTF.
-    // Si hacemos clic en botón, tenemos que simular ese nombre.
-    // De 'SingleToothModel', uri selection, vemos que usa TOOTH_ASSETS[selectedTooth].
-    // TOOTH_ASSETS usa keys tipo "Adult_11" (según lo que infiero de previos logs).
-    // PERO 'Model.tsx' emite el nombre del Grupo GLTF.
-
-    // La mejor estrategia:
-    // El diente seleccionado en el estado es 'selectedTooth'.
-    // Si el usuario toca el botón '11', debemos setear 'selectedTooth' al nombre correspondiente.
-    // ¿Cuál es el nombre?
-    // Si es adulto: `Adult_Tooth_${pieceNumber}` ??
-    // Vamos a probar con un mapeo simple basado en el modelo actual.
-    // Nota: Es posible que los nombres en el GLTF sean ligeramente distintos, ej "Tooth_11".
-    // Si falla, el componente Model no lo encontrará y no se iluminará, pero la lógica de SingleTooth podría fallar si depende del nombre exacto.
-    // SIN EMBARGO, el SingleTooth usa selectedTooth para buscar en TOOTH_ASSETS.
-    // TOOTH_ASSETS keys: Probablemente "Adult_11".
-    // Si el Model devuelve "Tooth_11", tu split('_')[1] funciona.
-
-    // Vamos a buscar en el odontograma el diente y usar un formato que coincida con lo que 'Model' espera o emite.
-    // En Model.tsx, dice: if (toothGroup.name.toLowerCase().includes("tooth")) ...
-    // Lo más seguro es que los nodos se llamen "Tooth_11" etc.
-    // Y el `selectedTooth` state almacena ese nombre.
-
-    // Ajuste: En la data del GLTF original, los dientes suelen llamarse "Tooth_11".
-    // Voy a usar ese formato estándar.
-
     const toothName = `Tooth_${pieceNumber}`;
-    // OJO: Si hay prefijo de modelo en el GLTF (ej. "Adult_Tooth_11"), esto debe coincidir.
-    // Dado que no puedo ver el GLTF tree, probaré "Tooth_" primero, que es estándar.
-
     setSelectedTooth(toothName);
   };
 
@@ -396,9 +355,7 @@ export default function Odontogram() {
         setIsAdultModel(response[0].model === "adult");
         if (response[0].model === "adult") setCurrentModelUri(adultmodelPath);
         else setCurrentModelUri(childmodelPath);
-      } catch {
-        // Silent fail - will show empty odontogram
-      }
+      } catch {}
     };
     fetchOdontograms();
   }, [logOut, patientId]);

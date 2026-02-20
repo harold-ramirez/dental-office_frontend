@@ -84,9 +84,7 @@ export default function AppointmentHistory() {
         logOut,
       );
       setAppointmentHistory(data);
-    } catch {
-      // Silent fail - sections will show empty
-    }
+    } catch {}
   }, [patientId, logOut]);
 
   useEffect(() => {

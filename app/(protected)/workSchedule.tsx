@@ -134,7 +134,6 @@ export default function WorkSchedule() {
         Id: number;
         status: boolean;
       }[] = [];
-      // ***************************************************
       for (let i = 0; i < originalShifts.Monday.length; i++) {
         if (shifts.Monday[i].status !== originalShifts.Monday[i].status) {
           updatedShifts.push({
@@ -205,7 +204,6 @@ export default function WorkSchedule() {
         return;
       }
       setOriginalShifts(shifts);
-      // ***************************************************
       await fetchWithToken(
         "/shifts",
         {

@@ -16,7 +16,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
-// const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function MedicalImages() {
   const { patientId, refresh } = useLocalSearchParams();
@@ -34,9 +33,7 @@ export default function MedicalImages() {
         logOut,
       );
       setImages(endpoint);
-    } catch {
-      // Silent fail - will show empty images list
-    }
+    } catch {}
   }, [patientId, logOut]);
 
   const onRefresh = useCallback(async () => {

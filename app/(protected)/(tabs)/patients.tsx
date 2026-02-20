@@ -85,7 +85,6 @@ export default function Patients() {
         setHasMoreData(false);
       }
     } catch {
-      // Silent fail for pagination - already have data showing
     } finally {
       setIsLoadingMore(false);
     }
@@ -115,7 +114,6 @@ export default function Patients() {
         );
         setFilteredPatients(results);
       } catch {
-        // Silent fail for search - will show empty results
         setFilteredPatients([]);
       }
     }, 500);
@@ -135,9 +133,7 @@ export default function Patients() {
           logOut,
         );
         setWhatsappMessage(data.defaultMessage);
-      } catch {
-        // Silent fail - WhatsApp message is optional feature
-      }
+      } catch {}
     };
     fetchMessage();
   }, [logOut]);

@@ -199,25 +199,18 @@ export default function Index() {
         fetchPendingPayments(),
       ]);
     } catch {
-      // Silencioso - no molestamos al usuario con errores de refresh
     } finally {
       setRefreshing(false);
     }
   }, [fetchAppointmentsSummary, fetchMiscData, fetchPendingPayments]);
 
   useEffect(() => {
-    fetchAppointmentsSummary().catch(() => {
-      // Silencioso - error en carga inicial
-    });
+    fetchAppointmentsSummary().catch(() => {});
   }, [fetchAppointmentsSummary]);
 
   useEffect(() => {
-    fetchMiscData().catch(() => {
-      // Silencioso - error en carga inicial
-    });
-    fetchPendingPayments().catch(() => {
-      // Silencioso - error en carga inicial
-    });
+    fetchMiscData().catch(() => {});
+    fetchPendingPayments().catch(() => {});
   }, [fetchMiscData, fetchPendingPayments]);
 
   return (

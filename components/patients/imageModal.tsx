@@ -29,7 +29,6 @@ import {
 import { DeleteAlertMessage } from "../alertMessage";
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
-// const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface ImageModalProps {
   onClose: () => void;
@@ -96,7 +95,6 @@ export default function ImageModal(props: ImageModalProps) {
     }
   };
 
-  // Backend calls
   const handleSaveImage = async () => {
     try {
       setIsLoading(true);

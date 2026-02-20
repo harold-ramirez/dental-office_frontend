@@ -43,7 +43,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useToast } from "react-native-toast-notifications";
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
-// const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function PatientProfile() {
   const { id } = useLocalSearchParams();
@@ -110,7 +109,6 @@ export default function PatientProfile() {
       );
       setPatient(endpoint);
     } catch {
-      // Silent fail - will show empty patient data
     } finally {
       setIsLoading(false);
     }
@@ -156,9 +154,7 @@ export default function PatientProfile() {
         logOut,
       );
       setImages(endpoint);
-    } catch {
-      // Silent fail - section will show empty
-    }
+    } catch {}
   }, [id, logOut]);
 
   const fetchOdontograms = useCallback(async () => {
@@ -169,9 +165,7 @@ export default function PatientProfile() {
         logOut,
       );
       setOdontograms(data);
-    } catch {
-      // Silent fail - section will show empty
-    }
+    } catch {}
   }, [id, logOut]);
 
   const fetchMedicalHistories = useCallback(async () => {
@@ -182,9 +176,7 @@ export default function PatientProfile() {
         logOut,
       );
       setMedicalHistories(data);
-    } catch {
-      // Silent fail - section will show empty
-    }
+    } catch {}
   }, [id, logOut]);
 
   const fetchTreatments = useCallback(async () => {
@@ -195,9 +187,7 @@ export default function PatientProfile() {
         logOut,
       );
       setTreatments(data);
-    } catch {
-      // Silent fail - section will show empty
-    }
+    } catch {}
   }, [id, logOut]);
 
   const fetchAppointments = useCallback(async () => {
@@ -208,9 +198,7 @@ export default function PatientProfile() {
         logOut,
       );
       setAppointments(data);
-    } catch {
-      // Silent fail - section will show empty
-    }
+    } catch {}
   }, [id, logOut]);
 
   const onRefresh = useCallback(async () => {

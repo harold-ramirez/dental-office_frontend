@@ -234,9 +234,7 @@ export default function Profile() {
         setOriginalUserData(data);
       };
       fetchUserData();
-    } catch {
-      // Silent fail - will show empty form
-    }
+    } catch {}
   }, [logOut]);
 
   return (
