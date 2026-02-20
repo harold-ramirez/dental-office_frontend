@@ -1,6 +1,8 @@
 import * as SecureStore from "expo-secure-store";
+import Constants from 'expo-constants';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = Constants.expoConfig?.extra?.apiUrl;
+// const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export interface LoginRequest {
   username: string;

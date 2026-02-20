@@ -1,7 +1,9 @@
+import Constants from "expo-constants";
 import { SplashScreen, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
 
+const API_URL = Constants.expoConfig?.extra?.apiUrl;
 SplashScreen.preventAutoHideAsync();
 
 type AuthState = {
@@ -57,7 +59,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const storedToken = await SecureStore.getItemAsync(tokenStorageKey);
         if (storedToken) {
           const res = await fetch(
-            `${process.env.EXPO_PUBLIC_API_URL}/auth/validate`,
+            // `${process.env.EXPO_PUBLIC_API_URL}/auth/validate`,
+            `${API_URL}/auth/validate`,
             {
               headers: { Authorization: `Bearer ${storedToken}` },
             },

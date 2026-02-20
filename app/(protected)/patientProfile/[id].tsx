@@ -40,8 +40,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useToast } from "react-native-toast-notifications";
+import Constants from 'expo-constants';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = Constants.expoConfig?.extra?.apiUrl;
+// const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function PatientProfile() {
   const { id } = useLocalSearchParams();

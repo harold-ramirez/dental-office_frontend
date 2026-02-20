@@ -45,6 +45,7 @@
       "typedRoutes": true
     },
     "extra": {
+      "apiUrl": "https://api.dr-alexander-ojalvo.cloud/api/v1",
       "router": {},
       "eas": {
         "projectId": "ebb57ac1-67e0-45cc-ac1c-836746597398"
