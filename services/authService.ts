@@ -1,5 +1,5 @@
+import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
-import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
 // const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -30,17 +30,15 @@ export const authService = {
 
       const data: LoginResponse = await response.json();
       return data;
-    } catch (error) {
-      console.error("Login error:", error);
-      throw error;
+    } catch {
+      throw new Error("El usuario y/o la contraseña son incorrectos");
     }
   },
 
   async getToken(): Promise<string | null> {
     try {
       return await SecureStore.getItemAsync("auth-token");
-    } catch (error) {
-      console.error("Error retrieving token:", error);
+    } catch {
       return null;
     }
   },

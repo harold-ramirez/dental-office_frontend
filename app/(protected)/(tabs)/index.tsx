@@ -24,9 +24,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function Index() {
   const BANNER_HEIGHT = 150;
+  const toast = useToast();
   const { logOut } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -142,8 +144,12 @@ export default function Index() {
           }));
           break;
       }
-    } catch (e) {
-      console.log("Error creating", e);
+    } catch {
+      toast.show("Error al guardar los cambios", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     } finally {
       setLoading(false);
     }
@@ -192,24 +198,26 @@ export default function Index() {
         fetchMiscData(),
         fetchPendingPayments(),
       ]);
-    } catch (e) {
-      console.log("Error refreshing:", e);
+    } catch {
+      // Silencioso - no molestamos al usuario con errores de refresh
     } finally {
       setRefreshing(false);
     }
   }, [fetchAppointmentsSummary, fetchMiscData, fetchPendingPayments]);
 
   useEffect(() => {
-    fetchAppointmentsSummary().catch((e) =>
-      console.error("Error getting appointments summary:", e),
-    );
+    fetchAppointmentsSummary().catch(() => {
+      // Silencioso - error en carga inicial
+    });
   }, [fetchAppointmentsSummary]);
 
   useEffect(() => {
-    fetchMiscData().catch((e) => console.log("Error getting misc data:", e));
-    fetchPendingPayments().catch((e) =>
-      console.log("Error getting pending payments:", e),
-    );
+    fetchMiscData().catch(() => {
+      // Silencioso - error en carga inicial
+    });
+    fetchPendingPayments().catch(() => {
+      // Silencioso - error en carga inicial
+    });
   }, [fetchMiscData, fetchPendingPayments]);
 
   return (

@@ -59,7 +59,6 @@ export default function LogInModal({
         onClose();
       }
     } catch (e: any) {
-      console.log("Error confirming password:", e);
       const errorMessage = e.message || "Error desconocido";
       if (errorMessage.includes("403")) {
         toast.show("Contraseña incorrecta", {

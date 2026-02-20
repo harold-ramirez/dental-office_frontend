@@ -19,10 +19,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function MedicalHistory() {
   const { patientId } = useLocalSearchParams();
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [isPosting, setIsPosting] = useState(false);
   const [showNewFormBtn, setShowNewFormBtn] = useState(true);
   const [habits, setHabits] = useState<{ Id: number; name: string }[]>([]);
@@ -135,8 +137,12 @@ export default function MedicalHistory() {
           ],
         });
       }
-    } catch (error) {
-      console.log("Error posting new Pathology:", error);
+    } catch {
+      toast.show("Error al registrar la patología", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     } finally {
       setNewPathologyHabit({
         ...newPathologyHabit,
@@ -167,8 +173,12 @@ export default function MedicalHistory() {
           habits: [...(formData.habits || []), { Id: res.Id, name: res.name }],
         });
       }
-    } catch (error) {
-      console.log("Error posting new Habit:", error);
+    } catch {
+      toast.show("Error al registrar el hábito", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     } finally {
       setNewPathologyHabit({
         ...newPathologyHabit,
@@ -251,8 +261,12 @@ export default function MedicalHistory() {
           refresh: Date.now().toString(),
         },
       });
-    } catch (error) {
-      console.log("Error posting new medical history:", error);
+    } catch {
+      toast.show("Error al registrar la historia médica", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       setIsPosting(false);
     }
   };
@@ -275,8 +289,8 @@ export default function MedicalHistory() {
       );
       setHabits(habits);
       setPersonalPathologies(personalPathologies);
-    } catch (e) {
-      console.error("Error fetching medical histories:", e);
+    } catch {
+      // Silent fail - will show empty form
     }
   }, [patientId, logOut]);
   useEffect(() => {

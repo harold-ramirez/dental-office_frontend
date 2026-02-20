@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
+import { useToast } from "react-native-toast-notifications";
 
 interface Props {
   onClose: () => void;
@@ -21,6 +22,7 @@ interface Props {
 export default function PaymentModal(props: Props) {
   const { onClose, procedureId, onRefresh } = props;
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPayment, setNewPayment] = useState<{
     amount: number | "";
@@ -49,8 +51,12 @@ export default function PaymentModal(props: Props) {
       );
       onRefresh();
       onClose();
-    } catch (error) {
-      console.log("Error posting Payment:", error);
+    } catch {
+      toast.show("Error al registrar el pago", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
   };
 

@@ -4,6 +4,7 @@ import { AuthContext } from "@/utils/authContext";
 import { Link } from "expo-router";
 import { useContext, useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { useToast } from "react-native-toast-notifications";
 import {
   EditIcon,
   LeftArrowIcon,
@@ -124,6 +125,7 @@ export function DaySchedule({
   refresh: string;
 }) {
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [whatsappMessage, setWhatsappMessage] = useState("");
   const [todaySchedule, setTodaySchedule] = useState<AppointmentDto[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -150,12 +152,16 @@ export function DaySchedule({
           logOut,
         );
         setWhatsappMessage(data.defaultMessage);
-      } catch (e) {
-        console.log("Error getting WA message", e);
+      } catch {
+        toast.show("Error al obtener mensaje de WhatsApp", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
       }
     };
     fetchMessage();
-  }, [logOut]);
+  }, [logOut, toast]);
 
   useEffect(() => {
     const makeSchedule = (appointments: any[]) => {
@@ -310,6 +316,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
     "current",
   );
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentDto>({
       Id: 0,
@@ -490,14 +497,18 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
             sunday: makeSchedule(data.nextWeek.sunday, "sunday", 6, true),
           },
         });
-      } catch (error) {
-        console.log("Error fetching week appointments:", error);
+      } catch {
+        toast.show("Error al cargar las citas semanales", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
       }
     };
 
     const timeoutId = setTimeout(fetchAppointments, 1000);
     return () => clearTimeout(timeoutId);
-  }, [refresh, logOut]);
+  }, [refresh, logOut, toast]);
 
   useEffect(() => {
     const fetchMessage = async () => {
@@ -508,12 +519,16 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
           logOut,
         );
         setWhatsappMessage(data.defaultMessage);
-      } catch (e) {
-        console.log("Error getting WA message", e);
+      } catch {
+        toast.show("Error al obtener mensaje de WhatsApp", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
       }
     };
     fetchMessage();
-  }, [logOut]);
+  }, [logOut, toast]);
 
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">
@@ -608,6 +623,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
 
 export function MonthSchedule({ refresh }: { refresh: string }) {
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [currentMonthView, setCurrentMonthView] = useState<"current" | "next">(
     "current",
   );
@@ -682,14 +698,18 @@ export function MonthSchedule({ refresh }: { refresh: string }) {
           currentMonth: data.currentMonth,
           nextMonth: data.nextMonth,
         });
-      } catch (error) {
-        console.log("Error fetching month appointments:", error);
+      } catch {
+        toast.show("Error al cargar las citas mensuales", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
       }
     };
 
     const timeoutId = setTimeout(fetchAppointments, 1000);
     return () => clearTimeout(timeoutId);
-  }, [refresh, logOut]);
+  }, [refresh, logOut, toast]);
 
   return (
     <View className="flex-1 justify-center items-center bg-whiteBlue p-2 rounded-xl w-full">
@@ -802,6 +822,7 @@ export function WeekAppointmentSelect({
   setSelectesDate: (val: Date) => void;
 }) {
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [currentWeekView, setCurrentWeekView] = useState<"current" | "next">(
     "current",
   );
@@ -984,14 +1005,18 @@ export function WeekAppointmentSelect({
             sunday: makeSchedule(data.nextWeek.sunday, "sunday", 6, true),
           },
         });
-      } catch (error) {
-        console.log("Error fetching week appointments:", error);
+      } catch {
+        toast.show("Error al cargar las citas semanales", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
       }
     };
 
     const timeoutId = setTimeout(fetchAppointments, 1000);
     return () => clearTimeout(timeoutId);
-  }, [logOut]);
+  }, [logOut, toast]);
 
   return (
     <View className="flex-1 bg-whiteBlue p-2 rounded-xl w-full">

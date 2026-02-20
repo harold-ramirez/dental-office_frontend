@@ -132,7 +132,7 @@ export default function Profile() {
       });
       setOriginalUserData(userData);
       setEditMode(false);
-    } catch (e) {
+    } catch {
       toast.show("Error al actualizar los datos", {
         type: "danger",
         placement: "top",
@@ -209,7 +209,6 @@ export default function Profile() {
       setNewPassword({ oldPassword: "", newPassword: "", confirmPassword: "" });
       authContext.logOut();
     } catch (e: any) {
-      console.log("Error changing password:", e);
       const errorMessage = e.message || "Error desconocido";
       if (errorMessage.includes("403")) {
         toast.show("Contraseña actual incorrecta", {
@@ -235,8 +234,8 @@ export default function Profile() {
         setOriginalUserData(data);
       };
       fetchUserData();
-    } catch (e) {
-      console.log("Error fetching user data:", e);
+    } catch {
+      // Silent fail - will show empty form
     }
   }, [logOut]);
 

@@ -16,10 +16,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function Requests() {
   const params = useLocalSearchParams();
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const [whatsappMessage, setWhatsappMessage] = useState("");
   const [requests, setRequests] = useState<AppointmentRequestDto[]>([]);
@@ -45,10 +47,14 @@ export default function Requests() {
       setRequests(endpoint);
       setRequestPage(1);
       setHasMoreRequests(endpoint.length === pageSize);
-    } catch (e) {
-      console.error("Error fetching requests:", e);
+    } catch {
+      toast.show("Error al cargar las solicitudes", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
-  }, [logOut, pageSize]);
+  }, [logOut, pageSize, toast]);
 
   const fetchMoreRequests = useCallback(async () => {
     if (isLoadingMoreRequests || !hasMoreRequests) return;
@@ -69,8 +75,8 @@ export default function Requests() {
       } else {
         setHasMoreRequests(false);
       }
-    } catch (e) {
-      console.error("Error fetching more requests:", e);
+    } catch {
+      // Silent fail for pagination - already have data
     } finally {
       setIsLoadingMoreRequests(false);
     }
@@ -86,8 +92,8 @@ export default function Requests() {
       setPastRequests(endpoint);
       setPastRequestPage(1);
       setHasMorePastRequests(endpoint.length === pageSize);
-    } catch (e) {
-      console.error("Error fetching requests:", e);
+    } catch {
+      // Silent fail - past requests are secondary feature
     }
   }, [logOut, pageSize]);
 
@@ -110,8 +116,8 @@ export default function Requests() {
       } else {
         setHasMorePastRequests(false);
       }
-    } catch (e) {
-      console.error("Error fetching more past requests:", e);
+    } catch {
+      // Silent fail for pagination - already have data
     } finally {
       setIsLoadingMorePastRequests(false);
     }
@@ -160,8 +166,8 @@ export default function Requests() {
           logOut,
         );
         setWhatsappMessage(data.defaultMessage);
-      } catch (e) {
-        console.log("Error getting WA message", e);
+      } catch {
+        // Silent fail - WhatsApp message is optional
       }
     };
     fetchMessage();

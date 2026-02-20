@@ -77,8 +77,7 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
           placeOfBirth: "",
           address: "",
         });
-      } catch (error) {
-        console.error("Error creating new patient:", error);
+      } catch {
         toast.show(
           "Hubo un error al registrar el paciente. Por favor, intenta nuevamente.",
           {
@@ -374,8 +373,7 @@ export function UpdatePatientModal({
           placement: "top",
           duration: 3000,
         });
-      } catch (error) {
-        console.error("Error updating patient:", error);
+      } catch {
         toast.show(
           "Hubo un error al actualizar los datos del paciente. Por favor, intenta nuevamente.",
           {

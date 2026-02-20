@@ -2,6 +2,7 @@ import Loading from "@/components/loading";
 import { MedicalImageDto } from "@/interfaces/interfaces";
 import { fetchWithToken } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
+import Constants from "expo-constants";
 import * as ImagePicker from "expo-image-picker";
 import { Link, RelativePathString, useRouter } from "expo-router";
 import { useContext, useEffect, useState } from "react";
@@ -26,7 +27,6 @@ import {
   XIcon,
 } from "../Icons";
 import { DeleteAlertMessage } from "../alertMessage";
-import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
 // const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -87,8 +87,12 @@ export default function ImageModal(props: ImageModalProps) {
         });
         setNewPhoto({ ...newPhoto, photoURL: asset.uri });
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
+      toast.show("Error al seleccionar la imagen", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
   };
 
@@ -120,8 +124,12 @@ export default function ImageModal(props: ImageModalProps) {
           refresh: Date.now().toString(),
         },
       });
-    } catch (e) {
-      console.error("Error al subir la imagen:", e);
+    } catch {
+      toast.show("Error al subir la imagen", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -149,8 +157,12 @@ export default function ImageModal(props: ImageModalProps) {
           refresh: Date.now().toString(),
         },
       });
-    } catch (e) {
-      console.error("Error al actualizar la imagen:", e);
+    } catch {
+      toast.show("Error al actualizar la imagen", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     } finally {
       setIsLoading(false);
     }

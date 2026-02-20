@@ -285,8 +285,6 @@ export default function Odontogram() {
     // ¿Cuál es el nombre?
     // Si es adulto: `Adult_Tooth_${pieceNumber}` ??
     // Vamos a probar con un mapeo simple basado en el modelo actual.
-
-    const prefix = isAdultModel ? "Adult_Tooth_" : "Child_Tooth_";
     // Nota: Es posible que los nombres en el GLTF sean ligeramente distintos, ej "Tooth_11".
     // Si falla, el componente Model no lo encontrará y no se iluminará, pero la lógica de SingleTooth podría fallar si depende del nombre exacto.
     // SIN EMBARGO, el SingleTooth usa selectedTooth para buscar en TOOTH_ASSETS.
@@ -373,7 +371,7 @@ export default function Odontogram() {
       setOdontograms(response);
       setCurrentOdontogram(response[0]);
       setIsAdultModel(response[0].model === "adult");
-    } catch (e) {
+    } catch {
       toast.show(
         "Hubo un error al actualizar el odontograma, inténtelo de nuevo",
         {
@@ -382,7 +380,6 @@ export default function Odontogram() {
           duration: 3000,
         },
       );
-      console.log("Error updating odontogram", e);
     }
   };
 
@@ -399,8 +396,8 @@ export default function Odontogram() {
         setIsAdultModel(response[0].model === "adult");
         if (response[0].model === "adult") setCurrentModelUri(adultmodelPath);
         else setCurrentModelUri(childmodelPath);
-      } catch (e) {
-        console.log("Error fetching odontograms", e);
+      } catch {
+        // Silent fail - will show empty odontogram
       }
     };
     fetchOdontograms();
@@ -420,7 +417,6 @@ export default function Odontogram() {
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Error loading asset");
-        console.error(e);
       }
     })();
   }, [isAdultModel]);
@@ -440,8 +436,7 @@ export default function Odontogram() {
           setSingleToothUri(asset.uri);
           setSelectedFace(null); // Reset selected face when tooth changes
           setAvailableFaces([]);
-        } catch (e) {
-          console.error("Failed loading single tooth", e);
+        } catch {
           setSingleToothUri(null);
         }
       } else {

@@ -35,10 +35,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await SecureStore.setItemAsync(tokenStorageKey, authToken);
       setIsLoggedIn(true);
       setToken(authToken);
-      console.log("JWT: [", authToken, "]");
       router.replace("/");
-    } catch (error) {
-      console.log("Error storing auth state:", error);
+    } catch {
+      // Silent fail - login already shows user-facing errors
     }
   };
 
@@ -48,8 +47,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setIsLoggedIn(false);
       setToken(null);
       router.replace("/login");
-    } catch (error) {
-      console.log("Error clearing auth state:", error);
+    } catch {
+      // Silent fail - logout will proceed anyway
     }
   };
 
@@ -72,12 +71,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
             setToken(null);
           } else {
             setToken(storedToken);
-            console.log("JWT: [", storedToken, "]");
             setIsLoggedIn(true);
           }
         }
-      } catch (error) {
-        console.log("Error retrieving auth state:", error);
+      } catch {
+        // Silent fail - app will show login screen
       }
       setIsReady(true);
     };

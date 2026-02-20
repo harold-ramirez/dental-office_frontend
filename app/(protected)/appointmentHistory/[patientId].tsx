@@ -84,8 +84,8 @@ export default function AppointmentHistory() {
         logOut,
       );
       setAppointmentHistory(data);
-    } catch (e) {
-      console.error("Error fetching appointments history:", e);
+    } catch {
+      // Silent fail - sections will show empty
     }
   }, [patientId, logOut]);
 

@@ -6,8 +6,10 @@ import { Stack } from "expo-router";
 import { useContext, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function WorkSchedule() {
+  const toast = useToast();
   const { logOut } = useContext(AuthContext);
   const [message, setMessage] = useState<{ isError: boolean; text: string }>({
     isError: false,
@@ -111,12 +113,16 @@ export default function WorkSchedule() {
         const data = await fetchWithToken("/shifts", { method: "GET" }, logOut);
         setShifts(data);
         setOriginalShifts(data);
-      } catch (e) {
-        console.error("Error fetching shifts:", e);
+      } catch {
+        toast.show("Error al cargar el horario de atención", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
       }
     };
     fetchShifts();
-  }, [logOut]);
+  }, [logOut, toast]);
 
   const handleSaveChanges = async () => {
     try {
@@ -212,8 +218,12 @@ export default function WorkSchedule() {
         isError: false,
         text: "Se aplicaron los cambios exitosamente",
       });
-    } catch (error) {
-      console.log("Error updating shifts", error);
+    } catch {
+      toast.show("Error al actualizar el horario", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       setMessage({
         isError: true,
         text: "Se produjo un error al actualizar el horario",

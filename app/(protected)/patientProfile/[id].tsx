@@ -19,6 +19,7 @@ import { MedicalImageDto, PatientDto } from "@/interfaces/interfaces";
 import { fetchWithToken } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
 import { EventArg, NavigationAction } from "@react-navigation/native";
+import Constants from "expo-constants";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Link,
@@ -40,7 +41,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useToast } from "react-native-toast-notifications";
-import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
 // const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -109,8 +109,8 @@ export default function PatientProfile() {
         logOut,
       );
       setPatient(endpoint);
-    } catch (e) {
-      console.error("Error fetching users:", e);
+    } catch {
+      // Silent fail - will show empty patient data
     } finally {
       setIsLoading(false);
     }
@@ -156,8 +156,8 @@ export default function PatientProfile() {
         logOut,
       );
       setImages(endpoint);
-    } catch (e) {
-      console.error("Error fetching images:", e);
+    } catch {
+      // Silent fail - section will show empty
     }
   }, [id, logOut]);
 
@@ -169,8 +169,8 @@ export default function PatientProfile() {
         logOut,
       );
       setOdontograms(data);
-    } catch (e) {
-      console.error("Error fetching Odontograms:", e);
+    } catch {
+      // Silent fail - section will show empty
     }
   }, [id, logOut]);
 
@@ -182,8 +182,8 @@ export default function PatientProfile() {
         logOut,
       );
       setMedicalHistories(data);
-    } catch (e) {
-      console.error("Error fetching medical histories:", e);
+    } catch {
+      // Silent fail - section will show empty
     }
   }, [id, logOut]);
 
@@ -195,8 +195,8 @@ export default function PatientProfile() {
         logOut,
       );
       setTreatments(data);
-    } catch (e) {
-      console.error("Error fetching Treatments:", e);
+    } catch {
+      // Silent fail - section will show empty
     }
   }, [id, logOut]);
 
@@ -208,8 +208,8 @@ export default function PatientProfile() {
         logOut,
       );
       setAppointments(data);
-    } catch (e) {
-      console.error("Error fetching Appointments:", e);
+    } catch {
+      // Silent fail - section will show empty
     }
   }, [id, logOut]);
 

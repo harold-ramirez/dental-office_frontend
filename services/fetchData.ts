@@ -1,5 +1,5 @@
+import Constants from "expo-constants";
 import { authService } from "./authService";
-import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
 // const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -21,7 +21,6 @@ export async function fetchWithToken(
   if (!response.ok) {
     if (response.status === 401) {
       onUnauthorized?.();
-      console.error("Unauthorized - token may have expired");
     }
     const error = new Error(`API error: ${response.status}`);
     (error as any).status = response.status;

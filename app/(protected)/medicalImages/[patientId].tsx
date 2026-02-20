@@ -3,6 +3,7 @@ import ImageModal from "@/components/patients/imageModal";
 import { MedicalImageDto } from "@/interfaces/interfaces";
 import { fetchWithToken } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
+import Constants from "expo-constants";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import {
@@ -13,7 +14,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
 // const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -34,8 +34,8 @@ export default function MedicalImages() {
         logOut,
       );
       setImages(endpoint);
-    } catch (e) {
-      console.error("Error fetching images:", e);
+    } catch {
+      // Silent fail - will show empty images list
     }
   }, [patientId, logOut]);
 

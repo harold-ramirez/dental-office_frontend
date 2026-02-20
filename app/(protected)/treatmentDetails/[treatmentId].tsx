@@ -7,10 +7,12 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function TreatmentDetails() {
   const { treatmentId } = useLocalSearchParams();
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [openModal, setOpenModal] = useState(false);
   const [treatmentDetails, setTreatmentDetails] = useState<{
     totalPaid: number;
@@ -45,10 +47,14 @@ export default function TreatmentDetails() {
           ? data.dentalPieces.replaceAll("-", " - ")
           : null,
       });
-    } catch (error) {
-      console.log("Error fetching treatment Details:", error);
+    } catch {
+      toast.show("Error al cargar los detalles del tratamiento", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
-  }, [treatmentId, logOut]);
+  }, [treatmentId, logOut, toast]);
 
   useEffect(() => {
     fetchProcedures();

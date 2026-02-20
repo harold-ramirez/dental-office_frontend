@@ -32,8 +32,7 @@ export const DeleteAlertMessage = (
               pathname: refreshPath,
               params: { refresh: Date.now().toString(), ...param },
             });
-          } catch (error) {
-            console.log(error);
+          } catch {
             toast.show(errorMessage, {
               type: "danger",
               placement: "top",

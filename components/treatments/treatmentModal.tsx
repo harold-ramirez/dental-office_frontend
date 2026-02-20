@@ -14,6 +14,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useToast } from "react-native-toast-notifications";
 import DropdownComponent from "../dropdown";
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
 export default function TreatmentModal(props: Props) {
   const { patientId = 0, onClose } = props;
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [teethAge, setTeethAge] = useState<"Adulto" | "Niño">("Adulto");
   const [formData, setFormData] = useState<{
     description: string;
@@ -56,9 +58,13 @@ export default function TreatmentModal(props: Props) {
       });
       setTreatmentList(parsed);
     } catch (error) {
-      console.log("Error fetching Treatments or Teeth:", error);
+      toast.show("Error al cargar los tratamientos", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
-  }, [logOut]);
+  }, [logOut, toast]);
 
   useEffect(() => {
     fetchTreatmentList();
@@ -90,7 +96,11 @@ export default function TreatmentModal(props: Props) {
       });
       onClose();
     } catch (error) {
-      console.log("Error posting Treatment:", error);
+      toast.show("Error al registrar el tratamiento", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
   };
 

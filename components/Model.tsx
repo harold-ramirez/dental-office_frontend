@@ -299,8 +299,6 @@ export default function Model({
 
     // Si encontramos un diente válido...
     if (toothGroup) {
-      console.log("Diente completo seleccionado:", toothGroup.name);
-
       // 1. DESELECCIONAR ANTERIOR (Si existe y es diferente)
       if (selectedToothRef.current && selectedToothRef.current !== toothGroup) {
         const prevGroup = selectedToothRef.current;

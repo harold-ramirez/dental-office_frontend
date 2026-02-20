@@ -15,10 +15,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function Treatments() {
   const { patientId } = useLocalSearchParams();
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [showModal, setShowModal] = useState(false);
   const [procedures, setProcedures] = useState<DiagnosedProcedureDto[]>([]);
   const [pageSize] = useState(10);
@@ -36,10 +38,14 @@ export default function Treatments() {
       setProcedures(data);
       setPage(1);
       setHasMoreData(data.length === pageSize);
-    } catch (error) {
-      console.log("Error fetching Diagnosed Procedures:", error);
+    } catch {
+      toast.show("Error al cargar los procedimientos", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
     }
-  }, [patientId, logOut, pageSize]);
+  }, [patientId, logOut, pageSize, toast]);
 
   const fetchMoreProcedures = useCallback(async () => {
     if (isLoadingMore || !hasMoreData) return;
@@ -60,8 +66,8 @@ export default function Treatments() {
       } else {
         setHasMoreData(false);
       }
-    } catch (error) {
-      console.log("Error fetching more procedures:", error);
+    } catch {
+      // Silent fail for pagination - already have data showing
     } finally {
       setIsLoadingMore(false);
     }

@@ -17,10 +17,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast } from "react-native-toast-notifications";
 
 export default function Patients() {
   const params = useLocalSearchParams();
   const { logOut } = useContext(AuthContext);
+  const toast = useToast();
   const [whatsappMessage, setWhatsappMessage] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [patients, setPatients] = useState<PatientDto[]>([]);
@@ -49,11 +51,15 @@ export default function Patients() {
       setPatients(endpoint);
       setPage(1);
       setHasMoreData(endpoint.length === pageSize);
-    } catch (e) {
-      console.error("Error fetching users:", e);
+    } catch {
+      toast.show("Error al cargar los pacientes", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       setHasError(true);
     }
-  }, [logOut, pageSize]);
+  }, [logOut, pageSize, toast]);
 
   const fetchMorePatients = useCallback(async () => {
     if (isLoadingMore || !hasMoreData || searchValue.trim() !== "") return;
@@ -78,8 +84,8 @@ export default function Patients() {
       } else {
         setHasMoreData(false);
       }
-    } catch (e) {
-      console.error("Error fetching more patients:", e);
+    } catch {
+      // Silent fail for pagination - already have data showing
     } finally {
       setIsLoadingMore(false);
     }
@@ -108,8 +114,8 @@ export default function Patients() {
           logOut,
         );
         setFilteredPatients(results);
-      } catch (e) {
-        console.error("Error searching patients:", e);
+      } catch {
+        // Silent fail for search - will show empty results
         setFilteredPatients([]);
       }
     }, 500);
@@ -129,8 +135,8 @@ export default function Patients() {
           logOut,
         );
         setWhatsappMessage(data.defaultMessage);
-      } catch (e) {
-        console.log("Error getting WA message", e);
+      } catch {
+        // Silent fail - WhatsApp message is optional feature
       }
     };
     fetchMessage();

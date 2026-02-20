@@ -138,7 +138,6 @@ export default function DayScheduleDetails() {
               });
               router.back();
             } catch (error: any) {
-              console.log("Error", error);
               toast.show("Ocurrió un error al registrar la cita", {
                 type: "danger",
                 placement: "top",
@@ -208,7 +207,6 @@ export default function DayScheduleDetails() {
               });
               router.back();
             } catch (error: any) {
-              console.log("Error", error);
               toast.show("Ocurrió un error al reprogramar la cita", {
                 type: "danger",
                 placement: "top",
@@ -250,7 +248,6 @@ export default function DayScheduleDetails() {
               });
               router.back();
             } catch (error: any) {
-              console.log("Error", error);
               toast.show("Ocurrió un error al cancelar la cita", {
                 type: "danger",
                 placement: "top",
@@ -291,8 +288,8 @@ export default function DayScheduleDetails() {
         );
         setPatientsList(patients);
         setTreatmentsList(treatments);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      } catch {
+        // Silent fail - form will show empty dropdowns
       } finally {
         setLoading(false);
       }
