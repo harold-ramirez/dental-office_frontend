@@ -357,9 +357,17 @@ export default function Odontogram() {
           logOut,
         );
         setOdontograms(response);
-        setCurrentOdontogram(response[0]);
-        setIsAdultModel(response[0].model === "adult");
-      } catch {}
+        if (response && response.length > 0) {
+          setCurrentOdontogram(response[0]);
+          setIsAdultModel(response[0].model === "adult");
+        } else {
+          setError("No hay odontogramas registrados para este paciente.");
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Error al cargar odontogramas",
+        );
+      }
     };
     fetchOdontograms();
   }, [logOut, patientId]);
@@ -403,9 +411,37 @@ export default function Odontogram() {
 
   if (error) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ color: "red" }}>Error: {error}</Text>
-      </View>
+      <>
+        <LinearGradient
+          colors={["#97CADB", "#018ABE", "#97CADB"]}
+          className="top-0 right-0 left-0 absolute h-full"
+        />
+        <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1">
+          <Stack.Screen
+            options={{
+              headerShown: true,
+              headerTitleAlign: "center",
+              headerStyle: { backgroundColor: "#001B48" },
+              headerTintColor: "#D6E8EE",
+              headerTitle: "Odontograma",
+            }}
+          />
+          <View className="flex-1 justify-center items-center px-6">
+            <View className="items-center gap-4 bg-whiteBlue p-8 rounded-2xl">
+              <Text className="font-bold text-blackBlue text-2xl text-center">
+                Sin odontogramas
+              </Text>
+              <Text className="text-darkBlue text-base text-center">
+                {error}
+              </Text>
+              <Text className="mt-2 text-darkBlue/75 text-sm text-center">
+                Cree un nuevo odontograma desde el perfil del paciente para
+                comenzar.
+              </Text>
+            </View>
+          </View>
+        </SafeAreaView>
+      </>
     );
   }
 
