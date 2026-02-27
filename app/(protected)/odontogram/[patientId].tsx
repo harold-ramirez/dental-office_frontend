@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unknown-property */
-import adultmodelPath from "@/assets/models/Adult_Denture.glb";
-import childmodelPath from "@/assets/models/Child_Denture.glb";
+import adultDentureModel from "@/assets/models/Adult_Denture.glb";
+import childDentureModel from "@/assets/models/Child_Denture.glb";
 import Model from "@/components/Model";
 import SingleToothModel from "@/components/SingleToothModel"; // Import SingleToothModel
 import { fetchWithToken } from "@/services/fetchData";
@@ -10,7 +10,7 @@ import { getStatusColor, getStatusDescription } from "@/utils/statusColors"; // 
 import { TOOTH_ASSETS } from "@/utils/toothAssets";
 import { Center, Environment, OrbitControls } from "@react-three/drei/native";
 import { Canvas } from "@react-three/fiber/native";
-import { Asset } from "expo-asset";
+import { Asset, useAssets } from "expo-asset";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { Suspense, useContext, useEffect, useMemo, useState } from "react";
@@ -42,6 +42,12 @@ export default function Odontogram() {
   const [changes, setChanges] = useState<Record<string, string>>({}); // Cambios locales
   const { logOut } = useContext(AuthContext);
   const toast = useToast();
+
+  // Preload denture models using useAssets hook
+  const [assets, assetsError] = useAssets([
+    adultDentureModel,
+    childDentureModel,
+  ]);
 
   const [odontograms, setOdontograms] = useState<
     {
@@ -353,30 +359,21 @@ export default function Odontogram() {
         setOdontograms(response);
         setCurrentOdontogram(response[0]);
         setIsAdultModel(response[0].model === "adult");
-        if (response[0].model === "adult") setCurrentModelUri(adultmodelPath);
-        else setCurrentModelUri(childmodelPath);
       } catch {}
     };
     fetchOdontograms();
   }, [logOut, patientId]);
 
+  // Set model URI when assets are loaded
   useEffect(() => {
-    (async () => {
-      try {
-        if (isAdultModel) {
-          const adultAsset = Asset.fromModule(adultmodelPath);
-          await adultAsset.downloadAsync();
-          setCurrentModelUri(adultAsset.uri);
-        } else {
-          const childAsset = Asset.fromModule(childmodelPath);
-          await childAsset.downloadAsync();
-          setCurrentModelUri(childAsset.uri);
-        }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Error loading asset");
-      }
-    })();
-  }, [isAdultModel]);
+    if (assets) {
+      const uri = isAdultModel ? assets[0].localUri : assets[1].localUri;
+      setCurrentModelUri(uri);
+    }
+    if (assetsError) {
+      setError(assetsError.message);
+    }
+  }, [assets, assetsError, isAdultModel]);
 
   useEffect(() => {
     const loadSingleTooth = async () => {
@@ -390,10 +387,11 @@ export default function Odontogram() {
         try {
           const asset = Asset.fromModule(assetModule);
           await asset.downloadAsync();
-          setSingleToothUri(asset.uri);
+          setSingleToothUri(asset.localUri || asset.uri);
           setSelectedFace(null); // Reset selected face when tooth changes
           setAvailableFaces([]);
-        } catch {
+        } catch (e) {
+          console.error("Error loading tooth asset:", e);
           setSingleToothUri(null);
         }
       } else {

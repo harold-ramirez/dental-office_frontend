@@ -23,6 +23,7 @@
       "edgeToEdgeEnabled": true,
       "package": "com.haroldramirez.mydentaloffice"
     },
+    "assetBundlePatterns": ["assets/**/*"],
     "web": {
       "bundler": "metro",
       "output": "static",
