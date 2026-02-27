@@ -1,5 +1,6 @@
-import { fetchWithToken } from "@/services/fetchData";
+import { fetchWithToken, getApiErrorMessage } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
+import { trimFormData } from "@/utils/formValidators";
 import { ADULT_TOOTH_PIECES, CHILD_TOOTH_PIECES } from "@/utils/teethPieces";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -27,6 +28,7 @@ export default function TreatmentModal(props: Props) {
   const { logOut } = useContext(AuthContext);
   const toast = useToast();
   const [teethAge, setTeethAge] = useState<"Adulto" | "Niño">("Adulto");
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<{
     description: string;
     totalCost: number | "";
@@ -58,11 +60,14 @@ export default function TreatmentModal(props: Props) {
       });
       setTreatmentList(parsed);
     } catch (error) {
-      toast.show("Error al cargar los tratamientos", {
-        type: "danger",
-        placement: "top",
-        duration: 3000,
-      });
+      toast.show(
+        getApiErrorMessage(error, "Error al cargar los tratamientos"),
+        {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        },
+      );
     }
   }, [logOut, toast]);
 
@@ -71,19 +76,32 @@ export default function TreatmentModal(props: Props) {
   }, [fetchTreatmentList]);
 
   const handleRegisterTreatment = async () => {
-    if (formData.Treatment_Id === 0) return;
+    if (formData.Treatment_Id === 0 || isLoading) return;
+
+    // Validar que el costo total no sea 0 o vacío
+    if (formData.totalCost === "" || formData.totalCost === 0) {
+      toast.show("Por favor, ingresa el costo total del tratamiento", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
+
     try {
+      setIsLoading(true);
+      const trimmed = trimFormData(formData);
       const res = await fetchWithToken(
         "/diagnosed-procedure",
         {
           method: "POST",
           body: JSON.stringify({
             description:
-              formData.description === "" ? null : formData.description,
-            totalCost: formData.totalCost === "" ? null : formData.totalCost,
+              trimmed.description === "" ? null : trimmed.description,
+            totalCost: trimmed.totalCost === "" ? null : trimmed.totalCost,
             Patient_Id: patientId,
-            Treatment_Id: formData.Treatment_Id,
-            dentalPieces: formData.dentalPieces.sort((a, b) => a - b).join("-"),
+            Treatment_Id: trimmed.Treatment_Id,
+            dentalPieces: trimmed.dentalPieces.sort((a, b) => a - b).join("-"),
           }),
         },
         logOut,
@@ -96,11 +114,16 @@ export default function TreatmentModal(props: Props) {
       });
       onClose();
     } catch (error) {
-      toast.show("Error al registrar el tratamiento", {
-        type: "danger",
-        placement: "top",
-        duration: 3000,
-      });
+      toast.show(
+        getApiErrorMessage(error, "Error al registrar el tratamiento"),
+        {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        },
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -259,9 +282,12 @@ export default function TreatmentModal(props: Props) {
           {/* Save Button */}
           <Pressable
             onPress={() => handleRegisterTreatment()}
-            className="justify-center items-center bg-blackBlue active:bg-darkBlue mt-5 p-1 border-2 border-whiteBlue rounded-full"
+            disabled={isLoading}
+            className={`justify-center items-center mt-5 p-1 border-2 border-whiteBlue rounded-full ${isLoading ? "bg-gray-400" : "bg-blackBlue active:bg-darkBlue"}`}
           >
-            <Text className="font-bold text-whiteBlue text-lg">Registrar</Text>
+            <Text className="font-bold text-whiteBlue text-lg">
+              {isLoading ? "Registrando..." : "Registrar"}
+            </Text>
           </Pressable>
         </Pressable>
       </View>

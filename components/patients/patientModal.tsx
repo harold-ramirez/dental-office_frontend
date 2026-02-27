@@ -1,6 +1,11 @@
 import { CreatePatientDto, PatientDto } from "@/interfaces/interfaces";
-import { fetchWithToken } from "@/services/fetchData";
+import { fetchWithToken, getApiErrorMessage } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
+import {
+  trimFormData,
+  validateAge,
+  validateDate,
+} from "@/utils/formValidators";
 import { useRouter } from "expo-router";
 import { useContext, useState } from "react";
 import {
@@ -48,54 +53,114 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
   });
 
   const handleRegisterPatient = async () => {
-    if (newPatient.name && newPatient.gender) {
-      setIsLoading(true);
-      try {
-        await fetchWithToken(
-          "/patients",
-          {
-            method: "POST",
-            body: JSON.stringify(newPatient),
-          },
-          logOut,
-        );
-        router.replace("/patients?refresh=1");
-        toast.show("El paciente ha sido registrado exitosamente", {
-          type: "success",
-          placement: "top",
-          duration: 3000,
-        });
-        setNewPatient({
-          name: "",
-          paternalSurname: "",
-          maternalSurname: "",
-          gender: "",
-          cellphoneNumber: "",
-          occupation: "",
-          birthdate: "",
-          identityDocument: "",
-          placeOfBirth: "",
-          address: "",
-        });
-      } catch {
-        toast.show(
-          "Hubo un error al registrar el paciente. Por favor, intenta nuevamente.",
-          {
-            type: "danger",
-            placement: "top",
-            duration: 3000,
-          },
-        );
-      } finally {
-        setIsLoading(false);
-        onClose();
-      }
-    } else {
-      toast.show("Por favor, completa los campos obligatorios (*).", {
+    // Validar campos obligatorios
+    if (!newPatient.name || !newPatient.name.trim()) {
+      toast.show("El nombre del paciente es obligatorio", {
         type: "danger",
         placement: "top",
         duration: 3000,
       });
+      return;
+    }
+    if (!newPatient.identityDocument || !newPatient.identityDocument.trim()) {
+      toast.show("El carnet de identidad es obligatorio", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
+    if (!newPatient.birthdate) {
+      toast.show("La fecha de nacimiento es obligatoria", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
+    if (!newPatient.gender) {
+      toast.show("El sexo del paciente es obligatorio", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Validar fecha de nacimiento
+    if (newPatient.birthdate) {
+      if (!validateDate(newPatient.birthdate)) {
+        toast.show("La fecha de nacimiento no es válida", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
+        return;
+      }
+      const birthDate = new Date(newPatient.birthdate);
+      if (birthDate > new Date()) {
+        toast.show("La fecha de nacimiento no puede ser futura", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
+        return;
+      }
+      const age = validateAge(newPatient.birthdate);
+      if (age === null) {
+        toast.show("La edad no es válida (debe estar entre 0 y 150 años)", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
+        return;
+      }
+    }
+
+    setIsLoading(true);
+    try {
+      const trimmedPatient = trimFormData(newPatient);
+      await fetchWithToken(
+        "/patients",
+        {
+          method: "POST",
+          body: JSON.stringify(trimmedPatient),
+        },
+        logOut,
+      );
+      router.replace("/patients?refresh=1");
+      toast.show("El paciente ha sido registrado exitosamente", {
+        type: "success",
+        placement: "top",
+        duration: 3000,
+      });
+      setNewPatient({
+        name: "",
+        paternalSurname: "",
+        maternalSurname: "",
+        gender: "",
+        cellphoneNumber: "",
+        occupation: "",
+        birthdate: "",
+        identityDocument: "",
+        placeOfBirth: "",
+        address: "",
+      });
+    } catch (error) {
+      toast.show(
+        getApiErrorMessage(
+          error,
+          "Hubo un error al registrar el paciente. Por favor, intenta nuevamente.",
+        ),
+        {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        },
+      );
+    } finally {
+      setIsLoading(false);
+      onClose();
     }
   };
 
@@ -356,42 +421,102 @@ export function UpdatePatientModal({
   const [patient, setPatient] = useState<PatientDto>({ ...initialPatient });
 
   const handleUpdatePatient = async () => {
-    if (patient.name && patient.gender) {
-      setIsLoading(true);
-      let endpoint: Response | null = null;
-      try {
-        endpoint = await fetchWithToken(
-          `/patients/${patient.Id}`,
-          {
-            method: "PATCH",
-            body: JSON.stringify(patient),
-          },
-          logOut,
-        );
-        toast.show("Los datos del paciente se han actualizado exitosamente.", {
-          type: "success",
-          placement: "top",
-          duration: 3000,
-        });
-      } catch {
-        toast.show(
-          "Hubo un error al actualizar los datos del paciente. Por favor, intenta nuevamente.",
-          {
-            type: "danger",
-            placement: "top",
-            duration: 3000,
-          },
-        );
-      } finally {
-        setIsLoading(false);
-        onClose(endpoint?.ok);
-      }
-    } else {
-      toast.show("Por favor, completa los campos obligatorios (*).", {
+    // Validar campos obligatorios
+    if (!patient.name || !patient.name.trim()) {
+      toast.show("El nombre del paciente es obligatorio", {
         type: "danger",
         placement: "top",
         duration: 3000,
       });
+      return;
+    }
+    if (!patient.identityDocument || !patient.identityDocument.trim()) {
+      toast.show("El carnet de identidad es obligatorio", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
+    if (!patient.birthdate) {
+      toast.show("La fecha de nacimiento es obligatoria", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
+    if (!patient.gender) {
+      toast.show("El sexo del paciente es obligatorio", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Validar fecha de nacimiento
+    if (patient.birthdate) {
+      if (!validateDate(patient.birthdate)) {
+        toast.show("La fecha de nacimiento no es válida", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
+        return;
+      }
+      const birthDate = new Date(patient.birthdate);
+      if (birthDate > new Date()) {
+        toast.show("La fecha de nacimiento no puede ser futura", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
+        return;
+      }
+      const age = validateAge(patient.birthdate);
+      if (age === null) {
+        toast.show("La edad no es válida (debe estar entre 0 y 150 años)", {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        });
+        return;
+      }
+    }
+
+    setIsLoading(true);
+    let endpoint: Response | null = null;
+    try {
+      const trimmedPatient = trimFormData(patient);
+      endpoint = await fetchWithToken(
+        `/patients/${patient.Id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(trimmedPatient),
+        },
+        logOut,
+      );
+      toast.show("Los datos del paciente se han actualizado exitosamente.", {
+        type: "success",
+        placement: "top",
+        duration: 3000,
+      });
+    } catch (error) {
+      toast.show(
+        getApiErrorMessage(
+          error,
+          "Hubo un error al actualizar los datos del paciente. Por favor, intenta nuevamente.",
+        ),
+        {
+          type: "danger",
+          placement: "top",
+          duration: 3000,
+        },
+      );
+    } finally {
+      setIsLoading(false);
+      onClose(endpoint?.ok);
     }
   };
 

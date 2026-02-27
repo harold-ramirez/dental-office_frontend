@@ -83,14 +83,14 @@ export default function PatientCard({
               .filter(Boolean)
               .join(" ")}
           </Text>
-          <View className="flex-row items-center gap-2">
-            <PhoneIcon size={21} color="#02457A" />
-            <Text className={`text-darkBlue text-lg`}>
-              {patient.cellphoneNumber
-                ? patient.cellphoneNumber
-                : `- - - - - - - -`}
-            </Text>
-          </View>
+          {patient.cellphoneNumber && (
+            <View className="flex-row items-center gap-2">
+              <PhoneIcon size={21} color="#02457A" />
+              <Text className={`text-darkBlue text-lg`}>
+                {patient.cellphoneNumber}
+              </Text>
+            </View>
+          )}
           {patient.gender === "M" ? (
             <View className="flex-row items-center gap-2">
               <View className="bg-darkBlue rounded-md">

@@ -2,8 +2,9 @@ import LogInModal from "@/components/account/logInModal";
 import DropdownComponent from "@/components/dropdown";
 import { LogoutIcon, UserDoctorIcon } from "@/components/Icons";
 import PasswordInput from "@/components/passwordInput";
-import { fetchWithToken } from "@/services/fetchData";
+import { fetchWithToken, getApiErrorMessage } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
+import { trimFormData } from "@/utils/formValidators";
 import { validatePassword } from "@/utils/validatePassword";
 import { LinearGradient } from "expo-linear-gradient";
 import { useContext, useEffect, useState } from "react";
@@ -92,21 +93,22 @@ export default function Profile() {
       });
       return;
     }
+    const trimmedUserData = trimFormData(userData);
     const newData: any = {};
-    if (userData.username !== originalUserData.username)
-      newData.username = userData.username;
+    if (trimmedUserData.username !== originalUserData.username)
+      newData.username = trimmedUserData.username;
 
-    if (userData.phoneNumber !== originalUserData.phoneNumber)
-      newData.phoneNumber = userData.phoneNumber;
+    if (trimmedUserData.phoneNumber !== originalUserData.phoneNumber)
+      newData.phoneNumber = trimmedUserData.phoneNumber;
 
-    if (userData.defaultMessage !== originalUserData.defaultMessage)
-      newData.defaultMessage = userData.defaultMessage;
+    if (trimmedUserData.defaultMessage !== originalUserData.defaultMessage)
+      newData.defaultMessage = trimmedUserData.defaultMessage;
 
     if (
-      userData.sessionDurationMinutes !==
+      trimmedUserData.sessionDurationMinutes !==
       originalUserData.sessionDurationMinutes
     )
-      newData.sessionDurationMinutes = userData.sessionDurationMinutes;
+      newData.sessionDurationMinutes = trimmedUserData.sessionDurationMinutes;
     if (Object.keys(newData).length === 0) {
       toast.show("No hay cambios para guardar", {
         type: "danger",
@@ -132,8 +134,8 @@ export default function Profile() {
       });
       setOriginalUserData(userData);
       setEditMode(false);
-    } catch {
-      toast.show("Error al actualizar los datos", {
+    } catch (error) {
+      toast.show(getApiErrorMessage(error, "Error al actualizar los datos"), {
         type: "danger",
         placement: "top",
       });
@@ -209,17 +211,23 @@ export default function Profile() {
       setNewPassword({ oldPassword: "", newPassword: "", confirmPassword: "" });
       authContext.logOut();
     } catch (e: any) {
-      const errorMessage = e.message || "Error desconocido";
-      if (errorMessage.includes("403")) {
+      const status = e?.status;
+      if (status === 403) {
         toast.show("Contraseña actual incorrecta", {
           type: "danger",
           placement: "top",
         });
       } else {
-        toast.show("Error al cambiar la contraseña. Intente nuevamente", {
-          type: "danger",
-          placement: "top",
-        });
+        toast.show(
+          getApiErrorMessage(
+            e,
+            "Error al cambiar la contraseña. Intente nuevamente",
+          ),
+          {
+            type: "danger",
+            placement: "top",
+          },
+        );
       }
     } finally {
       setLoading(false);

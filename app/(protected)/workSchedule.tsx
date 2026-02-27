@@ -1,5 +1,5 @@
 import { WorkScheduleSelection } from "@/components/appointments-requests/scheduleModes";
-import { fetchWithToken } from "@/services/fetchData";
+import { fetchWithToken, getApiErrorMessage } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
@@ -15,6 +15,7 @@ export default function WorkSchedule() {
     isError: false,
     text: "",
   });
+  const [isSaving, setIsSaving] = useState(false);
   const [shifts, setShifts] = useState<{
     Monday: {
       Id: number;
@@ -113,12 +114,15 @@ export default function WorkSchedule() {
         const data = await fetchWithToken("/shifts", { method: "GET" }, logOut);
         setShifts(data);
         setOriginalShifts(data);
-      } catch {
-        toast.show("Error al cargar el horario de atención", {
-          type: "danger",
-          placement: "top",
-          duration: 3000,
-        });
+      } catch (error) {
+        toast.show(
+          getApiErrorMessage(error, "Error al cargar el horario de atención"),
+          {
+            type: "danger",
+            placement: "top",
+            duration: 3000,
+          },
+        );
       }
     };
     fetchShifts();
@@ -126,6 +130,8 @@ export default function WorkSchedule() {
 
   const handleSaveChanges = async () => {
     try {
+      if (isSaving) return;
+      setIsSaving(true);
       setMessage({
         isError: false,
         text: "",
@@ -216,8 +222,8 @@ export default function WorkSchedule() {
         isError: false,
         text: "Se aplicaron los cambios exitosamente",
       });
-    } catch {
-      toast.show("Error al actualizar el horario", {
+    } catch (error) {
+      toast.show(getApiErrorMessage(error, "Error al actualizar el horario"), {
         type: "danger",
         placement: "top",
         duration: 3000,
@@ -226,6 +232,8 @@ export default function WorkSchedule() {
         isError: true,
         text: "Se produjo un error al actualizar el horario",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -282,10 +290,11 @@ export default function WorkSchedule() {
 
           <Pressable
             onPress={() => handleSaveChanges()}
-            className="items-center bg-blackBlue active:bg-darkBlue my-2 py-2 rounded-full w-3/4"
+            disabled={isSaving}
+            className={`items-center my-2 py-2 rounded-full w-3/4 ${isSaving ? "bg-gray-400" : "bg-blackBlue active:bg-darkBlue"}`}
           >
             <Text className="font-semibold text-whiteBlue text-lg">
-              Guardar
+              {isSaving ? "Guardando..." : "Guardar"}
             </Text>
           </Pressable>
         </View>

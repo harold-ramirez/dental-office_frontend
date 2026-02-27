@@ -11,6 +11,7 @@ import PopupModal from "@/components/popupModal";
 import { Summary, WeekSummary } from "@/components/summaries";
 import { fetchWithToken } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
+import { trimFormData } from "@/utils/formValidators";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -104,9 +105,10 @@ export default function Index() {
     }
     setLoading(true);
     try {
+      const trimmedData = trimFormData(newObject);
       const data = await fetchWithToken(
         url,
-        { method: "POST", body: JSON.stringify(newObject) },
+        { method: "POST", body: JSON.stringify(trimmedData) },
         logOut,
       );
       switch (url) {

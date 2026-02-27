@@ -1,7 +1,8 @@
 import { WeekAppointmentSelect } from "@/components/appointments-requests/scheduleModes";
 import DropdownComponent from "@/components/dropdown";
-import { fetchWithToken } from "@/services/fetchData";
+import { fetchWithToken, getApiErrorMessage } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
+import { validateDate } from "@/utils/formValidators";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useContext, useEffect, useState } from "react";
@@ -87,6 +88,25 @@ export default function DayScheduleDetails() {
       });
       return;
     }
+    // Validar que la fecha sea válida y no sea en el pasado
+    if (!validateDate(appointment.dateHour.toISOString())) {
+      toast.show("La fecha de la cita no es válida", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
+    const now = new Date();
+    // Permitir citas del mismo día, solo rechazar si es en el pasado
+    if (appointment.dateHour < now) {
+      toast.show("La fecha de la cita no puede ser en el pasado", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
     Alert.alert(
       "Confirmar Cita",
       `Se registrará una cita a nombre de ${
@@ -138,11 +158,17 @@ export default function DayScheduleDetails() {
               });
               router.back();
             } catch (error: any) {
-              toast.show("Ocurrió un error al registrar la cita", {
-                type: "danger",
-                placement: "top",
-                duration: 3000,
-              });
+              toast.show(
+                getApiErrorMessage(
+                  error,
+                  "Ocurrió un error al registrar la cita",
+                ),
+                {
+                  type: "danger",
+                  placement: "top",
+                  duration: 3000,
+                },
+              );
             } finally {
               setLoading(false);
             }
@@ -163,6 +189,24 @@ export default function DayScheduleDetails() {
           duration: 3000,
         },
       );
+      return;
+    }
+    // Validar que la nueva fecha sea válida y no sea en el pasado
+    if (!validateDate(appointment.dateHour.toISOString())) {
+      toast.show("La fecha de la cita no es válida", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
+      return;
+    }
+    const now = new Date();
+    if (appointment.dateHour < now) {
+      toast.show("La fecha de la cita no puede ser en el pasado", {
+        type: "danger",
+        placement: "top",
+        duration: 3000,
+      });
       return;
     }
     Alert.alert(
@@ -207,11 +251,17 @@ export default function DayScheduleDetails() {
               });
               router.back();
             } catch (error: any) {
-              toast.show("Ocurrió un error al reprogramar la cita", {
-                type: "danger",
-                placement: "top",
-                duration: 3000,
-              });
+              toast.show(
+                getApiErrorMessage(
+                  error,
+                  "Ocurrió un error al reprogramar la cita",
+                ),
+                {
+                  type: "danger",
+                  placement: "top",
+                  duration: 3000,
+                },
+              );
             } finally {
               setLoading(false);
             }
@@ -248,11 +298,17 @@ export default function DayScheduleDetails() {
               });
               router.back();
             } catch (error: any) {
-              toast.show("Ocurrió un error al cancelar la cita", {
-                type: "danger",
-                placement: "top",
-                duration: 3000,
-              });
+              toast.show(
+                getApiErrorMessage(
+                  error,
+                  "Ocurrió un error al cancelar la cita",
+                ),
+                {
+                  type: "danger",
+                  placement: "top",
+                  duration: 3000,
+                },
+              );
             } finally {
               setLoading(false);
             }
@@ -506,7 +562,8 @@ export default function DayScheduleDetails() {
           <View className="flex-row gap-5">
             <Pressable
               onPress={handleDeleteAppointment}
-              className="flex-1 items-center bg-red-600 active:bg-red-800 my-2 py-2 border border-whiteBlue rounded-full"
+              disabled={loading}
+              className={`flex-1 items-center my-2 py-2 border border-whiteBlue rounded-full ${loading ? "bg-gray-400" : "bg-red-600 active:bg-red-800"}`}
             >
               <Text className="font-semibold text-whiteBlue text-lg">
                 Cancelar Cita
@@ -514,7 +571,8 @@ export default function DayScheduleDetails() {
             </Pressable>
             <Pressable
               onPress={handleUpdateAppointment}
-              className="flex-1 items-center bg-whiteBlue active:bg-lightBlue my-2 py-2 border border-blackBlue rounded-full"
+              disabled={loading}
+              className={`flex-1 items-center my-2 py-2 border border-blackBlue rounded-full ${loading ? "bg-gray-400" : "bg-whiteBlue active:bg-lightBlue"}`}
             >
               <Text className="font-semibold text-blackBlue text-lg">
                 Reprogramar
@@ -524,10 +582,11 @@ export default function DayScheduleDetails() {
         ) : (
           <Pressable
             onPress={handlePostAppointment}
-            className="items-center bg-darkBlue active:bg-pureBlue my-2 py-2 border border-whiteBlue rounded-full w-3/4"
+            disabled={loading}
+            className={`items-center my-2 py-2 border border-whiteBlue rounded-full w-3/4 ${loading ? "bg-gray-400" : "bg-darkBlue active:bg-pureBlue"}`}
           >
             <Text className="font-semibold text-whiteBlue text-lg">
-              Agendar
+              {loading ? "Agendando..." : "Agendar"}
             </Text>
           </Pressable>
         )}

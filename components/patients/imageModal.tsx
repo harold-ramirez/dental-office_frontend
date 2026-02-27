@@ -1,6 +1,6 @@
 import Loading from "@/components/loading";
 import { MedicalImageDto } from "@/interfaces/interfaces";
-import { fetchWithToken } from "@/services/fetchData";
+import { fetchWithToken, getApiErrorMessage } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
 import Constants from "expo-constants";
 import * as ImagePicker from "expo-image-picker";
@@ -86,8 +86,8 @@ export default function ImageModal(props: ImageModalProps) {
         });
         setNewPhoto({ ...newPhoto, photoURL: asset.uri });
       }
-    } catch {
-      toast.show("Error al seleccionar la imagen", {
+    } catch (error) {
+      toast.show(getApiErrorMessage(error, "Error al seleccionar la imagen"), {
         type: "danger",
         placement: "top",
         duration: 3000,
@@ -122,8 +122,8 @@ export default function ImageModal(props: ImageModalProps) {
           refresh: Date.now().toString(),
         },
       });
-    } catch {
-      toast.show("Error al subir la imagen", {
+    } catch (error) {
+      toast.show(getApiErrorMessage(error, "Error al subir la imagen"), {
         type: "danger",
         placement: "top",
         duration: 3000,
@@ -155,8 +155,8 @@ export default function ImageModal(props: ImageModalProps) {
           refresh: Date.now().toString(),
         },
       });
-    } catch {
-      toast.show("Error al actualizar la imagen", {
+    } catch (error) {
+      toast.show(getApiErrorMessage(error, "Error al actualizar la imagen"), {
         type: "danger",
         placement: "top",
         duration: 3000,

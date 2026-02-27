@@ -3,6 +3,24 @@ import { authService } from "./authService";
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
 
+export function getApiErrorMessage(error: unknown, fallback: string) {
+  if (error && typeof error === "object") {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim() !== "") {
+      if (!message.startsWith("API error:")) return message;
+    }
+    const status = (error as { status?: number }).status;
+    if (status === 400) return "Datos invalidos. Verifique los campos.";
+    if (status === 401 || status === 403)
+      return "No tiene permisos para esta accion.";
+    if (status === 404) return "Recurso no encontrado.";
+    if (status === 409) return "Registro duplicado.";
+    if (typeof status === "number" && status >= 500)
+      return "Error del servidor. Intente mas tarde.";
+  }
+  return fallback;
+}
+
 export async function fetchWithToken(
   url: string,
   options: RequestInit = {},
@@ -21,7 +39,22 @@ export async function fetchWithToken(
     if (response.status === 401) {
       onUnauthorized?.();
     }
-    const error = new Error(`API error: ${response.status}`);
+    let errorMessage = `API error: ${response.status}`;
+    try {
+      const contentType = response.headers.get("Content-Type") || "";
+      if (contentType.includes("application/json")) {
+        const body = await response.json();
+        if (body?.message && typeof body.message === "string") {
+          errorMessage = body.message;
+        }
+      } else {
+        const text = await response.text();
+        if (text.trim() !== "") errorMessage = text;
+      }
+    } catch {
+      // Keep default errorMessage
+    }
+    const error = new Error(errorMessage);
     (error as any).status = response.status;
     throw error;
   }

@@ -1,4 +1,4 @@
-import { fetchWithToken } from "@/services/fetchData";
+import { fetchWithToken, getApiErrorMessage } from "@/services/fetchData";
 import { AuthContext } from "@/utils/authContext";
 import { useContext, useEffect, useState } from "react";
 import {
@@ -24,6 +24,7 @@ export default function PaymentModal(props: Props) {
   const { logOut } = useContext(AuthContext);
   const toast = useToast();
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [newPayment, setNewPayment] = useState<{
     amount: number | "";
     DiagnosedProcedure_Id: number;
@@ -35,8 +36,9 @@ export default function PaymentModal(props: Props) {
   });
 
   const handlePostPayment = async () => {
-    if (newPayment.amount === "") return;
+    if (newPayment.amount === "" || isLoading) return;
     try {
+      setIsLoading(true);
       await fetchWithToken(
         "/payments",
         {
@@ -51,12 +53,14 @@ export default function PaymentModal(props: Props) {
       );
       onRefresh();
       onClose();
-    } catch {
-      toast.show("Error al registrar el pago", {
+    } catch (error) {
+      toast.show(getApiErrorMessage(error, "Error al registrar el pago"), {
         type: "danger",
         placement: "top",
         duration: 3000,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -138,9 +142,12 @@ export default function PaymentModal(props: Props) {
           </View>
           <Pressable
             onPress={() => handlePostPayment()}
-            className="justify-center items-center bg-darkBlue active:bg-blackBlue mt-5 p-2 rounded-full"
+            disabled={isLoading}
+            className={`items-center mt-3 py-2 rounded-xl ${isLoading ? "bg-gray-400" : "bg-darkBlue active:bg-darkBlue/80"}`}
           >
-            <Text className="font-semibold text-whiteBlue">Registrar</Text>
+            <Text className="font-bold text-whiteBlue">
+              {isLoading ? "Registrando..." : "Registrar"}
+            </Text>
           </Pressable>
         </View>
       </View>
