@@ -42,7 +42,10 @@ export default function PatientCard({
   };
   const handleWhatsApp = () => {
     if (patient.cellphoneNumber) {
-      const msg = defaultMessage ? encodeURIComponent(defaultMessage) : "";
+      const msg =
+        defaultMessage && defaultMessage !== "null"
+          ? encodeURIComponent(defaultMessage)
+          : "";
       const url = `https://wa.me/591${patient.cellphoneNumber}?text=${msg}`;
       Linking.openURL(url);
     } else {

@@ -87,7 +87,10 @@ export default function PatientProfile() {
         { method: "GET" },
         logOut,
       );
-      const msg = data ? encodeURIComponent(data.defaultMessage) : "";
+      const msg =
+        data?.defaultMessage && data.defaultMessage !== "null"
+          ? encodeURIComponent(data.defaultMessage)
+          : "";
       const url = `https://wa.me/591${patient.cellphoneNumber}?text=${msg}`;
       Linking.openURL(url);
     } else {

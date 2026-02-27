@@ -58,9 +58,10 @@ export default function RequestCard({ ...props }: RequestCardProps) {
   };
   const handleWhatsApp = () => {
     if (props.request.phoneNumber) {
-      const msg = props.defaultMessage
-        ? encodeURIComponent(props.defaultMessage)
-        : "";
+      const msg =
+        props.defaultMessage && props.defaultMessage !== "null"
+          ? encodeURIComponent(props.defaultMessage)
+          : "";
       const url = `https://wa.me/591${props.request.phoneNumber}?text=${msg}`;
       Linking.openURL(url);
     } else {

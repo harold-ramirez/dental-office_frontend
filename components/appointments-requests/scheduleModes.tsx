@@ -1542,9 +1542,10 @@ export function ModalDetails({
               selectedAppointment.requestPhoneNumber) && (
               <Pressable
                 onPress={() => {
-                  const msg = defaultMessage
-                    ? encodeURIComponent(defaultMessage)
-                    : "";
+                  const msg =
+                    defaultMessage && defaultMessage !== "null"
+                      ? encodeURIComponent(defaultMessage)
+                      : "";
                   const url = `https://wa.me/591${selectedAppointment.requestPhoneNumber ?? selectedAppointment.patientPhoneNumber}?text=${msg}`;
                   Linking.openURL(url);
                 }}
