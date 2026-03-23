@@ -3,18 +3,39 @@ import { authService } from "./authService";
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
 
+const SPANISH_TRANSLATIONS: { [key: string]: string } = {
+  "appointment conflict": "Existe una cita en ese horario.",
+  "conflicts with existing appointment": "Esta cita choca con otra existente.",
+  "overlaps with existing appointment":
+    "Esta cita se superpone con otra existente.",
+  "appointment overlaps another one":
+    "Esta cita se superpone con otra existente.",
+  "time conflict": "Existe un conflicto de horario.",
+  "appointment already exists": "Ya existe una cita en ese momento.",
+};
+
+function translateMessage(message: string): string {
+  const lowerMessage = message.toLowerCase();
+  for (const [english, spanish] of Object.entries(SPANISH_TRANSLATIONS)) {
+    if (lowerMessage.includes(english)) {
+      return spanish;
+    }
+  }
+  return message;
+}
+
 export function getApiErrorMessage(error: unknown, fallback: string) {
   if (error && typeof error === "object") {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message.trim() !== "") {
-      if (!message.startsWith("API error:")) return message;
+      if (!message.startsWith("API error:")) return translateMessage(message);
     }
     const status = (error as { status?: number }).status;
     if (status === 400) return "Datos invalidos. Verifique los campos.";
     if (status === 401 || status === 403)
       return "No tiene permisos para esta accion.";
     if (status === 404) return "Recurso no encontrado.";
-    if (status === 409) return "Registro duplicado.";
+    if (status === 409) return "Existe un conflicto con los datos.";
     if (typeof status === "number" && status >= 500)
       return "Error del servidor. Intente mas tarde.";
   }

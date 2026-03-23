@@ -705,15 +705,17 @@ export default function PatientProfile() {
             </Pressable> */}
 
             {/* Whatsapp Button */}
-            <Pressable
-              onPress={handleWhatsApp}
-              className="justify-center items-center self-center active:bg-green-800/25 mt-5 px-4 border-green-800/75 border-x-2 active:rounded-lg"
-            >
-              <WhatsappIcon color="#16653499" size={48} />
-              <Text className="font-semibold text-green-800/75 text-sm text-center">
-                Enviar mensaje
-              </Text>
-            </Pressable>
+            {patient.cellphoneNumber && (
+              <Pressable
+                onPress={handleWhatsApp}
+                className="justify-center items-center self-center active:bg-green-800/25 mt-5 px-4 border-green-800/75 border-x-2 active:rounded-lg"
+              >
+                <WhatsappIcon color="#16653499" size={48} />
+                <Text className="font-semibold text-green-800/75 text-sm text-center">
+                  Enviar mensaje
+                </Text>
+              </Pressable>
+            )}
           </View>
         </ScrollView>
 

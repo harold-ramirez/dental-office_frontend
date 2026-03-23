@@ -93,12 +93,117 @@ const hours = [
   "19:00",
   "19:30",
 ];
-const getWeekRange = (isNextWeek: boolean = false) => {
-  const today = new Date();
-  const weekDay = today.getDay();
+
+type WeekByDay = {
+  monday: AppointmentDto[];
+  tuesday: AppointmentDto[];
+  wednesday: AppointmentDto[];
+  thursday: AppointmentDto[];
+  friday: AppointmentDto[];
+  saturday: AppointmentDto[];
+  sunday: AppointmentDto[];
+};
+
+const createEmptyWeekByDay = (): WeekByDay => ({
+  monday: [],
+  tuesday: [],
+  wednesday: [],
+  thursday: [],
+  friday: [],
+  saturday: [],
+  sunday: [],
+});
+
+const getWeekMonday = (baseDate: Date = new Date(), isNextWeek = false) => {
+  const date = new Date(baseDate);
+  date.setHours(12, 0, 0, 0);
+
+  const weekDay = date.getDay();
   const offsetLunes = weekDay === 0 ? -6 : 1 - weekDay;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() + offsetLunes + (isNextWeek ? 7 : 0));
+
+  const monday = new Date(date);
+  monday.setDate(date.getDate() + offsetLunes + (isNextWeek ? 7 : 0));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+};
+
+const isSameLocalDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+const isSameLocalSlot = (appointmentDateHour: string, slotDate: Date) => {
+  const appointmentDate = new Date(appointmentDateHour);
+  return (
+    isSameLocalDay(appointmentDate, slotDate) &&
+    appointmentDate.getHours() === slotDate.getHours() &&
+    appointmentDate.getMinutes() === slotDate.getMinutes()
+  );
+};
+
+const shouldSplitToQuarter = (
+  appointments: AppointmentDto[],
+  slotDate: Date,
+) => {
+  const minute = slotDate.getMinutes();
+
+  // Keep quarter-hour continuity when the cursor is already on :15 or :45.
+  if (minute === 15 || minute === 45) return true;
+
+  const nextQuarter = new Date(slotDate);
+  nextQuarter.setMinutes(slotDate.getMinutes() + 15, 0, 0);
+
+  // If an appointment starts in the next quarter, split this half-hour block.
+  return appointments.some((appointment) =>
+    isSameLocalSlot(appointment.dateHour, nextQuarter),
+  );
+};
+
+const getMondayBasedIndex = (date: Date) => {
+  const day = date.getDay();
+  return day === 0 ? 6 : day - 1;
+};
+
+const normalizeWeeksByLocalDate = (data: {
+  currentWeek: WeekByDay;
+  nextWeek: WeekByDay;
+}) => {
+  const currentMonday = getWeekMonday();
+  const nextMonday = new Date(currentMonday);
+  nextMonday.setDate(currentMonday.getDate() + 7);
+  const afterNextMonday = new Date(nextMonday);
+  afterNextMonday.setDate(nextMonday.getDate() + 7);
+
+  const normalizedCurrentWeek = createEmptyWeekByDay();
+  const normalizedNextWeek = createEmptyWeekByDay();
+
+  const allAppointments = [...DAYS]
+    .flatMap((day) => data.currentWeek[day])
+    .concat([...DAYS].flatMap((day) => data.nextWeek[day]));
+
+  allAppointments.forEach((appointment) => {
+    const appointmentDate = new Date(appointment.dateHour);
+    const dayIndex = getMondayBasedIndex(appointmentDate);
+    const dayKey = DAYS[dayIndex];
+
+    if (appointmentDate >= currentMonday && appointmentDate < nextMonday) {
+      normalizedCurrentWeek[dayKey].push(appointment);
+      return;
+    }
+
+    if (appointmentDate >= nextMonday && appointmentDate < afterNextMonday) {
+      normalizedNextWeek[dayKey].push(appointment);
+    }
+  });
+
+  return {
+    currentWeek: normalizedCurrentWeek,
+    nextWeek: normalizedNextWeek,
+  };
+};
+
+const getWeekRange = (isNextWeek: boolean = false) => {
+  const monday = getWeekMonday(new Date(), isNextWeek);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
@@ -178,9 +283,7 @@ export function DaySchedule({
         iHour.getHours() <= Number(hours[hours.length - 1].split(":")[0])
       ) {
         const appointment = appointments.find((appointment) =>
-          appointment.dateHour.includes(
-            iHour.toISOString().split("T")[1].split(".")[0].slice(0, 5),
-          ),
+          isSameLocalSlot(appointment.dateHour, iHour),
         );
 
         let step:
@@ -203,7 +306,7 @@ export function DaySchedule({
           step = appointment.minutesDuration;
         } else {
           // Relleno
-          step = iHour.getMinutes().toString().endsWith("5") ? 15 : 30;
+          step = shouldSplitToQuarter(appointments, iHour) ? 15 : 30;
           result.push({
             Id: 0,
             dateHour: iHour.toISOString(),
@@ -332,43 +435,11 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
       patientPhoneNumber: null,
     });
   const [allWeeksSchedule, setAllWeeksSchedule] = useState<{
-    currentWeek: {
-      monday: AppointmentDto[];
-      tuesday: AppointmentDto[];
-      wednesday: AppointmentDto[];
-      thursday: AppointmentDto[];
-      friday: AppointmentDto[];
-      saturday: AppointmentDto[];
-      sunday: AppointmentDto[];
-    };
-    nextWeek: {
-      monday: AppointmentDto[];
-      tuesday: AppointmentDto[];
-      wednesday: AppointmentDto[];
-      thursday: AppointmentDto[];
-      friday: AppointmentDto[];
-      saturday: AppointmentDto[];
-      sunday: AppointmentDto[];
-    };
+    currentWeek: WeekByDay;
+    nextWeek: WeekByDay;
   }>({
-    currentWeek: {
-      monday: [],
-      tuesday: [],
-      wednesday: [],
-      thursday: [],
-      friday: [],
-      saturday: [],
-      sunday: [],
-    },
-    nextWeek: {
-      monday: [],
-      tuesday: [],
-      wednesday: [],
-      thursday: [],
-      friday: [],
-      saturday: [],
-      sunday: [],
-    },
+    currentWeek: createEmptyWeekByDay(),
+    nextWeek: createEmptyWeekByDay(),
   });
 
   const weekSchedule =
@@ -379,16 +450,11 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
   useEffect(() => {
     const makeSchedule = (
       appointments: AppointmentDto[],
-      day: string,
       dayIndex: number,
       isNextWeek: boolean = false,
     ) => {
       const result: AppointmentDto[] = [];
-      const today = new Date();
-      const weekDay = today.getDay();
-      const offsetLunes = weekDay === 0 ? -6 : 1 - weekDay;
-      const monday = new Date(today);
-      monday.setDate(today.getDate() + offsetLunes + (isNextWeek ? 7 : 0));
+      const monday = getWeekMonday(new Date(), isNextWeek);
       const dayDate = new Date(monday);
       dayDate.setDate(monday.getDate() + dayIndex);
       const iHour = new Date(dayDate);
@@ -404,9 +470,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
         iHour.getHours() <= Number(hours[hours.length - 1].split(":")[0])
       ) {
         const appointment = appointments.find((appointment) =>
-          appointment.dateHour.includes(
-            iHour.toISOString().split("T")[1].split(".")[0].slice(0, 5),
-          ),
+          isSameLocalSlot(appointment.dateHour, iHour),
         );
 
         let step:
@@ -429,7 +493,7 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
           step = appointment.minutesDuration;
         } else {
           // Relleno
-          step = iHour.getMinutes().toString().endsWith("5") ? 15 : 30;
+          step = shouldSplitToQuarter(appointments, iHour) ? 15 : 30;
           fillerId--;
           result.push({
             Id: fillerId,
@@ -452,49 +516,38 @@ export function WeekSchedule({ refresh }: { refresh: string }) {
           logOut,
         );
 
+        const normalizedData = normalizeWeeksByLocalDate(data);
+
         setAllWeeksSchedule({
           currentWeek: {
-            monday: makeSchedule(data.currentWeek.monday, "monday", 0, false),
-            tuesday: makeSchedule(
-              data.currentWeek.tuesday,
-              "tuesday",
-              1,
-              false,
-            ),
+            monday: makeSchedule(normalizedData.currentWeek.monday, 0, false),
+            tuesday: makeSchedule(normalizedData.currentWeek.tuesday, 1, false),
             wednesday: makeSchedule(
-              data.currentWeek.wednesday,
-              "wednesday",
+              normalizedData.currentWeek.wednesday,
               2,
               false,
             ),
             thursday: makeSchedule(
-              data.currentWeek.thursday,
-              "thursday",
+              normalizedData.currentWeek.thursday,
               3,
               false,
             ),
-            friday: makeSchedule(data.currentWeek.friday, "friday", 4, false),
+            friday: makeSchedule(normalizedData.currentWeek.friday, 4, false),
             saturday: makeSchedule(
-              data.currentWeek.saturday,
-              "saturday",
+              normalizedData.currentWeek.saturday,
               5,
               false,
             ),
-            sunday: makeSchedule(data.currentWeek.sunday, "sunday", 6, false),
+            sunday: makeSchedule(normalizedData.currentWeek.sunday, 6, false),
           },
           nextWeek: {
-            monday: makeSchedule(data.nextWeek.monday, "monday", 0, true),
-            tuesday: makeSchedule(data.nextWeek.tuesday, "tuesday", 1, true),
-            wednesday: makeSchedule(
-              data.nextWeek.wednesday,
-              "wednesday",
-              2,
-              true,
-            ),
-            thursday: makeSchedule(data.nextWeek.thursday, "thursday", 3, true),
-            friday: makeSchedule(data.nextWeek.friday, "friday", 4, true),
-            saturday: makeSchedule(data.nextWeek.saturday, "saturday", 5, true),
-            sunday: makeSchedule(data.nextWeek.sunday, "sunday", 6, true),
+            monday: makeSchedule(normalizedData.nextWeek.monday, 0, true),
+            tuesday: makeSchedule(normalizedData.nextWeek.tuesday, 1, true),
+            wednesday: makeSchedule(normalizedData.nextWeek.wednesday, 2, true),
+            thursday: makeSchedule(normalizedData.nextWeek.thursday, 3, true),
+            friday: makeSchedule(normalizedData.nextWeek.friday, 4, true),
+            saturday: makeSchedule(normalizedData.nextWeek.saturday, 5, true),
+            sunday: makeSchedule(normalizedData.nextWeek.sunday, 6, true),
           },
         });
       } catch {
@@ -840,43 +893,11 @@ export function WeekAppointmentSelect({
       patientPhoneNumber: null,
     });
   const [allWeeksSchedule, setAllWeeksSchedule] = useState<{
-    currentWeek: {
-      monday: AppointmentDto[];
-      tuesday: AppointmentDto[];
-      wednesday: AppointmentDto[];
-      thursday: AppointmentDto[];
-      friday: AppointmentDto[];
-      saturday: AppointmentDto[];
-      sunday: AppointmentDto[];
-    };
-    nextWeek: {
-      monday: AppointmentDto[];
-      tuesday: AppointmentDto[];
-      wednesday: AppointmentDto[];
-      thursday: AppointmentDto[];
-      friday: AppointmentDto[];
-      saturday: AppointmentDto[];
-      sunday: AppointmentDto[];
-    };
+    currentWeek: WeekByDay;
+    nextWeek: WeekByDay;
   }>({
-    currentWeek: {
-      monday: [],
-      tuesday: [],
-      wednesday: [],
-      thursday: [],
-      friday: [],
-      saturday: [],
-      sunday: [],
-    },
-    nextWeek: {
-      monday: [],
-      tuesday: [],
-      wednesday: [],
-      thursday: [],
-      friday: [],
-      saturday: [],
-      sunday: [],
-    },
+    currentWeek: createEmptyWeekByDay(),
+    nextWeek: createEmptyWeekByDay(),
   });
 
   const weekSchedule =
@@ -887,16 +908,11 @@ export function WeekAppointmentSelect({
   useEffect(() => {
     const makeSchedule = (
       appointments: AppointmentDto[],
-      day: string,
       dayIndex: number,
       isNextWeek: boolean = false,
     ) => {
       const result: AppointmentDto[] = [];
-      const today = new Date();
-      const weekDay = today.getDay();
-      const offsetLunes = weekDay === 0 ? -6 : 1 - weekDay;
-      const monday = new Date(today);
-      monday.setDate(today.getDate() + offsetLunes + (isNextWeek ? 7 : 0));
+      const monday = getWeekMonday(new Date(), isNextWeek);
       const dayDate = new Date(monday);
       dayDate.setDate(monday.getDate() + dayIndex);
       const iHour = new Date(dayDate);
@@ -912,9 +928,7 @@ export function WeekAppointmentSelect({
         iHour.getHours() <= Number(hours[hours.length - 1].split(":")[0])
       ) {
         const appointment = appointments.find((appointment) =>
-          appointment.dateHour.includes(
-            iHour.toISOString().split("T")[1].split(".")[0].slice(0, 5),
-          ),
+          isSameLocalSlot(appointment.dateHour, iHour),
         );
 
         let step:
@@ -937,7 +951,7 @@ export function WeekAppointmentSelect({
           step = appointment.minutesDuration;
         } else {
           // Relleno
-          step = iHour.getMinutes().toString().endsWith("5") ? 15 : 30;
+          step = shouldSplitToQuarter(appointments, iHour) ? 15 : 30;
           fillerId--;
           result.push({
             Id: fillerId,
@@ -960,49 +974,38 @@ export function WeekAppointmentSelect({
           logOut,
         );
 
+        const normalizedData = normalizeWeeksByLocalDate(data);
+
         setAllWeeksSchedule({
           currentWeek: {
-            monday: makeSchedule(data.currentWeek.monday, "monday", 0, false),
-            tuesday: makeSchedule(
-              data.currentWeek.tuesday,
-              "tuesday",
-              1,
-              false,
-            ),
+            monday: makeSchedule(normalizedData.currentWeek.monday, 0, false),
+            tuesday: makeSchedule(normalizedData.currentWeek.tuesday, 1, false),
             wednesday: makeSchedule(
-              data.currentWeek.wednesday,
-              "wednesday",
+              normalizedData.currentWeek.wednesday,
               2,
               false,
             ),
             thursday: makeSchedule(
-              data.currentWeek.thursday,
-              "thursday",
+              normalizedData.currentWeek.thursday,
               3,
               false,
             ),
-            friday: makeSchedule(data.currentWeek.friday, "friday", 4, false),
+            friday: makeSchedule(normalizedData.currentWeek.friday, 4, false),
             saturday: makeSchedule(
-              data.currentWeek.saturday,
-              "saturday",
+              normalizedData.currentWeek.saturday,
               5,
               false,
             ),
-            sunday: makeSchedule(data.currentWeek.sunday, "sunday", 6, false),
+            sunday: makeSchedule(normalizedData.currentWeek.sunday, 6, false),
           },
           nextWeek: {
-            monday: makeSchedule(data.nextWeek.monday, "monday", 0, true),
-            tuesday: makeSchedule(data.nextWeek.tuesday, "tuesday", 1, true),
-            wednesday: makeSchedule(
-              data.nextWeek.wednesday,
-              "wednesday",
-              2,
-              true,
-            ),
-            thursday: makeSchedule(data.nextWeek.thursday, "thursday", 3, true),
-            friday: makeSchedule(data.nextWeek.friday, "friday", 4, true),
-            saturday: makeSchedule(data.nextWeek.saturday, "saturday", 5, true),
-            sunday: makeSchedule(data.nextWeek.sunday, "sunday", 6, true),
+            monday: makeSchedule(normalizedData.nextWeek.monday, 0, true),
+            tuesday: makeSchedule(normalizedData.nextWeek.tuesday, 1, true),
+            wednesday: makeSchedule(normalizedData.nextWeek.wednesday, 2, true),
+            thursday: makeSchedule(normalizedData.nextWeek.thursday, 3, true),
+            friday: makeSchedule(normalizedData.nextWeek.friday, 4, true),
+            saturday: makeSchedule(normalizedData.nextWeek.saturday, 5, true),
+            sunday: makeSchedule(normalizedData.nextWeek.sunday, 6, true),
           },
         });
       } catch {

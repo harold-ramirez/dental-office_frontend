@@ -356,6 +356,16 @@ export default function DayScheduleDetails() {
   if (loading) {
     return (
       <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTitleAlign: "center",
+            headerStyle: { backgroundColor: "#001B48" },
+            headerTintColor: "#D6E8EE",
+            headerTitle: "Agendar Cita",
+            headerRight: () => <></>,
+          }}
+        />
         <LinearGradient
           colors={["#018ABE", "#02457A", "#018ABE"]}
           className="top-0 right-0 left-0 absolute h-full"
@@ -372,6 +382,16 @@ export default function DayScheduleDetails() {
 
   return (
     <>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTitleAlign: "center",
+          headerStyle: { backgroundColor: "#001B48" },
+          headerTintColor: "#D6E8EE",
+          headerTitle: "Agendar Cita",
+          headerRight: () => <></>,
+        }}
+      />
       <LinearGradient
         colors={["#018ABE", "#02457A", "#018ABE"]}
         className="top-0 right-0 left-0 absolute h-full"
@@ -385,16 +405,6 @@ export default function DayScheduleDetails() {
           alignItems: "center",
         }}
       >
-        <Stack.Screen
-          options={{
-            headerShown: true,
-            headerTitleAlign: "center",
-            headerStyle: { backgroundColor: "#001B48" },
-            headerTintColor: "#D6E8EE",
-            headerTitle: "Agendar Cita",
-            headerRight: () => <></>,
-          }}
-        />
         <View className="flex-1 gap-2 w-full">
           {/* Patient */}
           {requestID && !isRequestPatientRegistered && (

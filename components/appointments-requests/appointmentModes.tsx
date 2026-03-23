@@ -24,7 +24,7 @@ export function DayAppointment(props: appointmentProps) {
 
   return (
     <View
-      className={`w-full border-blackBlue ${duration !== 15 || patient ? `border-t` : ``}`}
+      className="w-full border-blackBlue border-t"
       style={{ height: heightPx }}
     >
       {patient ? (
@@ -73,7 +73,7 @@ export function WeekAppointment(props: appointmentProps) {
   return (
     <View
       style={{ height: heightPx }}
-      className={`w-full border-blackBlue ${duration !== 15 || patient ? `border-t` : ``}`}
+      className="w-full border-blackBlue border-t"
     >
       {patient ? (
         <Pressable
