@@ -1,3 +1,4 @@
+import { socketService } from "@/services/socketService";
 import Constants from "expo-constants";
 import { SplashScreen, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -35,12 +36,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await SecureStore.setItemAsync(tokenStorageKey, authToken);
       setIsLoggedIn(true);
       setToken(authToken);
+      // Conectar Socket.IO después de iniciar sesión
+      await socketService.connect(authToken);
       router.replace("/");
     } catch {}
   };
 
   const logOut = async () => {
     try {
+      socketService.disconnect();
       await SecureStore.deleteItemAsync(tokenStorageKey);
       setIsLoggedIn(false);
       setToken(null);
@@ -51,6 +55,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const getAuthFromStorage = async () => {
       try {
+        // Solicitar permisos de notificaciones
+        await socketService.requestNotificationPermissions();
+
         const storedToken = await SecureStore.getItemAsync(tokenStorageKey);
         if (storedToken) {
           const res = await fetch(`${API_URL}/auth/validate`, {
@@ -64,6 +71,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
           } else {
             setToken(storedToken);
             setIsLoggedIn(true);
+            // Conectar Socket.IO si el JWT es válido
+            await socketService.connect(storedToken);
           }
         }
       } catch {}
