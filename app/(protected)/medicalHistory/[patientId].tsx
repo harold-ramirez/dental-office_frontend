@@ -21,6 +21,26 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useToast } from "react-native-toast-notifications";
 
+function ReadOnlyValue({
+  value,
+  placeholder = "-",
+  className = "",
+}: {
+  value?: string | null;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <View
+      className={`bg-whiteBlue border border-blackBlue rounded-xl px-3 py-2 min-h-11 justify-center ${className}`}
+    >
+      <Text className="text-center text-blackBlue" selectable>
+        {value && value.trim() !== "" ? value : placeholder}
+      </Text>
+    </View>
+  );
+}
+
 export default function MedicalHistory() {
   const { patientId } = useLocalSearchParams();
   const { logOut } = useContext(AuthContext);
@@ -402,19 +422,25 @@ export default function MedicalHistory() {
                   <Text className="font-bold text-whiteBlue text-lg">
                     Antecedentes Patológicos Familiares
                   </Text>
-                  <TextInput
-                    placeholder="..."
-                    placeholderTextColor={"gray"}
-                    readOnly={formData.Id}
-                    value={formData.familyPathologicalHistory}
-                    onChangeText={(val) =>
-                      setFormData({
-                        ...formData,
-                        familyPathologicalHistory: val,
-                      })
-                    }
-                    className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue
+                      value={formData.familyPathologicalHistory}
+                      className="w-full"
+                    />
+                  ) : (
+                    <TextInput
+                      placeholder="..."
+                      placeholderTextColor={"gray"}
+                      value={formData.familyPathologicalHistory}
+                      onChangeText={(val) =>
+                        setFormData({
+                          ...formData,
+                          familyPathologicalHistory: val,
+                        })
+                      }
+                      className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
+                    />
+                  )}
                 </View>
                 <View>
                   <Text className="font-bold text-whiteBlue text-lg">
@@ -497,10 +523,9 @@ export default function MedicalHistory() {
                     Alergias
                   </Text>
                   {formData.Id ? (
-                    <TextInput
-                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
-                      value={formData.allergies ?? "-"}
-                      editable={false}
+                    <ReadOnlyValue
+                      value={formData.allergies}
+                      className="flex-1"
                     />
                   ) : (
                     <OptionalTextInput
@@ -518,10 +543,9 @@ export default function MedicalHistory() {
                     Embarazo
                   </Text>
                   {formData.Id ? (
-                    <TextInput
-                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
-                      value={formData.pregnantMonths ?? "-"}
-                      editable={false}
+                    <ReadOnlyValue
+                      value={formData.pregnantMonths}
+                      className="flex-1"
                     />
                   ) : (
                     <OptionalTextInput
@@ -539,10 +563,9 @@ export default function MedicalHistory() {
                     Está en Tratamiento Médico?
                   </Text>
                   {formData.Id ? (
-                    <TextInput
-                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
-                      value={formData.medicalTreatment ?? "-"}
-                      editable={false}
+                    <ReadOnlyValue
+                      value={formData.medicalTreatment}
+                      className="flex-1"
                     />
                   ) : (
                     <OptionalTextInput
@@ -560,10 +583,9 @@ export default function MedicalHistory() {
                     Actualmente recibe algún medicamento?
                   </Text>
                   {formData.Id ? (
-                    <TextInput
-                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
-                      value={formData.takingMedicine ?? "-"}
-                      editable={false}
+                    <ReadOnlyValue
+                      value={formData.takingMedicine}
+                      className="flex-1"
                     />
                   ) : (
                     <OptionalTextInput
@@ -581,10 +603,9 @@ export default function MedicalHistory() {
                     Tuvo hemorragia después de una extracción dental?
                   </Text>
                   {formData.Id ? (
-                    <TextInput
-                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
-                      value={formData.hemorrhageType ?? "-"}
-                      editable={false}
+                    <ReadOnlyValue
+                      value={formData.hemorrhageType}
+                      className="flex-1"
                     />
                   ) : (
                     <OptionalTextInput
@@ -609,27 +630,36 @@ export default function MedicalHistory() {
                 </Text>
                 <View>
                   <Text className="font-semibold text-whiteBlue">ATM</Text>
-                  <TextInput
-                    readOnly={formData.Id}
-                    value={formData.tmj}
-                    onChangeText={(val) =>
-                      setFormData({ ...formData, tmj: val })
-                    }
-                    className="bg-whiteBlue rounded-xl text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue value={formData.tmj} className="w-full" />
+                  ) : (
+                    <TextInput
+                      value={formData.tmj}
+                      onChangeText={(val) =>
+                        setFormData({ ...formData, tmj: val })
+                      }
+                      className="bg-whiteBlue rounded-xl text-center"
+                    />
+                  )}
                 </View>
                 <View>
                   <Text className="font-semibold text-whiteBlue">
                     Ganglios Linfáticos
                   </Text>
-                  <TextInput
-                    readOnly={formData.Id}
-                    value={formData.lymphNodes}
-                    onChangeText={(val) =>
-                      setFormData({ ...formData, lymphNodes: val })
-                    }
-                    className="bg-whiteBlue rounded-xl text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue
+                      value={formData.lymphNodes}
+                      className="w-full"
+                    />
+                  ) : (
+                    <TextInput
+                      value={formData.lymphNodes}
+                      onChangeText={(val) =>
+                        setFormData({ ...formData, lymphNodes: val })
+                      }
+                      className="bg-whiteBlue rounded-xl text-center"
+                    />
+                  )}
                 </View>
                 <View>
                   <Text className="font-semibold text-whiteBlue">
@@ -712,17 +742,20 @@ export default function MedicalHistory() {
                 </View>
                 <View>
                   <Text className="font-semibold text-whiteBlue">Otros</Text>
-                  <TextInput
-                    multiline
-                    numberOfLines={5}
-                    readOnly={formData.Id}
-                    value={formData.others}
-                    onChangeText={(val) =>
-                      setFormData({ ...formData, others: val })
-                    }
-                    className="bg-whiteBlue p-2 rounded-xl h-24 text-blackBlue"
-                    style={{ textAlignVertical: "top" }}
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue value={formData.others} className="w-full" />
+                  ) : (
+                    <TextInput
+                      multiline
+                      numberOfLines={5}
+                      value={formData.others}
+                      onChangeText={(val) =>
+                        setFormData({ ...formData, others: val })
+                      }
+                      className="bg-whiteBlue p-2 rounded-xl h-24 text-blackBlue"
+                      style={{ textAlignVertical: "top" }}
+                    />
+                  )}
                 </View>
               </GlassyBackground>
 
@@ -733,83 +766,118 @@ export default function MedicalHistory() {
                 </Text>
                 <View>
                   <Text className="font-semibold text-whiteBlue">Labios</Text>
-                  <TextInput
-                    readOnly={formData.Id}
-                    value={formData.lipsStatus}
-                    onChangeText={(val) => {
-                      setFormData({ ...formData, lipsStatus: val });
-                    }}
-                    className="bg-whiteBlue rounded-xl text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue
+                      value={formData.lipsStatus}
+                      className="w-full"
+                    />
+                  ) : (
+                    <TextInput
+                      value={formData.lipsStatus}
+                      onChangeText={(val) => {
+                        setFormData({ ...formData, lipsStatus: val });
+                      }}
+                      className="bg-whiteBlue rounded-xl text-center"
+                    />
+                  )}
                 </View>
                 <View>
                   <Text className="font-semibold text-whiteBlue">Lengua</Text>
-                  <TextInput
-                    readOnly={formData.Id}
-                    value={formData.tongueStatus}
-                    onChangeText={(val) => {
-                      setFormData({ ...formData, tongueStatus: val });
-                    }}
-                    className="bg-whiteBlue rounded-xl text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue
+                      value={formData.tongueStatus}
+                      className="w-full"
+                    />
+                  ) : (
+                    <TextInput
+                      value={formData.tongueStatus}
+                      onChangeText={(val) => {
+                        setFormData({ ...formData, tongueStatus: val });
+                      }}
+                      className="bg-whiteBlue rounded-xl text-center"
+                    />
+                  )}
                 </View>
                 <View>
                   <Text className="font-semibold text-whiteBlue">Paladar</Text>
-                  <TextInput
-                    readOnly={formData.Id}
-                    value={formData.palateStatus}
-                    onChangeText={(val) => {
-                      setFormData({ ...formData, palateStatus: val });
-                    }}
-                    className="bg-whiteBlue rounded-xl text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue
+                      value={formData.palateStatus}
+                      className="w-full"
+                    />
+                  ) : (
+                    <TextInput
+                      value={formData.palateStatus}
+                      onChangeText={(val) => {
+                        setFormData({ ...formData, palateStatus: val });
+                      }}
+                      className="bg-whiteBlue rounded-xl text-center"
+                    />
+                  )}
                 </View>
                 <View>
                   <Text className="font-semibold text-whiteBlue">
                     Piso de la Boca
                   </Text>
-                  <TextInput
-                    readOnly={formData.Id}
-                    value={formData.mouthFloorStatus}
-                    onChangeText={(val) => {
-                      setFormData({ ...formData, mouthFloorStatus: val });
-                    }}
-                    className="bg-whiteBlue rounded-xl text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue
+                      value={formData.mouthFloorStatus}
+                      className="w-full"
+                    />
+                  ) : (
+                    <TextInput
+                      value={formData.mouthFloorStatus}
+                      onChangeText={(val) => {
+                        setFormData({ ...formData, mouthFloorStatus: val });
+                      }}
+                      className="bg-whiteBlue rounded-xl text-center"
+                    />
+                  )}
                 </View>
                 <View>
                   <Text className="font-semibold text-whiteBlue">
                     Mucosa Yugal
                   </Text>
-                  <TextInput
-                    readOnly={formData.Id}
-                    value={formData.buccalMucousStatus}
-                    onChangeText={(val) => {
-                      setFormData({ ...formData, buccalMucousStatus: val });
-                    }}
-                    className="bg-whiteBlue rounded-xl text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue
+                      value={formData.buccalMucousStatus}
+                      className="w-full"
+                    />
+                  ) : (
+                    <TextInput
+                      value={formData.buccalMucousStatus}
+                      onChangeText={(val) => {
+                        setFormData({ ...formData, buccalMucousStatus: val });
+                      }}
+                      className="bg-whiteBlue rounded-xl text-center"
+                    />
+                  )}
                 </View>
                 <View>
                   <Text className="font-semibold text-whiteBlue">Encías</Text>
-                  <TextInput
-                    readOnly={formData.Id}
-                    value={formData.gumsStatus}
-                    onChangeText={(val) => {
-                      setFormData({ ...formData, gumsStatus: val });
-                    }}
-                    className="bg-whiteBlue rounded-xl text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue
+                      value={formData.gumsStatus}
+                      className="w-full"
+                    />
+                  ) : (
+                    <TextInput
+                      value={formData.gumsStatus}
+                      onChangeText={(val) => {
+                        setFormData({ ...formData, gumsStatus: val });
+                      }}
+                      className="bg-whiteBlue rounded-xl text-center"
+                    />
+                  )}
                 </View>
                 <View className="flex-row justify-between gap-3">
                   <Text className="font-semibold text-whiteBlue">
                     Utiliza Prótesis intraoral?
                   </Text>
                   {formData.Id ? (
-                    <TextInput
-                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
-                      value={formData.prosthesisLocation ?? "-"}
-                      editable={false}
+                    <ReadOnlyValue
+                      value={formData.prosthesisLocation}
+                      className="flex-1"
                     />
                   ) : (
                     <OptionalTextInput
@@ -833,14 +901,23 @@ export default function MedicalHistory() {
                   <Text className="font-semibold text-whiteBlue">
                     Fecha de la última vez que visitó al odontólogo
                   </Text>
-                  <TextInput
-                    readOnly={formData.Id}
-                    value={formData.lastTimeVisitedDentist}
-                    onChangeText={(val) => {
-                      setFormData({ ...formData, lastTimeVisitedDentist: val });
-                    }}
-                    className="bg-whiteBlue rounded-xl text-center"
-                  />
+                  {formData.Id ? (
+                    <ReadOnlyValue
+                      value={formData.lastTimeVisitedDentist}
+                      className="w-full"
+                    />
+                  ) : (
+                    <TextInput
+                      value={formData.lastTimeVisitedDentist}
+                      onChangeText={(val) => {
+                        setFormData({
+                          ...formData,
+                          lastTimeVisitedDentist: val,
+                        });
+                      }}
+                      className="bg-whiteBlue rounded-xl text-center"
+                    />
+                  )}
                 </View>
                 <View>
                   <Text className="font-semibold text-whiteBlue">Hábitos</Text>
@@ -926,10 +1003,9 @@ export default function MedicalHistory() {
                     Utiliza cepillo dental?
                   </Text>
                   {formData.Id ? (
-                    <TextInput
-                      className="flex-1 bg-whiteBlue px-1 rounded-lg h-11 text-center"
-                      value={formData.toothBrushingFrequency ?? "-"}
-                      editable={false}
+                    <ReadOnlyValue
+                      value={formData.toothBrushingFrequency}
+                      className="flex-1"
                     />
                   ) : (
                     <OptionalTextInput

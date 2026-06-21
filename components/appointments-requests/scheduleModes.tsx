@@ -1387,6 +1387,10 @@ export function ModalDetails({
   selectedAppointment: AppointmentDto;
   defaultMessage: string;
 }) {
+  const appointmentDate = new Date(selectedAppointment.dateHour);
+  const isFutureAppointment = appointmentDate.getTime() > Date.now();
+  const isAppointmentToday = isSameLocalDay(appointmentDate, new Date());
+
   return (
     <PopupModal
       showModal={modalVisible}
@@ -1545,17 +1549,55 @@ export function ModalDetails({
               selectedAppointment.requestPhoneNumber) && (
               <Pressable
                 onPress={() => {
-                  const msg =
+                  const patientName = (
+                    selectedAppointment.patient || "paciente"
+                  )
+                    .trim()
+                    .split(/\s+/)[0];
+                  const appointmentDay = appointmentDate.toLocaleDateString(
+                    "es-BO",
+                    {
+                      weekday: "long",
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    },
+                  );
+                  const appointmentHour = appointmentDate.toLocaleTimeString(
+                    "es-BO",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    },
+                  );
+
+                  const dayReference = isAppointmentToday
+                    ? "para el día de hoy"
+                    : `para el ${appointmentDay}`;
+                  const treatmentSentence = selectedAppointment.treatment
+                    ? ` El tratamiento agendado es ${selectedAppointment.treatment}.`
+                    : "";
+                  const reminderMessage = `Hola ${patientName}, te envío este mensaje para recordarte que tienes una cita programada ${dayReference} a las ${appointmentHour}.${treatmentSentence} Si necesitas reprogramar, por favor me avisas con anticipación.`;
+
+                  const fallbackMessage =
                     defaultMessage && defaultMessage !== "null"
-                      ? encodeURIComponent(defaultMessage)
+                      ? defaultMessage
                       : "";
-                  const url = `https://wa.me/591${selectedAppointment.requestPhoneNumber ?? selectedAppointment.patientPhoneNumber}?text=${msg}`;
+
+                  const messageToSend = isFutureAppointment
+                    ? reminderMessage
+                    : fallbackMessage;
+
+                  const url = `https://wa.me/591${selectedAppointment.requestPhoneNumber ?? selectedAppointment.patientPhoneNumber}?text=${encodeURIComponent(messageToSend)}`;
                   Linking.openURL(url);
                 }}
                 className="flex-row justify-center items-center gap-2 bg-green-700 active:bg-green-600 px-4 py-1 rounded-md"
               >
                 <WhatsappIcon color="#D6E8EE" />
-                <Text className="font-semibold text-whiteBlue">Mensaje</Text>
+                <Text className="font-semibold text-whiteBlue">
+                  {isFutureAppointment ? "Enviar recordatorio" : "Mensaje"}
+                </Text>
               </Pressable>
             )}
           </View>

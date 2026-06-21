@@ -32,12 +32,16 @@ interface UpdatePatientProps {
   patient: PatientDto;
 }
 
+const ADDRESS_MIN_HEIGHT = 48;
+const ADDRESS_MAX_HEIGHT = 160;
+
 export function CreatePatientModal({ onClose }: CreatePatientProps) {
   const router = useRouter();
   const toast = useToast();
   const { logOut } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [addressHeight, setAddressHeight] = useState(ADDRESS_MIN_HEIGHT);
   const [newPatient, setNewPatient] = useState<CreatePatientDto>({
     name: "",
     paternalSurname: "",
@@ -185,23 +189,11 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
         className="border border-whiteBlue rounded-xl w-full"
       >
         <View className="gap-2 p-3">
-          <Text className="font-bold text-whiteBlue text-center">
+          <Text className="font-bold text-whiteBlue text-center text-xl">
             INFORMACIÓN DEL PACIENTE
           </Text>
-          <View className="flex-row gap-2 w-full">
-            {/* Names */}
-            <View className="flex-1">
-              <Text className="font-bold text-whiteBlue text-lg">Nombres</Text>
-              <TextInput
-                value={newPatient.name}
-                onChangeText={(val) =>
-                  setNewPatient({ ...newPatient, name: val })
-                }
-                placeholder="Nombres"
-                placeholderTextColor={"gray"}
-                className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-              />
-            </View>
+
+          <View className="flex-row gap-2 w-full items-center">
             {/* IDENTITY DOCUMENT */}
             <View className="flex-1">
               <Text className="font-bold text-whiteBlue text-lg">
@@ -217,7 +209,87 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
                 className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
               />
             </View>
+
+            {/* Gender */}
+            <View className="flex-1 items-center">
+              <Text className="font-bold text-whiteBlue text-lg">Sexo</Text>
+              <GenderRadio
+                value={newPatient.gender as "M" | "F"}
+                onChange={(val) =>
+                  setNewPatient({ ...newPatient, gender: val })
+                }
+              />
+            </View>
           </View>
+
+          <View className="flex-row gap-2 w-full items-center">
+            {/* Names */}
+            <View className="flex-1">
+              <Text className="font-bold text-whiteBlue text-lg">Nombres</Text>
+              <TextInput
+                value={newPatient.name}
+                onChangeText={(val) =>
+                  setNewPatient({ ...newPatient, name: val })
+                }
+                placeholder="Nombres"
+                placeholderTextColor={"gray"}
+                className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
+              />
+            </View>
+            {/* Birthdate */}
+            <View className="flex-1">
+              <Text className="font-bold text-whiteBlue text-lg">
+                Fecha Nacimiento
+              </Text>
+              <DatePicker
+                modal
+                mode="date"
+                maximumDate={new Date()}
+                open={showDatePicker}
+                date={
+                  newPatient.birthdate
+                    ? new Date(newPatient.birthdate)
+                    : new Date(2000, 6, 1)
+                }
+                onConfirm={(date) => {
+                  setNewPatient({
+                    ...newPatient,
+                    birthdate: date.toISOString(),
+                  });
+                  setShowDatePicker(false);
+                }}
+                onCancel={() => {
+                  setShowDatePicker(false);
+                }}
+              />
+              <Pressable
+                disabled={isLoading}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <TextInput
+                  className="bg-whiteBlue h-12 p-1 border border-blackBlue rounded-xl w-full text-center"
+                  placeholder="Selecciona fecha..."
+                  placeholderTextColor="gray"
+                  value={
+                    newPatient.birthdate
+                      ? new Date(newPatient.birthdate).toLocaleDateString(
+                          "es-BO",
+                        )
+                      : ""
+                  }
+                  editable={false}
+                />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Optional Data Separator */}
+          <View className="flex-row gap-3 items-center">
+            <View className="border-b flex-1 border-whiteBlue/80" />
+            <Text className="text-whiteBlue/90 italic">Datos Opcionales</Text>
+            <View className="border-b flex-1 border-whiteBlue/80" />
+          </View>
+
           <View className="flex-row gap-2">
             <View className="flex-1">
               <Text className="font-bold text-whiteBlue text-lg">
@@ -254,16 +326,8 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               />
             </View>
           </View>
+
           <View className="flex-row gap-2">
-            <View className="flex-1">
-              <Text className="font-bold text-whiteBlue text-lg">Sexo</Text>
-              <GenderRadio
-                value={newPatient.gender as "M" | "F"}
-                onChange={(val) =>
-                  setNewPatient({ ...newPatient, gender: val })
-                }
-              />
-            </View>
             <View className="flex-1">
               <Text className="font-bold text-whiteBlue text-lg">Celular</Text>
               <TextInput
@@ -297,50 +361,9 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               />
             </View>
           </View>
+
           <View className="flex-row gap-2">
             <View className="flex-1">
-              <Text className="font-bold text-whiteBlue text-lg">
-                Fecha Nacimiento
-              </Text>
-              <DatePicker
-                modal
-                mode="date"
-                maximumDate={new Date()}
-                open={showDatePicker}
-                date={
-                  newPatient.birthdate
-                    ? new Date(newPatient.birthdate)
-                    : new Date(2000, 6, 1)
-                }
-                onConfirm={(date) => {
-                  setNewPatient({
-                    ...newPatient,
-                    birthdate: date.toISOString(),
-                  });
-                  setShowDatePicker(false);
-                }}
-                onCancel={() => {
-                  setShowDatePicker(false);
-                }}
-              />
-              <Pressable
-                disabled={isLoading}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <TextInput
-                  className="bg-whiteBlue p-1 border border-blackBlue rounded-xl w-full text-center"
-                  placeholder="Selecciona fecha..."
-                  placeholderTextColor="gray"
-                  value={
-                    newPatient.birthdate
-                      ? new Date(newPatient.birthdate).toLocaleDateString(
-                          "es-BO",
-                        )
-                      : ""
-                  }
-                  editable={false}
-                />
-              </Pressable>
               <Text className="mt-1 font-bold text-whiteBlue text-lg">
                 Lugar Nacimiento
               </Text>
@@ -357,6 +380,8 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
                 className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
               />
             </View>
+
+            {/* Address */}
             <View className="flex-1">
               <Text className="font-bold text-whiteBlue text-lg">
                 Dirección
@@ -364,16 +389,30 @@ export function CreatePatientModal({ onClose }: CreatePatientProps) {
               <TextInput
                 multiline
                 numberOfLines={2}
-                style={{ textAlignVertical: "top" }}
                 value={newPatient.address ?? ""}
                 placeholder="Dirección completa"
                 placeholderTextColor={"gray"}
                 readOnly={isLoading}
                 maxLength={100}
+                scrollEnabled={addressHeight >= ADDRESS_MAX_HEIGHT}
+                onContentSizeChange={(event) => {
+                  const nextHeight = Math.min(
+                    Math.max(
+                      ADDRESS_MIN_HEIGHT,
+                      event.nativeEvent.contentSize.height,
+                    ),
+                    ADDRESS_MAX_HEIGHT,
+                  );
+                  setAddressHeight(nextHeight);
+                }}
                 onChangeText={(val) =>
                   setNewPatient({ ...newPatient, address: val })
                 }
-                className="bg-whiteBlue border border-blackBlue rounded-xl w-full h-32"
+                className="bg-whiteBlue border border-blackBlue rounded-xl w-full"
+                style={{
+                  textAlignVertical: "top",
+                  height: addressHeight,
+                }}
               />
             </View>
           </View>
@@ -418,6 +457,7 @@ export function UpdatePatientModal({
   const { logOut } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [addressHeight, setAddressHeight] = useState(ADDRESS_MIN_HEIGHT);
   const [patient, setPatient] = useState<PatientDto>({ ...initialPatient });
 
   const handleUpdatePatient = async () => {
@@ -533,7 +573,7 @@ export function UpdatePatientModal({
         backgroundColor: "#000000AA",
         justifyContent: "center",
         alignItems: "center",
-        marginTop: -40,
+        marginTop: -110,
       }}
     >
       <GlassyBackground
@@ -542,19 +582,98 @@ export function UpdatePatientModal({
         className="border border-whiteBlue rounded-xl w-full"
       >
         <View className="gap-2 p-3">
-          <Text className="font-bold text-whiteBlue text-xl text-center">
+          <Text className="font-bold text-whiteBlue text-center text-xl">
             INFORMACIÓN DEL PACIENTE
           </Text>
-          <View>
-            <Text className="font-bold text-whiteBlue text-lg">Nombres</Text>
-            <TextInput
-              value={patient.name}
-              onChangeText={(val) => setPatient({ ...patient, name: val })}
-              placeholder="Nombres"
-              placeholderTextColor={"gray"}
-              className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
-            />
+          <View className="flex-row gap-2 w-full items-center">
+            <View className="flex-1">
+              <Text className="font-bold text-whiteBlue text-lg">
+                Carnet de Identidad
+              </Text>
+              <TextInput
+                value={patient.identityDocument ?? ""}
+                onChangeText={(val) =>
+                  setPatient({ ...patient, identityDocument: val })
+                }
+                placeholder="CI"
+                placeholderTextColor={"gray"}
+                readOnly={isLoading}
+                className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
+              />
+            </View>
+
+            <View className="flex-1 items-center">
+              <Text className="font-bold text-whiteBlue text-lg">Sexo</Text>
+              <GenderRadio
+                value={patient.gender as "M" | "F"}
+                onChange={(val) => setPatient({ ...patient, gender: val })}
+              />
+            </View>
           </View>
+
+          <View className="flex-row gap-2 w-full items-center">
+            <View className="flex-1">
+              <Text className="font-bold text-whiteBlue text-lg">Nombres</Text>
+              <TextInput
+                value={patient.name}
+                onChangeText={(val) => setPatient({ ...patient, name: val })}
+                placeholder="Nombres"
+                placeholderTextColor={"gray"}
+                readOnly={isLoading}
+                className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
+              />
+            </View>
+
+            <View className="flex-1">
+              <Text className="font-bold text-whiteBlue text-lg">
+                Fecha Nacimiento
+              </Text>
+              <DatePicker
+                modal
+                mode="date"
+                maximumDate={new Date()}
+                open={showDatePicker}
+                date={
+                  patient.birthdate
+                    ? new Date(patient.birthdate)
+                    : new Date(2000, 6, 1)
+                }
+                onConfirm={(date) => {
+                  setPatient({
+                    ...patient,
+                    birthdate: date.toISOString(),
+                  });
+                  setShowDatePicker(false);
+                }}
+                onCancel={() => {
+                  setShowDatePicker(false);
+                }}
+              />
+              <Pressable
+                disabled={isLoading}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <TextInput
+                  className="bg-whiteBlue h-12 p-1 border border-blackBlue rounded-xl w-full text-center"
+                  placeholder="Selecciona fecha..."
+                  placeholderTextColor="gray"
+                  value={
+                    patient.birthdate
+                      ? new Date(patient.birthdate).toLocaleDateString("es-BO")
+                      : ""
+                  }
+                  editable={false}
+                />
+              </Pressable>
+            </View>
+          </View>
+
+          <View className="flex-row gap-3 items-center">
+            <View className="border-b flex-1 border-whiteBlue/80" />
+            <Text className="text-whiteBlue/90 italic">Datos Opcionales</Text>
+            <View className="border-b flex-1 border-whiteBlue/80" />
+          </View>
+
           <View className="flex-row gap-2">
             <View className="flex-1">
               <Text className="font-bold text-whiteBlue text-lg">
@@ -591,14 +710,8 @@ export function UpdatePatientModal({
               />
             </View>
           </View>
+
           <View className="flex-row gap-2">
-            <View className="flex-1">
-              <Text className="font-bold text-whiteBlue text-lg">Sexo</Text>
-              <GenderRadio
-                value={patient.gender as "M" | "F"}
-                onChange={(val) => setPatient({ ...patient, gender: val })}
-              />
-            </View>
             <View className="flex-1">
               <Text className="font-bold text-whiteBlue text-lg">Celular</Text>
               <TextInput
@@ -632,48 +745,9 @@ export function UpdatePatientModal({
               />
             </View>
           </View>
+
           <View className="flex-row gap-2">
             <View className="flex-1">
-              <Text className="font-bold text-whiteBlue text-lg">
-                Fecha Nacimiento
-              </Text>
-              <DatePicker
-                modal
-                mode="date"
-                open={showDatePicker}
-                maximumDate={new Date()}
-                date={
-                  patient.birthdate
-                    ? new Date(patient.birthdate)
-                    : new Date(2000, 6, 1)
-                }
-                onConfirm={(date) => {
-                  setPatient({
-                    ...patient,
-                    birthdate: date.toISOString(),
-                  });
-                  setShowDatePicker(false);
-                }}
-                onCancel={() => {
-                  setShowDatePicker(false);
-                }}
-              />
-              <Pressable
-                disabled={isLoading}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <TextInput
-                  className="bg-whiteBlue p-1 border border-blackBlue rounded-xl w-full text-center"
-                  placeholder="Selecciona fecha..."
-                  placeholderTextColor="gray"
-                  value={
-                    patient.birthdate
-                      ? new Date(patient.birthdate).toLocaleDateString("es-BO")
-                      : ""
-                  }
-                  editable={false}
-                />
-              </Pressable>
               <Text className="mt-1 font-bold text-whiteBlue text-lg">
                 Lugar Nacimiento
               </Text>
@@ -690,6 +764,7 @@ export function UpdatePatientModal({
                 className="bg-whiteBlue border border-blackBlue rounded-xl w-full text-center"
               />
             </View>
+
             <View className="flex-1">
               <Text className="font-bold text-whiteBlue text-lg">
                 Dirección
@@ -697,14 +772,28 @@ export function UpdatePatientModal({
               <TextInput
                 multiline
                 numberOfLines={2}
-                style={{ textAlignVertical: "top" }}
                 value={patient.address ?? ""}
                 placeholder="Dirección completa"
                 placeholderTextColor={"gray"}
                 readOnly={isLoading}
                 maxLength={100}
+                scrollEnabled={addressHeight >= ADDRESS_MAX_HEIGHT}
+                onContentSizeChange={(event) => {
+                  const nextHeight = Math.min(
+                    Math.max(
+                      ADDRESS_MIN_HEIGHT,
+                      event.nativeEvent.contentSize.height,
+                    ),
+                    ADDRESS_MAX_HEIGHT,
+                  );
+                  setAddressHeight(nextHeight);
+                }}
                 onChangeText={(val) => setPatient({ ...patient, address: val })}
-                className="bg-whiteBlue border border-blackBlue rounded-xl w-full h-32"
+                className="bg-whiteBlue border border-blackBlue rounded-xl w-full"
+                style={{
+                  textAlignVertical: "top",
+                  height: addressHeight,
+                }}
               />
             </View>
           </View>

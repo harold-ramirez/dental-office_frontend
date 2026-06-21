@@ -181,6 +181,7 @@ export default function RequestCard({ ...props }: RequestCardProps) {
                   selectedDate: props.request.dateHourRequest,
                   requestID: props.request.Id,
                   requestName: props.request.patientFullName,
+                  requestPhoneNumber: props.request.phoneNumber,
                   sentRequestDate: props.request.registerDate,
                 },
               }}

@@ -9,6 +9,7 @@ import { useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Pressable,
   Text,
   TextInput,
@@ -30,6 +31,7 @@ export default function DayScheduleDetails() {
     treatment,
     requestID,
     requestName,
+    requestPhoneNumber: requestPhoneNumberParam,
     sentRequestDate,
   } = useLocalSearchParams<{
     appointmentID?: string;
@@ -40,6 +42,7 @@ export default function DayScheduleDetails() {
     treatment?: string;
     requestID?: string;
     requestName?: string;
+    requestPhoneNumber?: string;
     sentRequestDate?: string;
   }>();
   const router = useRouter();
@@ -54,6 +57,12 @@ export default function DayScheduleDetails() {
     { label: string; value: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [requestPhoneNumber, setRequestPhoneNumber] = useState<string | null>(
+    requestPhoneNumberParam ?? null,
+  );
+  const [patientPhoneNumber, setPatientPhoneNumber] = useState<string | null>(
+    null,
+  );
   const [appointment, setAppoinment] = useState({
     Patient_Id: patientID ? Number(patientID) : 0,
     Treatment_Id: treatment ? Number(treatment) : 0,
@@ -351,7 +360,47 @@ export default function DayScheduleDetails() {
     };
 
     fetchData();
-  }, [logOut]);
+
+    // If this screen was opened from a request, fetch its phone number
+    const fetchRequestPhone = async () => {
+      if (!requestID) return;
+      try {
+        const data = await fetchWithToken(
+          `/appointment-requests/${requestID}`,
+          { method: "GET" },
+          logOut,
+        );
+        // backend may return phoneNumber or phone
+        setRequestPhoneNumber(data.phoneNumber ?? data.phone ?? null);
+      } catch {
+        // ignore silently; phone may not be available
+      }
+    };
+
+    fetchRequestPhone();
+  }, [logOut, requestID]);
+
+  useEffect(() => {
+    const fetchPatientPhone = async () => {
+      const id = appointment.Patient_Id || (patientID ? Number(patientID) : 0);
+      if (!id) {
+        setPatientPhoneNumber(null);
+        return;
+      }
+      try {
+        const data = await fetchWithToken(
+          `/patients/${id}`,
+          { method: "GET" },
+          logOut,
+        );
+        setPatientPhoneNumber(data.phoneNumber ?? data.phone ?? null);
+      } catch {
+        setPatientPhoneNumber(null);
+      }
+    };
+
+    fetchPatientPhone();
+  }, [appointment.Patient_Id, patientID, logOut]);
 
   if (loading) {
     return (
@@ -590,15 +639,89 @@ export default function DayScheduleDetails() {
             </Pressable>
           </View>
         ) : (
-          <Pressable
-            onPress={handlePostAppointment}
-            disabled={loading}
-            className={`items-center my-2 py-2 border border-whiteBlue rounded-full w-3/4 ${loading ? "bg-gray-400" : "bg-darkBlue active:bg-pureBlue"}`}
-          >
-            <Text className="font-semibold text-whiteBlue text-lg">
-              {loading ? "Agendando..." : "Agendar"}
-            </Text>
-          </Pressable>
+          <View className="flex-row justify-center items-center gap-4 w-full px-2">
+            {/* WhatsApp Confirmation button (only if opened from a request) */}
+            {requestID && (
+              <Pressable
+                onPress={async () => {
+                  const firstName =
+                    (requestName || "").trim().split(/\s+/)[0] || "paciente";
+                  const apptDate: Date =
+                    appointment.dateHour instanceof Date
+                      ? appointment.dateHour
+                      : new Date(appointment.dateHour);
+                  const now = new Date();
+                  const isToday =
+                    apptDate.getFullYear() === now.getFullYear() &&
+                    apptDate.getMonth() === now.getMonth() &&
+                    apptDate.getDate() === now.getDate();
+                  const appointmentDay = apptDate.toLocaleDateString("es-BO", {
+                    weekday: "long",
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  });
+                  const appointmentHour = apptDate.toLocaleTimeString("es-BO", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  });
+
+                  const dayReference = isToday
+                    ? "el día de hoy"
+                    : `el ${appointmentDay}`;
+                  const confirmationMsg = `Hola ${firstName}, recibí tu solicitud y te espero ${dayReference} a las ${appointmentHour} en el consultorio.\n-Dr. Alexander Ojalvo`;
+                  let phoneToUse = patientPhoneNumber ?? requestPhoneNumber;
+
+                  // If we don't have a phone yet, try fetching the request on demand
+                  if (!phoneToUse && requestID) {
+                    try {
+                      const data = await fetchWithToken(
+                        `/appointment-requests/${requestID}`,
+                        { method: "GET" },
+                        logOut,
+                      );
+                      phoneToUse = data.phoneNumber ?? data.phone ?? null;
+                      // update state so future sends reuse it
+                      setRequestPhoneNumber(phoneToUse);
+                    } catch {
+                      phoneToUse = null;
+                    }
+                  }
+
+                  if (phoneToUse) {
+                    const url = `https://wa.me/591${phoneToUse}?text=${encodeURIComponent(confirmationMsg)}`;
+                    Linking.openURL(url);
+                  } else {
+                    toast.show(
+                      "No se encontró número de teléfono del paciente ni de la solicitud.",
+                      {
+                        type: "danger",
+                        placement: "top",
+                        duration: 3000,
+                      },
+                    );
+                  }
+                }}
+                disabled={loading}
+                className={`flex-1 items-center my-2 py-2 border border-whiteBlue rounded-full px-4 ${loading ? "bg-gray-400" : "bg-whiteBlue active:bg-lightBlue"}`}
+              >
+                <Text className="font-semibold text-blackBlue text-lg">
+                  Enviar confirmación
+                </Text>
+              </Pressable>
+            )}
+
+            <Pressable
+              onPress={handlePostAppointment}
+              disabled={loading}
+              className={`flex-1 items-center my-2 py-2 border border-whiteBlue rounded-full ${loading ? "bg-gray-400" : "bg-darkBlue active:bg-pureBlue"}`}
+            >
+              <Text className="font-semibold text-whiteBlue text-lg">
+                {loading ? "Agendando..." : "Agendar"}
+              </Text>
+            </Pressable>
+          </View>
         )}
       </SafeAreaView>
 
