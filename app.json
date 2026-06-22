@@ -47,6 +47,7 @@
     },
     "extra": {
       "apiUrl": "https://api-demo.dr-alexander-ojalvo.cloud/api/vdemo",
+      "socketUrl": "https://api-demo.dr-alexander-ojalvo.cloud",
       "router": {},
       "eas": {
         "projectId": "ebb57ac1-67e0-45cc-ac1c-836746597398"

@@ -3,7 +3,12 @@ import * as Notifications from "expo-notifications";
 import { io, Socket } from "socket.io-client";
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;
-// ✅ Asegúrate de que incluya el puerto, ej: http://192.168.1.100:3001
+// ⚠️ IMPORTANTE: El SOCKET_URL debe ser la URL BASE del servidor (sin /api/...)
+// Extrae la URL base de API_URL (ej: de "https://example.com/api/vdemo" a "https://example.com")
+const SOCKET_URL =
+  Constants.expoConfig?.extra?.socketUrl ||
+  API_URL?.replace(/\/api\/.*$/, "") ||
+  "http://localhost:3001";
 
 let socket: Socket | null = null;
 
@@ -24,12 +29,16 @@ export const socketService = {
    */
   async connect(token: string): Promise<void> {
     if (socket?.connected) {
+      console.log("⚠️ Socket ya está conectado, ignorando nueva conexión");
       return;
     }
 
     try {
+      console.log(`🔌 Intentando conectar a Socket.IO en: ${SOCKET_URL}`);
+      console.log(`🔐 Token: ${token.substring(0, 20)}...`);
+
       // ✅ CORRECCIÓN: Eliminar "Bearer " y pasar solo el token
-      socket = io(API_URL, {
+      socket = io(SOCKET_URL, {
         auth: {
           token: token, // Solo el token, sin "Bearer"
         },
@@ -37,6 +46,7 @@ export const socketService = {
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         reconnectionAttempts: 5,
+        transports: ["websocket", "polling"], // Intenta primero websocket, luego polling
         transportOptions: {
           polling: {
             extraHeaders: {
@@ -50,6 +60,7 @@ export const socketService = {
       socket.on(
         "appointment-request-created",
         (payload: { patientFullName: string }) => {
+          console.log("📬 Evento recibido:", payload);
           socketService.sendNotification(
             "Solicitud recibida",
             `${payload.patientFullName} envió una solicitud de cita`,
